@@ -1,0 +1,84 @@
+/* ============================================
+   侧边导航（Table of Contents）
+   仅在文章页显示，用于快速跳转
+   ============================================ */
+
+.side-toc {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    width: 240px;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--card-shadow-sm);
+    z-index: 100;
+    font-size: 0.9rem;
+    display: none; /* 默认隐藏，仅大屏显示 */
+}
+
+.side-toc h3 {
+    font-size: 0.95rem;
+    color: var(--accent-primary);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.side-toc ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.side-toc li {
+    margin: 6px 0;
+}
+
+.side-toc a {
+    display: block;
+    padding: 6px 10px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.side-toc a:hover {
+    background: var(--bg-tertiary);
+    color: var(--accent-primary);
+    border-left-color: var(--accent-primary);
+}
+
+.side-toc a.active {
+    background: var(--bg-tertiary);
+    color: var(--accent-primary);
+    border-left-color: var(--accent-primary);
+    font-weight: 600;
+}
+
+/* 仅在1400px以上的屏幕显示 */
+@media (min-width: 1400px) {
+    .side-toc {
+        display: block;
+    }
+}
+
+/* 滚动条美化 */
+.side-toc::-webkit-scrollbar {
+    width: 6px;
+}
+
+.side-toc::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.side-toc::-webkit-scrollbar-thumb:hover {
+    background: var(--border-hover);
+}
