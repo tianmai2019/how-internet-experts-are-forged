@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>50个问句锚点：知识地图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .toc {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .toc h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .toc ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .toc a {
+            color: #764ba2;
+            text-decoration: none;
+            display: block;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .toc a:hover {
+            background: #f0f0f0;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .question-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #764ba2;
+            transition: all 0.2s;
+        }
+
+        .question-item:hover {
+            transform: translateX(5px);
+            background: #f0f0f5;
+        }
+
+        .question-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 0.9rem;
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .question-links {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 40px 0;
+            opacity: 0.8;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            .section {
+                padding: 25px 20px;
+            }
+            .toc ul {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <header>
+            <h1>50个问句锚点：知识地图</h1>
+            <p class="subtitle">这份清单整理了《互联网专家是如何炼成的》一文中的50个关键问题，每个问题都可以作为一个知识入口</p>
+        </header>
+
+        <div class="toc">
+            <h2>📋 快速导航</h2>
+            <ul>
+                <li><a href="#a">A. 用户视角：互联网作为「会回应的世界」</a></li>
+                <li><a href="#b">B. 程序员入门视角：互联网作为「被构建的世界」</a></li>
+                <li><a href="#c">C. 工程师视角：互联网作为「流动的系统」</a></li>
+                <li><a href="#d">D. 高级工程师视角：互联网作为「权衡的系统」</a></li>
+                <li><a href="#e">E. 专家视角：互联网作为「塑造现实的系统」</a></li>
+                <li><a href="#f">F. AI时代视角：互联网作为「会对话的系统」</a></li>
+                <li><a href="#g">G. 总结性问题：作为全站知识地图入口</a></li>
+            </ul>
+        </div>
+
+        <div class="section" id="a">
+            <h2>A. 用户视角：互联网作为「会回应的世界」</h2>
+
+            <div class="question-item">
+                <span class="question-number">1</span>
+                <div class="question-text">为什么输入一个网址，页面就会出现在眼前？</div>
+                <div class="question-links">适合链接到：浏览器、域名、DNS、HTTP、网页加载流程总览</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">2</span>
+                <div class="question-text">为什么一条消息发出去，几乎立刻就能到另一个人的手机上？</div>
+                <div class="question-links">适合链接到：即时通讯原理、长连接、消息推送、网络传输</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">3</span>
+                <div class="question-text">为什么平台会越来越懂你喜欢看什么？</div>
+                <div class="question-links">适合链接到：推荐系统、用户画像、行为数据、内容分发</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">4</span>
+                <div class="question-text">为什么地图知道你现在在哪？</div>
+                <div class="question-links">适合链接到：GPS、基站定位、Wi-Fi定位、地图服务</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">5</span>
+                <div class="question-text">为什么你删除的东西，有时候又像并没有真的消失？</div>
+                <div class="question-links">适合链接到：数据存储、缓存、回收站、备份、数据留痕、平台数据策略</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">6</span>
+                <div class="question-text">为什么AI能像在和人说话一样回答你？</div>
+                <div class="question-links">适合链接到：大语言模型基础、生成式AI、自然语言处理入门</div>
+            </div>
+        </div>
+
+        <div class="section" id="b">
+            <h2>B. 程序员入门视角：互联网作为「被构建的世界」</h2>
+
+            <div class="question-item">
+                <span class="question-number">7</span>
+                <div class="question-text">一个网页到底是怎么做出来的？</div>
+                <div class="question-links">适合链接到：HTML/CSS/JavaScript 入门、网页开发基础</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">8</span>
+                <div class="question-text">前端和后端到底分别在做什么？</div>
+                <div class="question-links">适合链接到：前后端分工、Web 架构入门</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">9</span>
+                <div class="question-text">浏览器为什么能显示出你写的页面？</div>
+                <div class="question-links">适合链接到：浏览器渲染原理、DOM、CSSOM、渲染流程</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">10</span>
+                <div class="question-text">点击一个按钮之后，数据去了哪里？</div>
+                <div class="question-links">适合链接到：请求响应模型、表单提交、AJAX、接口调用</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">11</span>
+                <div class="question-text">注册、登录、评论、点赞、下单这些功能，本质上是怎么实现的？</div>
+                <div class="question-links">适合链接到：Web业务功能实现总览、认证、会话、CRUD、业务系统基础</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">12</span>
+                <div class="question-text">数据库到底在存什么？</div>
+                <div class="question-links">适合链接到：数据库基础、表、记录、关系型数据库入门</div>
+            </div>
+        </div>
+
+        <div class="section" id="c">
+            <h2>C. 工程师视角：互联网作为「流动的系统」</h2>
+
+            <div class="question-item">
+                <span class="question-number">13</span>
+                <div class="question-text">当你在浏览器里输入一个网址时，背后到底发生了什么？</div>
+                <div class="question-links">适合链接到：一次完整请求链路、从浏览器到服务器的全过程</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">14</span>
+                <div class="question-text">为什么有的网站打开很快，有的网站却总是很慢？</div>
+                <div class="question-links">适合链接到：性能优化、前端加载优化、CDN、缓存、网络延迟</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">15</span>
+                <div class="question-text">为什么访问量一大，原本正常的系统就会开始超时、报错甚至崩溃？</div>
+                <div class="question-links">适合链接到：高并发、容量规划、性能瓶颈、系统稳定性</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">16</span>
+                <div class="question-text">为什么一个看起来很简单的点赞、评论、下单功能，背后却要设计那么多环节？</div>
+                <div class="question-links">适合链接到：业务链路、分层架构、事务、异步处理</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">17</span>
+                <div class="question-text">为什么大型系统总是在谈缓存、队列、负载均衡、限流、降级和熔断？</div>
+                <div class="question-links">适合链接到：大型系统设计总览、中间件与服务治理专题页</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">18</span>
+                <div class="question-text">为什么数据库常常会成为系统的瓶颈？</div>
+                <div class="question-links">适合链接到：数据库瓶颈、索引、锁、IO、读写压力、分库分表</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">19</span>
+                <div class="question-text">为什么一个接口超时，最后可能拖垮整条业务链？</div>
+                <div class="question-links">适合链接到：依赖调用、超时传播、雪崩效应、链路稳定性</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">20</span>
+                <div class="question-text">为什么缓存能显著提高系统性能？</div>
+                <div class="question-links">适合链接到：缓存原理、Redis、缓存设计、缓存一致性</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">21</span>
+                <div class="question-text">为什么消息队列能帮助系统削峰填谷？</div>
+                <div class="question-links">适合链接到：消息队列、异步化、解耦、削峰填谷</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">22</span>
+                <div class="question-text">为什么负载均衡可以让同一个服务同时承接大量请求？</div>
+                <div class="question-links">适合链接到：负载均衡、反向代理、流量分发</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">23</span>
+                <div class="question-text">为什么分布式系统会比单机系统复杂那么多？</div>
+                <div class="question-links">适合链接到：分布式系统入门、网络分区、一致性、协调问题</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">24</span>
+                <div class="question-text">为什么高并发场景下，最难的不是功能实现，而是稳定性保障？</div>
+                <div class="question-links">适合链接到：高并发系统设计、稳定性建设</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">25</span>
+                <div class="question-text">为什么大型网站总是在做监控、日志、链路追踪和故障演练？</div>
+                <div class="question-links">适合链接到：可观测性、监控体系、日志系统、Tracing、故障演练</div>
+            </div>
+        </div>
+
+        <div class="section" id="d">
+            <h2>D. 高级工程师视角：互联网作为「权衡的系统」</h2>
+
+            <div class="question-item">
+                <span class="question-number">26</span>
+                <div class="question-text">为什么系统设计里没有银弹？</div>
+                <div class="question-links">适合链接到：架构设计思想、工程权衡、没有通用最优解</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">27</span>
+                <div class="question-text">为什么一个看起来先进的架构，不一定适合当前业务？</div>
+                <div class="question-links">适合链接到：技术选型、业务阶段与架构匹配</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">28</span>
+                <div class="question-text">为什么单体应用并不一定落后，微服务也不一定天然先进？</div>
+                <div class="question-links">适合链接到：单体 vs 微服务、系统演进路径</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">29</span>
+                <div class="question-text">为什么一致性、性能、可用性、成本和复杂度之间总要做取舍？</div>
+                <div class="question-links">适合链接到：CAP、BASE、工程权衡、性能与一致性</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">30</span>
+                <div class="question-text">为什么很多技术方案在白板上很好看，到了线上却未必值得？</div>
+                <div class="question-links">适合链接到：架构落地、工程现实、维护成本、组织成本</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">31</span>
+                <div class="question-text">为什么稳定性往往比「炫技式设计」更重要？</div>
+                <div class="question-links">适合链接到：稳定性治理、SRE思想、工程实践</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">32</span>
+                <div class="question-text">为什么技术债从来不只是代码问题，而是时间、组织和业务共同累积出来的问题？</div>
+                <div class="question-links">适合链接到：技术债、组织协作、业务压力与架构退化</div>
+            </div>
+        </div>
+
+        <div class="section" id="e">
+            <h2>E. 专家视角：互联网作为「塑造现实的系统」</h2>
+
+            <div class="question-item">
+                <span class="question-number">33</span>
+                <div class="question-text">为什么推荐系统不仅是在分发内容，也在塑造人的注意力？</div>
+                <div class="question-links">适合链接到：推荐系统、注意力经济、平台影响机制</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">34</span>
+                <div class="question-text">为什么平台不仅是在提供服务，也在制定规则？</div>
+                <div class="question-links">适合链接到：平台治理、内容审核、流量分配、平台规则</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">35</span>
+                <div class="question-text">为什么一个按钮的位置、一个推荐策略、一个互动机制，都会改变人的行为？</div>
+                <div class="question-links">适合链接到：产品设计、行为设计、用户心理、交互机制</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">36</span>
+                <div class="question-text">为什么互联网产品设计，最后会影响人的情绪、表达和判断？</div>
+                <div class="question-links">适合链接到：产品心理学、信息环境、社会化传播</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">37</span>
+                <div class="question-text">为什么组织结构会反过来影响系统架构？</div>
+                <div class="question-links">适合链接到：康威定律、组织与架构、团队协作</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">38</span>
+                <div class="question-text">为什么商业目标常常决定技术路线，而不只是反过来？</div>
+                <div class="question-links">适合链接到：技术与业务关系、商业驱动架构</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">39</span>
+                <div class="question-text">为什么互联网系统最终改变的，不只是信息流动方式，而是人和世界的关系方式？</div>
+                <div class="question-links">适合链接到：互联网社会学、数字身份、平台社会</div>
+            </div>
+        </div>
+
+        <div class="section" id="f">
+            <h2>F. AI时代视角：互联网作为「会对话的系统」</h2>
+
+            <div class="question-item">
+                <span class="question-number">40</span>
+                <div class="question-text">为什么AI看起来像在理解你，却不一定真的理解你？</div>
+                <div class="question-links">适合链接到：大模型原理、语言生成与「理解」的差别</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">41</span>
+                <div class="question-text">为什么AI能说得很流畅，却不一定总是正确？</div>
+                <div class="question-links">适合链接到：AI幻觉、概率生成、事实性问题</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">42</span>
+                <div class="question-text">为什么生成式AI和传统软件系统在本质上不一样？</div>
+                <div class="question-links">适合链接到：传统系统 vs AI系统、确定性与概率性</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">43</span>
+                <div class="question-text">为什么AI系统的输出带有概率性，而不是传统系统那样的确定性？</div>
+                <div class="question-links">适合链接到：token预测、采样机制、概率模型基础</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">44</span>
+                <div class="question-text">为什么AI越像人，人越容易误判它的真实能力边界？</div>
+                <div class="question-links">适合链接到：拟人化效应、人机交互、AI认知偏差</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">45</span>
+                <div class="question-text">为什么AI没有让互联网变简单，而只是把复杂性藏得更深？</div>
+                <div class="question-links">适合链接到：AI系统工程、RAG、模型应用架构、AI产品边界</div>
+            </div>
+        </div>
+
+        <div class="section" id="g">
+            <h2>G. 总结性问题：作为全站知识地图入口</h2>
+            <p style="margin-bottom: 30px; color: #666;">这几个问题特别适合做「总目录页」或「专题引导页」。</p>
+
+            <div class="question-item">
+                <span class="question-number">46</span>
+                <div class="question-text">为什么一个按钮背后会藏着一整条系统链路？</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">47</span>
+                <div class="question-text">为什么一个系统越大，越不像代码问题，而像复杂性问题？</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">48</span>
+                <div class="question-text">为什么技术越深入，最后越会通向对人、组织和社会的理解？</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">49</span>
+                <div class="question-text">为什么真正的互联网世界观，不是知道零散知识点，而是把它们连成结构？</div>
+            </div>
+
+            <div class="question-item">
+                <span class="question-number">50</span>
+                <div class="question-text">它为什么会这样工作？</div>
+                <div class="question-links">这个问题，甚至可以做成整个博客知识地图的总入口页标题。</div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网专家是如何炼成的</p>
+        </footer>
+    </div>
+</body>
+</html>
