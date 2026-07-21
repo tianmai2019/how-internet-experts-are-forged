@@ -1,7 +1,7 @@
 
-# 互联网专家是如何炼成的
+# 互联网大帝是如何炼成的
 
-一个分层展开的互联网世界观知识库，从用户视角到专家视角，一层一层揭示互联网背后的世界。
+一个分层展开的互联网世界观知识库，从用户视角到大帝视角，一层一层揭示互联网背后的世界。
 
 ---
 
@@ -13,9 +13,9 @@ HowInternetExpertsAreForged/
 ├── docs/                               # 网站内容（GitHub Pages 从这里部署）
 │   ├── index.html                      # 网站首页
 │   ├── articles/                       # 文章
-│   │   └── 01-how-internet-experts-are-forged.md
+│   │   └── 01-how-internet-experts-are-forged.html
 │   └── questions/                      # 问题锚点
-│       └── 00-question-map.md
+│       └── 00-question-map.html
 ├── archive/                            # 原始文件归档
 │   ├── HowInternetExpertsAreForgedMainArticle.md
 │   └── QuestionList.md
@@ -28,11 +28,11 @@ HowInternetExpertsAreForged/
 
 ### 文章
 
-- [互联网专家是如何炼成的](docs/articles/01-how-internet-experts-are-forged.md) — 主文章，讲述从用户到专家的5层认知递进
+- [互联网大帝是如何炼成的](docs/articles/01-how-internet-experts-are-forged.html) — 主文章，讲述从用户到大帝的5层认知递进
 
 ### 知识锚点
 
-- [50个问句锚点：知识地图](docs/questions/00-question-map.md) — 50个问题，每个都可以作为一个知识入口
+- [50个问句锚点：知识地图](docs/questions/00-question-map.html) — 50个问题，每个都可以作为一个知识入口
 
 ---
 
@@ -44,7 +44,7 @@ HowInternetExpertsAreForged/
 | 2 | 程序员入门视角 | 「被构建的世界」 |
 | 3 | 工程师视角 | 「流动的系统」 |
 | 4 | 高级工程师视角 | 「权衡的系统」 |
-| 5 | 专家视角 | 「塑造现实的系统」 |
+| 5 | 大帝视角 | 「塑造现实的系统」 |
 | 6 | AI时代视角 | 「会对话的系统」 |
 
 ---

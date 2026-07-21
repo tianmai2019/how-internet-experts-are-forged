@@ -10,7 +10,7 @@
 ```bash
 # 在项目目录下执行
 git add .
-git commit -m "Initial commit: 互联网专家是如何炼成的"
+git commit -m "Initial commit: 互联网大帝是如何炼成的"
 ```
 
 ---
@@ -71,7 +71,7 @@ git push -u gitee main
 ### 3. 启用 Gitee Pages
 
 - 进入仓库的 **服务** → **Gitee Pages**
-- 部署目录：填写 `public`
+- 部署目录：填写 `docs`（不是 public）
 - 点击 "启动"
 - 稍等几分钟，你的网站就会上线：
 
