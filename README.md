@@ -10,9 +10,8 @@
 ```
 HowInternetExpertsAreForged/
 ├── README.md                           # 项目说明
-├── public/                             # 网站静态页面
-│   └── index.html                      # 网站首页
-├── docs/                               # 内容目录
+├── docs/                               # 网站内容（GitHub Pages 从这里部署）
+│   ├── index.html                      # 网站首页
 │   ├── articles/                       # 文章
 │   │   └── 01-how-internet-experts-are-forged.md
 │   └── questions/                      # 问题锚点
