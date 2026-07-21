@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q1：为什么输入一个网址，页面就会出现在眼前？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #1D4ED8;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .diagram-box {
+            background: #F9FAFB;
+            border: 2px dashed #D1D5DB;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .step-box {
+            display: inline-block;
+            background: #3B82F6;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin: 10px;
+            font-weight: 600;
+        }
+
+        .arrow {
+            display: block;
+            font-size: 1.5rem;
+            color: #9CA3AF;
+            margin: 10px 0;
+        }
+
+        .highlight-box {
+            background: #EFF6FF;
+            border-left: 4px solid #3B82F6;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #1D4ED8;
+        }
+
+        .code-block {
+            background: #1F2937;
+            color: #E5E7EB;
+            padding: 25px;
+            border-radius: 12px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box {
+            background: #10B981;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .try-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box a {
+            color: #ECFDF5;
+            text-decoration: underline;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header">
+            <div class="level-badge">🎯 第1层认知 · 用户视角</div>
+            <h1>为什么输入一个网址，页面就会出现在眼前？</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">这是一个关于"奇迹"如何发生的故事</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                每天我们都在输入网址，但你有没有停下来想过：
+                <strong>这到底是怎么发生的？</strong>
+            </p>
+
+            <p>
+                你输入 <code>google.com</code>，按下回车，不到一秒，页面就出现了。
+                看起来就像魔法一样。
+            </p>
+
+            <p>
+                但"魔法"的背后，是几十个系统、数千公里的光缆、数亿次计算在协同工作。
+                理解这个过程，就是打开互联网黑盒的第一步。
+            </p>
+
+            <div class="highlight-box">
+                <strong>为什么这个问题是"第1层"的起点？</strong><br>
+                因为这是每一个上网的人都会有的好奇。
+                从这个问题开始，我们可以一层一层把整个互联网剥开来看。
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <p>要回答"网址怎么变成页面"，我们需要先回答这几个问题：</p>
+
+            <ol style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>网址是什么？</strong> <code>google.com</code> 到底是什么意思？</li>
+                <li><strong>电脑怎么找到那个网站？</strong> 服务器在哪里？</li>
+                <li><strong>请求怎么发出去？</strong> 数据如何传输几千公里？</li>
+                <li><strong>页面怎么回来？</strong> HTML是如何变成屏幕上的画面的？</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3>用户层：只看结果</h3>
+
+            <p>
+                在普通用户眼里，这是这样的：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">输入网址</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">按下回车</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">🎉 页面出现！</div>
+            </div>
+
+            <p>
+                <strong>就这么简单。</strong><br>
+                不需要知道中间发生了什么，能用就行。
+                这就是我们大多数人每天的状态。
+            </p>
+
+            <h3>🔨 实现层：开始理解构造</h3>
+
+            <p>
+                一旦你开始学习编程，这个黑盒就开始透明了。
+                你会发现，原来背后是这样的：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">📝 URL解析</div>
+                <div class="arrow">→</div>
+                <div class="step-box">📖 DNS查询</div>
+                <div class="arrow">→</div>
+                <div class="step-box">📤 HTTP请求</div>
+                <div class="arrow">→</div>
+                <div class="step-box">📥 响应回来</div>
+                <div class="arrow">→</div>
+                <div class="step-box">🎨 浏览器渲染</div>
+            </div>
+
+            <p>
+                让我们一个一个来看：
+            </p>
+
+            <div class="highlight-box">
+                <strong>1. URL解析：网址到底是什么？</strong><br><br>
+                <code>https://www.google.com/search?q=hello</code><br><br>
+                <ul style="text-align: left; margin-top: 15px;">
+                    <li><code>https://</code> - 协议（用什么方式说话）</li>
+                    <li><code>www.google.com</code> - 域名（找谁说话）</li>
+                    <li><code>/search</code> - 路径（找什么内容）</li>
+                    <li><code>?q=hello</code> - 参数（说什么话）</li>
+                </ul>
+            </div>
+
+            <p>
+                <strong>2. DNS查询：域名怎么变成IP地址？</strong><br>
+                这就像查电话簿：你记得名字，需要查到号码。
+            </p>
+
+            <div class="code-block">
+google.com → DNS查询 → 142.250.71.14<br>
+(名字)      (电话簿)    (电话号码)
+            </div>
+
+            <p>
+                <strong>3. 发送HTTP请求：建立连接</strong><br>
+                浏览器找到了IP地址，就像拨通了电话，然后开始对话：
+            </p>
+
+            <div class="code-block">
+浏览器："你好，我要首页！"<br>
+服务器："收到，这就给你发！"<br>
+浏览器："谢谢！"
+            </div>
+
+            <p>
+                <strong>4. 接收HTML：拿到页面内容</strong><br>
+                服务器发回的不是图片，而是一段HTML代码，大概长这样：
+            </p>
+
+            <div class="code-block">
+&lt;html&gt;<br>
+  &lt;head&gt;<br>
+    &lt;title&gt;Google&lt;/title&gt;<br>
+  &lt;/head&gt;<br>
+  &lt;body&gt;<br>
+    &lt;h1&gt;Hello!&lt;/h1&gt;<br>
+  &lt;/body&gt;<br>
+&lt;/html&gt;
+            </div>
+
+            <p>
+                <strong>5. 渲染：把代码变成画面</strong><br>
+                浏览器是一个画家，它拿到HTML描述，然后在画布上一笔一笔画出来：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">📄 解析HTML结构</div>
+                <div class="step-box">🎨 应用CSS样式</div>
+                <div class="step-box">⚡ 运行JavaScript</div>
+                <div class="step-box">🖥️ 显示在屏幕上</div>
+            </div>
+
+            <h3>🌊 系统层：看到完整链路</h3>
+
+            <p>
+                到了工程师视角，你会发现这不仅仅是"浏览器和服务器"对话那么简单。
+                这背后是一个巨大的分布式系统在工作。
+            </p>
+
+            <div class="highlight-box">
+                <strong>请求的旅程，可能经过：</strong><br><br>
+                1. 你的手机 → WiFi路由器 → ISP网络<br>
+                2. CDN（内容分发网络，可能就近返回）<br>
+                3. 负载均衡器（分配给哪个服务器）<br>
+                4. Web服务器（处理HTTP）<br>
+                5. 应用服务器（处理业务逻辑）<br>
+                6. 数据库/缓存（读取数据）<br>
+                7. 然后原路返回！
+            </div>
+
+            <p>
+                所有这一切，通常在<strong>几百毫秒</strong>内完成。
+                而你，就在屏幕前，看到了结果。
+            </p>
+
+            <h3>⚖️ 权衡层：为什么这样设计？</h3>
+
+            <p>
+                到了高级工程师视角，你会问：<strong>为什么系统要设计成这样？</strong>
+            </p>
+
+            <p>
+                每个选择都是权衡：
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>为什么用域名而不直接用IP？</strong> → 好记 vs 多一层查询</li>
+                <li><strong>为什么用CDN？</strong> → 速度快 vs 成本高</li>
+                <li><strong>为什么分层？</strong> → 灵活可扩展 vs 复杂度高</li>
+            </ul>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>试试看：亲眼看看这个过程！</h3>
+                <p>
+                    在Chrome浏览器中，按 <strong>F12</strong> 打开开发者工具，
+                    选择 <strong>Network（网络）</strong> 标签页，然后刷新页面。
+                </p>
+                <p>
+                    你会看到浏览器发出的每一个请求，还有它们花了多少时间！
+                </p>
+            </div>
+
+            <p>
+                或者，你也可以试试这个：
+            </p>
+
+            <div class="code-block">
+Windows: 打开 cmd，输入 ping google.com<br>
+Mac: 打开终端，输入 ping google.com
+            </div>
+
+            <p>
+                你会看到你的电脑正在和Google服务器对话！
+            </p>
+
+            <h2>🔗 延伸问题</h2>
+
+            <p>
+                理解了这个过程，你自然会想问更多：
+            </p>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=2">Q2: 为什么消息能即时到达？</a>
+                <a href="question.html?q=7">Q7: 网页是怎么做出来的？</a>
+                <a href="question.html?q=9">Q9: 浏览器如何显示页面？</a>
+                <a href="question.html?q=13">Q13: 输入网址后发生了什么？</a>
+                <a href="question.html?q=14">Q14: 为什么有的网站快有的慢？</a>
+                <a href="question.html?q=20">Q20: 缓存为什么能提高性能？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>从技术到世界</h3>
+                <p>
+                    当你真正理解这个过程后，你看世界的方式会改变。
+                </p>
+                <p>
+                    你会意识到：<strong>互联网不是"自然"存在的，而是人造的。</strong><br>
+                    每个设计选择背后，都有商业、政治、社会的考量。
+                </p>
+            </div>
+
+            <p>
+                想想看：
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>为什么网址是这样的格式？</strong> 谁规定的？</li>
+                <li><strong>为什么 .com 那么贵？</strong> 谁在赚钱？</li>
+                <li><strong>为什么有些网站在某些地方访问不了？</strong> 谁说了算？</li>
+                <li><strong>为什么你访问的是这个结果而不是那个？</strong> 谁在过滤？</li>
+            </ul>
+
+            <p>
+                这就是从"用户"到"大帝"的转变：
+                <strong>不再只看结果，而是开始问"谁在决定这个结果？"</strong>
+            </p>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，为什么输入一个网址，页面就会出现在眼前？
+            </p>
+
+            <p>
+                <strong>答案是：</strong><br>
+                因为无数工程师构建了一个不可思议的系统，
+                把复杂隐藏在简单的界面后面，
+                让每个人都能享受"奇迹"。
+            </p>
+
+            <div class="highlight-box">
+                <strong>而现在，你已经开始看到这个"奇迹"背后的真相了。</strong><br><br>
+                🎉 恭喜你！你已经迈出了从用户到思考者的第一步！
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=2" class="btn">继续探索 Q2 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

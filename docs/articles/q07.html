@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q7：一个网页到底是怎么做出来的？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #059669;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .diagram-box {
+            background: #F9FAFB;
+            border: 2px dashed #D1D5DB;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .step-box {
+            display: inline-block;
+            background: #10B981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin: 10px;
+            font-weight: 600;
+        }
+
+        .arrow {
+            display: block;
+            font-size: 1.5rem;
+            color: #9CA3AF;
+            margin: 10px 0;
+        }
+
+        .highlight-box {
+            background: #ECFDF5;
+            border-left: 4px solid #10B981;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #059669;
+        }
+
+        .code-block {
+            background: #1F2937;
+            color: #E5E7EB;
+            padding: 25px;
+            border-radius: 12px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        .code-comment {
+            color: #6B7280;
+        }
+
+        .code-tag {
+            color: #60A5FA;
+        }
+
+        .code-attr {
+            color: #FBBF24;
+        }
+
+        .code-string {
+            color: #34D399;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box {
+            background: #10B981;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .try-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box a {
+            color: #ECFDF5;
+            text-decoration: underline;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .three-pillars {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .pillar {
+            background: #F9FAFB;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            border-top: 4px solid;
+        }
+
+        .pillar-html { border-color: #E34C26; }
+        .pillar-css { border-color: #264DE4; }
+        .pillar-js { border-color: #F7DF1E; }
+
+        .pillar-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .live-demo {
+            border: 2px dashed #10B981;
+            background: #ECFDF5;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .live-demo-box {
+            background: white;
+            border: 1px solid #A7F3D0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .three-pillars {
+                grid-template-columns: 1fr;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header">
+            <div class="level-badge">🔨 第2层认知 · 程序员入门视角</div>
+            <h1>一个网页到底是怎么做出来的？</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">恭喜！你准备好成为创作者了</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                你每天都在看网页，但你有没有想过：<strong>这些网页是怎么被创造出来的？</strong>
+            </p>
+
+            <p>
+                这个问题之所以重要，是因为它标志着一个转变：
+                <strong>从"使用者"到"创造者"。</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>第2层认知的觉醒：</strong><br><br>
+                原来网页不是"长在网上"的，<br>
+                而是有人一行一行写出来的！<br><br>
+                既然别人能写出来，那我也能！
+            </div>
+
+            <p>
+                一旦你理解了这一点，整个互联网在你眼里就不一样了。
+                你看到的不再是"现成的东西"，而是"我也能做的东西"。
+            </p>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <p>要做出一个网页，你其实只需要理解三件事：</p>
+
+            <ol style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>结构：</strong> 网页上有什么？（标题、图片、按钮...）</li>
+                <li><strong>样式：</strong> 它们长什么样？（颜色、大小、位置...）</li>
+                <li><strong>行为：</strong> 它们会做什么？（点击有反应、数据变化...）</li>
+            </ol>
+
+            <p>
+                刚好，这三件事分别对应三种技术。
+            </p>
+
+            <h2>🔨 一层一层看</h2>
+
+            <h3>用户层：只看结果</h3>
+
+            <p>
+                在普通用户眼里，网页就是网页。
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">🌐 打开浏览器</div>
+                <div class="arrow">→</div>
+                <div class="step-box">📄 看到页面</div>
+                <div class="arrow">→</div>
+                <div class="step-box">👆 点击交互</div>
+            </div>
+
+            <p>
+                至于背后是什么，用户不关心，也不需要关心。
+            </p>
+
+            <h3>实现层：三剑客合体！</h3>
+
+            <p>
+                欢迎来到程序员的世界！这里有三个好朋友：
+            </p>
+
+            <div class="three-pillars">
+                <div class="pillar pillar-html">
+                    <div class="pillar-icon">📄</div>
+                    <h3>HTML</h3>
+                    <p><strong>结构</strong></p>
+                    <p style="font-size: 0.9rem; color: #6B7280;">
+                        定义"有什么"
+                    </p>
+                </div>
+                <div class="pillar pillar-css">
+                    <div class="pillar-icon">🎨</div>
+                    <h3>CSS</h3>
+                    <p><strong>样式</strong></p>
+                    <p style="font-size: 0.9rem; color: #6B7280;">
+                        定义"长什么样"
+                    </p>
+                </div>
+                <div class="pillar pillar-js">
+                    <div class="pillar-icon">⚡</div>
+                    <h3>JavaScript</h3>
+                    <p><strong>行为</strong></p>
+                    <p style="font-size: 0.9rem; color: #6B7280;">
+                        定义"做什么"
+                    </p>
+                </div>
+            </div>
+
+            <p>
+                让我们一个一个来看：
+            </p>
+
+            <div class="highlight-box">
+                <strong>📄 HTML：内容骨架</strong><br><br>
+                HTML就像文章的大纲——告诉你这是标题、那是段落、那里有张图。
+            </div>
+
+            <p>
+                一个最简单的HTML长这样：
+            </p>
+
+            <div class="code-block">
+<span class="code-comment">&lt;!-- 这是注释 --&gt;</span><br>
+<span class="code-tag">&lt;html</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;head</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">&lt;title</span><span class="code-tag">&gt;</span>我的第一个网页<span class="code-tag">&lt;/title</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;/head</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;body</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">&lt;h1</span><span class="code-tag">&gt;</span>Hello World!<span class="code-tag">&lt;/h1</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">&lt;p</span><span class="code-tag">&gt;</span>这是一个段落。<span class="code-tag">&lt;/p</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;/body</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/html</span><span class="code-tag">&gt;</span>
+            </div>
+
+            <p>
+                看到了吗？HTML用"标签"来定义内容。
+                就像写作时用"标题"、"段落"来组织内容一样。
+            </p>
+
+            <div class="highlight-box">
+                <strong>🎨 CSS：样式和颜值</strong><br><br>
+                光有内容还不够，我们需要让它好看！CSS就是来做这个的。
+            </div>
+
+            <p>
+                假设我们有个标题，CSS可以决定：
+            </p>
+
+            <div class="code-block">
+<span class="code-tag">h1</span> {<br>
+  <span class="code-attr">color</span>: <span class="code-string">#10B981</span>;      <span class="code-comment">/* 绿色 */</span><br>
+  <span class="code-attr">font-size</span>: <span class="code-string">32px</span>;  <span class="code-comment">/* 字号 */</span><br>
+  <span class="code-attr">text-align</span>: <span class="code-string">center</span>; <span class="code-comment">/* 居中 */</span><br>
+}
+            </div>
+
+            <p>
+                CSS的强大之处在于：它是<strong>描述性</strong>的。
+                你只需要说"我要这样"，浏览器就会帮你做到。
+            </p>
+
+            <div class="highlight-box">
+                <strong>⚡ JavaScript：让网页活起来</strong><br><br>
+                最后，我们需要交互。用户点击了要反应，输入了要回应——这就是JavaScript的工作。
+            </div>
+
+            <div class="code-block">
+<span class="code-comment">// 当按钮被点击时...</span><br>
+button.addEventListener(<span class="code-string">'click'</span>, function() {<br>
+  alert(<span class="code-string">'你好！'</span>);  <span class="code-comment">// 弹个窗</span><br>
+});
+            </div>
+
+            <p>
+                好！现在让我们把三剑客合体，做一个真正的网页！
+            </p>
+
+            <div class="live-demo">
+                <h3>✋ 现场演示：你的第一个网页！</h3>
+                <p>让我们把HTML、CSS、JavaScript放在一起：</p>
+                <div class="code-block">
+<span class="code-tag">&lt;!DOCTYPE html&gt;</span><br>
+<span class="code-tag">&lt;html</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;head</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;style</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">body</span> { background: #F9FAFB; text-align: center; padding: 50px; }<br>
+    <span class="code-tag">button</span> { background: #10B981; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }<br>
+  <span class="code-tag">&lt;/style</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/head</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;body</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;h1</span><span class="code-tag">&gt;</span>🎉 我的第一个网页！<span class="code-tag">&lt;/h1</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;p</span><span class="code-tag">&gt;</span>点击下面的按钮试试看~<span class="code-tag">&lt;/p</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;button</span> id=<span class="code-string">"magic-btn"</span><span class="code-tag">&gt;</span>✨ 点我试试 ✨<span class="code-tag">&lt;/button</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;p</span> id=<span class="code-string">"result"</span><span class="code-tag">&gt;</span><span class="code-tag">&lt;/p</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;script</span><span class="code-tag">&gt;</span><br>
+    let count = 0;<br>
+    document.getElementById('magic-btn').addEventListener('click', function() {<br>
+      count++;<br>
+      document.getElementById('result').innerText = `你已经点了 ${count} 次！`;<br>
+    });<br>
+  <span class="code-tag">&lt;/script</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/body</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/html</span><span class="code-tag">&gt;</span>
+                </div>
+            </div>
+
+            <p>
+                恭喜！你刚才看到的就是一个完整的现代网页的全部代码！
+            </p>
+
+            <h3>🌊 系统层：从代码到屏幕</h3>
+
+            <p>
+                当你把这三个文件写好后，浏览器是怎么把它变成屏幕上的画面的？
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">1️⃣ 解析 HTML</div>
+                <div class="arrow">→</div>
+                <div class="step-box">2️⃣ 构建 DOM 树</div>
+                <div class="arrow">→</div>
+                <div class="step-box">3️⃣ 解析 CSS</div>
+                <div class="arrow">→</div>
+                <div class="step-box">4️⃣ 布局计算</div>
+                <div class="arrow">→</div>
+                <div class="step-box">5️⃣ 绘制画面！</div>
+            </div>
+
+            <p>
+                这个过程在你每次打开网页、甚至每次滚动页面时都在发生。
+                而浏览器，就是一个不知疲倦的画家。
+            </p>
+
+            <h3>⚖️ 权衡层：为什么这样设计？</h3>
+
+            <p>
+                现在你可能会问：为什么要分成三种语言？
+                为什么不把它们合并成一个？
+            </p>
+
+            <div class="highlight-box">
+                <strong>关注点分离原则！</strong><br><br>
+                <ul style="text-align: left;">
+                    <li>HTML：这东西是什么？</li>
+                    <li>CSS：这东西长什么样？</li>
+                    <li>JS：这东西做什么？</li>
+                </ul><br>
+                这样分开后，修改其中一个不会影响另外两个。
+            </div>
+
+            <p>
+                这就是软件设计的智慧：<strong>把不同的东西分开来管。</strong>
+            </p>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>来！现在就做一个网页！</h3>
+                <p>
+                    1. 在电脑上新建一个文件，叫 <code>index.html</code><br>
+                    2. 用记事本（或任何编辑器）打开它<br>
+                    3. 把刚才的代码复制进去<br>
+                    4. 保存，双击打开！
+                </p>
+                <p>
+                    你会看到你的第一个网页在浏览器里运行！
+                </p>
+            </div>
+
+            <p>
+                想玩得更嗨一点？试试修改代码！
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li>把标题文字改成你的名字</li>
+                <li>把按钮颜色换成你喜欢的颜色（比如 #667eea）</li>
+                <li>修改点击后的提示文字</li>
+            </ul>
+
+            <p>
+                每次修改后刷新一下页面——看！你在改变这个网页！
+            </p>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=1">Q1: 网址怎么变成页面？</a>
+                <a href="question.html?q=8">Q8: 前后端在做什么？</a>
+                <a href="question.html?q=9">Q9: 浏览器如何显示页面？</a>
+                <a href="question.html?q=10">Q10: 点击按钮后数据去哪了？</a>
+                <a href="question.html?q=11">Q11: 注册登录如何实现？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>从代码到权力</h3>
+                <p>
+                    一旦你理解了"网页是写出来的"，你就开始意识到：
+                </p>
+                <p>
+                    <strong>所有你在网上看到的东西，都是某些人决定给你看到的。</strong><br>
+                    而这些决定的背后，有价值观、有商业、有政治、有偏见。
+                </p>
+            </div>
+
+            <p>
+                想想这些问题：
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>为什么这个按钮这么大？</strong> 是为了让你更容易点击吗？</li>
+                <li><strong>为什么这个选项藏在这么深的地方？</strong> 是想让你找不到吗？</li>
+                <li><strong>为什么这个颜色让我感觉很紧迫？</strong> 是故意设计的吗？</li>
+                <li><strong>为什么这个App让我停不下来？</strong> 是用了什么心理学技巧吗？</li>
+            </ul>
+
+            <p>
+                这就是从"只会用"到"看透"的转变。
+                你看到的不再是"理所当然"，而是"有人这样设计"。
+            </p>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，一个网页到底是怎么做出来的？
+            </p>
+
+            <p>
+                <strong>答案是：</strong><br>
+                用HTML定义结构，用CSS定义样式，用JavaScript定义行为，
+                然后用浏览器把它们变成屏幕上的画面。
+            </p>
+
+            <div class="highlight-box">
+                <strong>但这还不是全部的真相。</strong><br><br>
+                更深层的真相是：<br><br>
+                <strong>你也可以做网页！</strong><br>
+                你也可以成为这个世界的创造者之一！
+            </div>
+
+            <p>
+                恭喜你，从今天开始，你看互联网的眼光不一样了！
+            </p>
+
+            <div class="nav-footer">
+                <a href="q01.html" class="btn btn-outline">← 前一篇：Q1</a>
+                <a href="../questions/00-question-map.html" class="btn btn-outline">🗺️ 知识地图</a>
+                <a href="question.html?q=8" class="btn">下一篇：Q8 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

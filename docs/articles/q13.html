@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q13：当你输入一个网址时，背后发生了什么？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #0891B2;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+            margin: 30px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #06B6D4 0%, #0891B2 100%);
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .timeline-marker {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid #06B6D4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0891B2;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+        .timeline-content {
+            margin-left: 30px;
+            background: #F9FAFB;
+            padding: 20px 25px;
+            border-radius: 12px;
+            flex: 1;
+        }
+
+        .timeline-content h4 {
+            margin: 0 0 10px 0;
+            color: #0891B2;
+            font-size: 1.1rem;
+        }
+
+        .highlight-box {
+            background: #ECFEFF;
+            border-left: 4px solid #06B6D4;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #0891B2;
+        }
+
+        .code-block {
+            background: #1F2937;
+            color: #E5E7EB;
+            padding: 25px;
+            border-radius: 12px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        .request-flow {
+            display: grid;
+            gap: 10px;
+            margin: 30px 0;
+        }
+
+        .flow-step {
+            background: #F9FAFB;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .flow-arrow {
+            text-align: center;
+            color: #0891B2;
+            font-size: 1.2rem;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box {
+            background: #06B6D4;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .try-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .tech-item {
+            background: #ECFEFF;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #A5F3FC;
+        }
+
+        .tech-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .timeline::before {
+                left: 15px;
+            }
+            .timeline-marker {
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+            .timeline-content {
+                margin-left: 15px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header">
+            <div class="level-badge">🌊 第3层认知 · 工程师视角</div>
+            <h1>当你输入一个网址时，背后发生了什么？</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">从一个按钮到一条完整的链路</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                你可能听过一个经典的面试题：<strong>"在浏览器输入 google.com 后发生了什么？"</strong>
+            </p>
+
+            <p>
+                为什么这个问题这么重要？因为它测试的不是背诵，而是：
+            </p>
+
+            <div class="highlight-box">
+                <strong>你是否能看到"流动"的世界。</strong><br><br>
+                普通用户看到的是：<br>
+                点击 → 页面出来<br><br>
+                工程师看到的是：<br>
+                数据在流动、请求在传递、系统在协作
+            </div>
+
+            <p>
+                这就是第3层认知的核心：从"看到东西"到"看到流动"。
+            </p>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <p>
+                整个过程可以拆成几步：
+            </p>
+
+            <ol style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>找人：</strong> 这个网站在哪？（DNS）</li>
+                <li><strong>连接：</strong> 怎么连上它？（TCP/TLS）</li>
+                <li><strong>请求：</strong> 我要什么？（HTTP）</li>
+                <li><strong>处理：</strong> 服务器怎么干活？（后端）</li>
+                <li><strong>返回：</strong> 内容怎么回来？（响应）</li>
+                <li><strong>显示：</strong> 浏览器怎么画？（渲染）</li>
+            </ol>
+
+            <h2>🌊 一层一层看</h2>
+
+            <h3>用户层：只看结果</h3>
+
+            <p>
+                在普通用户眼里，这是瞬间完成的：
+            </p>
+
+            <div class="request-flow">
+                <div class="flow-step">
+                    <span class="tech-icon">🔤</span>
+                    <span>输入网址</span>
+                </div>
+                <div class="flow-arrow">↓</div>
+                <div class="flow-step">
+                    <span class="tech-icon">⚡</span>
+                    <span>回车！</span>
+                </div>
+                <div class="flow-arrow">↓</div>
+                <div class="flow-step">
+                    <span class="tech-icon">🎉</span>
+                    <span>页面出来了！</span>
+                </div>
+            </div>
+
+            <p>
+                简单，美好。但这不是真相。
+            </p>
+
+            <h3>实现层：开始看到过程</h3>
+
+            <p>
+                在入门程序员眼里，这变成了"请求-响应"：
+            </p>
+
+            <div class="highlight-box">
+                <strong>浏览器问：</strong> "你好，给我首页！"<br><br>
+                <strong>服务器答：</strong> "好的，这是HTML！"
+            </div>
+
+            <p>
+                但这还只是冰山一角。真实世界比这复杂得多。
+            </p>
+
+            <h3>系统层：完整的8步旅程！</h3>
+
+            <p>
+                现在让我们进入工程师视角，看看每毫秒都发生了什么：
+            </p>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker">1</div>
+                    <div class="timeline-content">
+                        <h4>📍 DNS 查询：找到服务器在哪</h4>
+                        <p>
+                            浏览器先去问："google.com 的IP地址是什么？"
+                            这就像查通讯录：用名字找电话号码。
+                        </p>
+                        <p>
+                            不是问一次就够了——它可能会问本地缓存、路由器、ISP、
+                            直到找到根DNS服务器——一层层问出去。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">2</div>
+                    <div class="timeline-content">
+                        <h4>🔌 TCP 握手：建立连接</h4>
+                        <p>
+                            找到IP后，浏览器开始和服务器"三次握手"：
+                        </p>
+                        <p>
+                            "SYN!" → "SYN-ACK!" → "ACK!"<br>
+                            就像打电话："喂？" "在" "好开始说"
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">3</div>
+                    <div class="timeline-content">
+                        <h4>🔐 TLS 握手：加密通信</h4>
+                        <p>
+                            如果是 HTTPS，现在要协商加密方式、交换密钥。
+                            这就是那个小锁头图标的来源！
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">4</div>
+                    <div class="timeline-content">
+                        <h4>📤 HTTP 请求：发出需求</h4>
+                        <p>
+                            浏览器终于说正事了：
+                        </p>
+                        <div class="code-block">
+GET / HTTP/1.1<br>
+Host: google.com<br>
+User-Agent: Chrome/120.0<br>
+Accept: text/html
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">5</div>
+                    <div class="timeline-content">
+                        <h4>🏭 服务器处理：内部的旅程</h4>
+                        <p>
+                            请求到达服务器后，事情才真正开始！
+                        </p>
+                        <div class="tech-stack">
+                            <div class="tech-item">
+                                <div class="tech-icon">⚖️</div>
+                                <div>负载均衡</div>
+                            </div>
+                            <div class="tech-item">
+                                <div class="tech-icon">🚀</div>
+                                <div>CDN/缓存</div>
+                            </div>
+                            <div class="tech-item">
+                                <div class="tech-icon">🔙</div>
+                                <div>后端服务</div>
+                            </div>
+                            <div class="tech-item">
+                                <div class="tech-icon">🗄️</div>
+                                <div>数据库</div>
+                            </div>
+                        </div>
+                        <p>
+                            请求可能经过好几个服务，调用好几个数据库，
+                            最后才把数据组装好。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">6</div>
+                    <div class="timeline-content">
+                        <h4>📥 HTTP 响应：内容回来</h4>
+                        <p>
+                            服务器把HTML、CSS、JS发回来：
+                        </p>
+                        <div class="code-block">
+HTTP/1.1 200 OK<br>
+Content-Type: text/html<br>
+Content-Length: 1234<br>
+<br>
+&lt;!DOCTYPE html&gt;...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">7</div>
+                    <div class="timeline-content">
+                        <h4>🔄 继续请求：拿到资源</h4>
+                        <p>
+                            HTML只是开始！浏览器发现还需要CSS、JS、图片...
+                            于是又发起更多请求，并行加载。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker">8</div>
+                    <div class="timeline-content">
+                        <h4>🎨 渲染显示：页面出现！</h4>
+                        <p>
+                            浏览器解析HTML、应用CSS、运行JS、绘制画面。
+                            最后——你终于看到了页面！
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                而所有这一切，通常发生在<strong>几百毫秒</strong>内！
+            </p>
+
+            <div class="highlight-box">
+                <strong>这就是第3层认知的觉醒：</strong><br><br>
+                互联网不是"传送门"——它是一个精密的系统，<br>
+                无数微小的步骤，每一步都不可少！
+            </div>
+
+            <h3>权衡层：为什么这么设计？</h3>
+
+            <p>
+                你可能会问：为什么要这么多步？不能简化吗？
+            </p>
+
+            <p>
+                这就是工程师思维——每个选择都有代价：
+            </p>
+
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <div class="tech-icon">🔀</div>
+                    <div>DNS解析</div>
+                    <p style="font-size:0.85rem; color:#6B7280">好记但慢</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🔒</div>
+                    <div>TLS加密</div>
+                    <p style="font-size:0.85rem; color:#6B7280">安全但慢</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">⚡</div>
+                    <div>CDN缓存</div>
+                    <p style="font-size:0.85rem; color:#6B7280">快但花钱</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">📊</div>
+                    <div>负载均衡</div>
+                    <p style="font-size:0.85rem; color:#6B7280">稳定但复杂</p>
+                </div>
+            </div>
+
+            <p>
+                所有这些加在一起，就是现代Web：一个充满权衡的系统。
+            </p>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>亲眼看看请求的旅程！</h3>
+                <p>
+                    在Chrome浏览器里：
+                </p>
+                <ol style="text-align:left;">
+                    <li>按 <code>F12</code> 打开开发者工具</li>
+                    <li>选择 <strong>Network</strong>（网络）标签</li>
+                    <li>刷新页面</li>
+                    <li>你会看到每一个请求！</li>
+                </ol>
+                <p>
+                    点击任意一个请求，你可以看到详细的时间线：
+                    DNS查询花了多久、连接花了多久、下载花了多久...
+                </p>
+            </div>
+
+            <p>
+                想玩得更深一点？试试这个命令：
+            </p>
+
+            <div class="code-block">
+traceroute google.com
+            </div>
+
+            <p>
+                你会看到你的数据包去了哪些地方，每一跳花了多少时间！
+            </p>
+
+            <h2>🔗 延伸问题</h2>
+
+            <p>
+                这篇文章只是打开了潘多拉的盒子——现在你可能想问更多：
+            </p>
+
+            <div class="related-questions">
+                <h3>深入探索：</h3>
+                <a href="question.html?q=14">Q14: 为什么有的网站快有的慢？</a>
+                <a href="question.html?q=17">Q17: 为什么要谈缓存、队列、负载均衡？</a>
+                <a href="question.html?q=18">Q18: 为什么数据库是瓶颈？</a>
+                <a href="question.html?q=20">Q20: 为什么缓存能提高性能？</a>
+                <a href="question.html?q=25">Q25: 为什么要做监控和链路追踪？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>从数据流到权力流</h3>
+                <p>
+                    当你理解了数据的流动路径，你就开始理解：
+                </p>
+                <p>
+                    <strong>谁控制了路径，谁就控制了信息。</strong>
+                </p>
+            </div>
+
+            <p>
+                想想这些问题：
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>为什么有些网站在某些地方访问不了？</strong> 因为某段路径被切断了。</li>
+                <li><strong>为什么CDN很重要？</strong> 因为它把内容放得离你更近，也控制了内容分发。</li>
+                <li><strong>为什么大公司要建自己的数据中心？</strong> 因为控制了基础设施，就控制了命运。</li>
+                <li><strong>为什么隐私这么难？</strong> 因为你的请求经过了太多环节，每个环节都可能被记录。</li>
+            </ul>
+
+            <p>
+                这就是大帝视角：
+                <strong>看到技术，也看到技术背后的权力、经济、政治结构。</strong>
+            </p>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，当你输入一个网址时，背后发生了什么？
+            </p>
+
+            <p>
+                <strong>答案是：</strong><br>
+                一个精密的系统开始工作——从DNS到TCP，从负载均衡到数据库，
+                最后回到浏览器渲染。
+            </p>
+
+            <div class="highlight-box">
+                <strong>但更深层的答案是：</strong><br><br>
+                你看到的不再是"页面出来了"，<br>
+                你看到的是——<strong>"数据在流动"！</strong>
+            </div>
+
+            <p>
+                恭喜你！现在你开始用工程师的眼光看世界了。
+            </p>
+
+            <div class="nav-footer">
+                <a href="q07.html" class="btn btn-outline">← 前一篇：Q7</a>
+                <a href="../questions/00-question-map.html" class="btn btn-outline">🗺️ 知识地图</a>
+                <a href="question.html?q=14" class="btn">下一篇：Q14 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

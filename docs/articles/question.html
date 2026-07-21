@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问题加载中...</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <script src="../assets/data/questions.js"></script>
+    <style>
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .level-1 { background: #DBEAFE; color: #1E40AF; }
+        .level-2 { background: #D1FAE5; color: #065F46; }
+        .level-3 { background: #CFFAFE; color: #164E63; }
+        .level-4 { background: #EDE9FE; color: #5B21B6; }
+        .level-5 { background: #FEF3C7; color: #92400E; }
+        .level-6 { background: #FCE7F3; color: #9D174D; }
+        .level-0 { background: #F3F4F6; color: #374151; }
+
+        .question-title {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: #1F2937;
+        }
+
+        .progress-hint {
+            background: #F9FAFB;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .related-links {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .related-links a {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 16px;
+            background: #F3F4F6;
+            border-radius: 20px;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .related-links a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .checking-box {
+            background: #EFF6FF;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #93C5FD;
+            border-top-color: #3B82F6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .available-box {
+            background: #D1FAE5;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #10B981;
+        }
+
+        .available-box h3 {
+            color: #065F46;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <header id="page-header">
+            <h1>⏳ 加载中...</h1>
+            <p class="subtitle" id="level-name">正在检查文章状态...</p>
+        </header>
+
+        <div class="card">
+            <div class="coming-soon">
+                <div class="checking-box" id="checking-box">
+                    <div class="spinner"></div>
+                    <span>正在检查文章是否已发布...</span>
+                </div>
+
+                <div class="icon" id="page-icon">📝</div>
+                <div class="level-badge" id="level-badge"></div>
+                <h2 class="question-title" id="question-text">加载中...</h2>
+                <p id="status-text">这篇文章正在紧张创作中...</p>
+                <p id="contrib-text">如果你想帮忙撰写，欢迎贡献！</p>
+
+                <div class="progress-hint" id="progress-hint">
+                    <strong>💡 写作提示</strong>
+                    <p>可以从以下角度来写这篇文章：</p>
+                    <ul id="hint-list" style="text-align: left; margin-top: 15px; color: #666;"></ul>
+                </div>
+
+                <div class="related-links">
+                    <strong>探索更多：</strong><br>
+                    <a href="../questions/00-question-map.html">🗺️ 知识地图</a>
+                    <a href="01-how-internet-experts-are-forged.html">📖 主文章</a>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+
+    <script>
+        // 已完成的文章列表 - 更新这个来标记已发布！
+        const PUBLISHED = {
+            1: true,    // Q1已完成
+            7: true,    // Q7已完成
+            13: true,   // Q13已完成
+            26: true,   // Q26已完成
+            33: true,   // Q33已完成
+            40: true,   // Q40已完成
+            46: true,   // Q46已完成
+            47: true,   // Q47已完成
+            48: true,   // Q48已完成
+            49: true,   // Q49已完成
+            50: true    // Q50已完成（总结篇）
+        };
+
+        // 从URL获取问题编号
+        function getQuestionId() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('q');
+            return id ? parseInt(id) : null;
+        }
+
+        // 检查是否有已发布的文章
+        function checkPublished(id) {
+            if (PUBLISHED[id]) {
+                // 跳转到真实文章
+                const filename = `q${String(id).padStart(2, '0')}.html`;
+                window.location.href = filename;
+                return true;
+            }
+            return false;
+        }
+
+        // 获取该层级的写作提示
+        function getHintsForLevel(level) {
+            const hints = {
+                1: [
+                    "从小白视角开始，用生活中的例子",
+                    "解释这个现象为什么重要",
+                    "不需要深入技术细节",
+                    "留下悬念，引导到下一层"
+                ],
+                2: [
+                    "从程序员入门角度解释",
+                    "加入一些简单的代码示例",
+                    "解释前后端如何分工",
+                    "让读者感觉自己也能做出来"
+                ],
+                3: [
+                    "从系统和链路视角分析",
+                    "加入流程图或架构图（可以手绘）",
+                    "解释性能、并发、稳定性等概念",
+                    "关联到其他相关问题"
+                ],
+                4: [
+                    "从权衡和选择角度展开",
+                    "讨论技术方案的优缺点",
+                    "加入真实场景中的取舍案例",
+                    "体现工程思维"
+                ],
+                5: [
+                    "从更高的视角看这个问题",
+                    "讨论技术如何影响人、组织、社会",
+                    "加入产品思维、商业思维",
+                    "升华到世界观层面"
+                ],
+                6: [
+                    "对比传统系统和AI系统的不同",
+                    "讨论概率性和确定性的区别",
+                    "探讨AI时代的新挑战",
+                    "联系到现实中的AI应用"
+                ],
+                0: [
+                    "作为总结性问题，要有全局视角",
+                    "串联前面各层的内容",
+                    "升华到世界观层面",
+                    "给读者留下深刻印象"
+                ]
+            };
+            return hints[level] || hints[0];
+        }
+
+        // 渲染页面
+        function renderPage() {
+            const id = getQuestionId();
+
+            if (!id || !QUESTIONS[id]) {
+                document.getElementById('question-text').textContent = "问题不存在";
+                document.getElementById('level-name').textContent = "返回首页查看所有问题";
+                document.getElementById('checking-box').style.display = 'none';
+                return;
+            }
+
+            // 先检查是否已发布（有一个短暂的延迟让用户看到检查动画）
+            setTimeout(() => {
+                if (checkPublished(id)) {
+                    return;  // 将跳转，不继续渲染
+                }
+
+                // 没有发布，继续显示placeholder
+                document.getElementById('checking-box').style.display = 'none';
+
+                const question = QUESTIONS[id];
+                const levelName = LEVEL_NAMES[question.level];
+                const icon = LEVEL_ICONS[question.level];
+
+                // 设置标题
+                document.title = `Q${id}: ${question.text}`;
+                document.getElementById('question-text').textContent = question.text;
+                document.getElementById('level-name').textContent = levelName;
+                document.getElementById('page-icon').textContent = icon;
+
+                // 设置层级徽章
+                const badge = document.getElementById('level-badge');
+                badge.textContent = levelName;
+                badge.className = `level-badge level-${question.level}`;
+
+                // 设置写作提示
+                const hintList = document.getElementById('hint-list');
+                const hints = getHintsForLevel(question.level);
+                hintList.innerHTML = hints.map(h => `<li>${h}</li>`).join('');
+
+                // 修改header，显示Q编号
+                document.getElementById('page-header').innerHTML = `
+                    <h1>⏳ Q${id}: 即将上线</h1>
+                    <p class="subtitle">${levelName}</p>
+                `;
+            }, 800);
+        }
+
+        // 页面加载完成后渲染
+        renderPage();
+    </script>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

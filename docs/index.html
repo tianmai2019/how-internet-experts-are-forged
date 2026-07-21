@@ -4,44 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>互联网大帝是如何炼成的</title>
+    <link rel="stylesheet" href="assets/css/shared.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            line-height: 1.8;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 60px 20px;
-        }
-
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 60px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
         .card {
             background: white;
             border-radius: 16px;
@@ -66,15 +30,21 @@
             display: flex;
             align-items: center;
             padding: 20px;
-            background: #f8f9fa;
+            background: #F9FAFB;
             border-radius: 12px;
             border-left: 4px solid #667eea;
+            transition: all 0.2s;
+        }
+
+        .layer:hover {
+            transform: translateX(5px);
+            background: #F9F6FF;
         }
 
         .layer-number {
-            width: 40px;
-            height: 40px;
-            background: #667eea;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 50%;
             display: flex;
@@ -83,17 +53,19 @@
             font-weight: bold;
             margin-right: 20px;
             flex-shrink: 0;
+            font-size: 1.2rem;
         }
 
         .layer-content h3 {
             font-size: 1.1rem;
             margin-bottom: 5px;
-            color: #333;
+            color: #1F2937;
         }
 
         .layer-content p {
-            color: #666;
+            color: #6B7280;
             font-size: 0.95rem;
+            margin: 0;
         }
 
         .btn {
@@ -136,35 +108,40 @@
             margin: 40px 0;
         }
 
-        footer {
-            text-align: center;
-            color: white;
-            padding: 40px 0;
-            opacity: 0.8;
+        .card-intro {
+            font-size: 1.1rem;
+            color: #4B5563;
+            line-height: 1.8;
         }
 
-        .links {
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
             margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid #eee;
+            text-align: center;
         }
 
-        .links a {
-            color: #667eea;
-            text-decoration: none;
-            margin-right: 20px;
+        .stat-item {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
         }
 
-        .links a:hover {
-            text-decoration: underline;
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            opacity: 0.9;
         }
 
         @media (max-width: 600px) {
-            h1 {
-                font-size: 1.8rem;
-            }
             .card {
-                padding: 25px;
+                padding: 30px 20px;
             }
             .layer {
                 flex-direction: column;
@@ -182,12 +159,12 @@
         <header>
             <h1>互联网大帝是如何炼成的</h1>
             <p class="subtitle">互联小白如何渡劫飞升成帝</p>
-            <p style="margin-top: 15px; opacity: 0.85;">从使用互联网，到理解互联网，再到看见互联网背后的世界</p>
+            <p style="margin-top: 15px; opacity: 0.85;">从使用互联网,到理解互联网,再到看见互联网背后的世界</p>
         </header>
 
         <div class="card">
             <h2>📖 阅读主文章</h2>
-            <p style="margin-bottom: 25px; color: #666;">
+            <p class="card-intro">
                 这篇文章讲述了一个人从普通用户成长为互联网大帝的完整心路历程，
                 一层一层揭示互联网背后的世界。
             </p>
@@ -195,66 +172,81 @@
         </div>
 
         <div class="card">
-            <h2>🗺️ 5层认知递进</h2>
+            <h2>🗺️ 6层认知递进</h2>
             <div class="layers">
                 <div class="layer">
                     <div class="layer-number">1</div>
                     <div class="layer-content">
-                        <h3>用户视角</h3>
-                        <p>互联网是「会回应的世界」——只看结果，不追问原理</p>
+                        <h3>🎯 用户视角</h3>
+                        <p>互联网是"会回应的世界" — 只看结果，不追问原理</p>
                     </div>
                 </div>
                 <div class="layer">
                     <div class="layer-number">2</div>
                     <div class="layer-content">
-                        <h3>程序员入门视角</h3>
-                        <p>互联网是「被构建的世界」——理解前端、后端、数据库的分工</p>
+                        <h3>🔨 程序员入门视角</h3>
+                        <p>互联网是"被构建的世界" — 理解前端、后端、数据库的分工</p>
                     </div>
                 </div>
                 <div class="layer">
                     <div class="layer-number">3</div>
                     <div class="layer-content">
-                        <h3>工程师视角</h3>
-                        <p>互联网是「流动的系统」——看到完整请求链路</p>
+                        <h3>🌊 工程师视角</h3>
+                        <p>互联网是"流动的系统" — 看到完整请求链路</p>
                     </div>
                 </div>
                 <div class="layer">
                     <div class="layer-number">4</div>
                     <div class="layer-content">
-                        <h3>高级工程师视角</h3>
-                        <p>互联网是「权衡的系统」——理解工程中的取舍</p>
+                        <h3>⚖️ 高级工程师视角</h3>
+                        <p>互联网是"权衡的系统" — 理解工程中的取舍</p>
                     </div>
                 </div>
                 <div class="layer">
                     <div class="layer-number">5</div>
                     <div class="layer-content">
-                        <h3>大帝视角</h3>
-                        <p>互联网是「塑造现实的系统」——技术如何与社会互动</p>
+                        <h3>👑 大帝视角</h3>
+                        <p>互联网是"塑造现实的系统" — 技术如何与社会互动</p>
                     </div>
                 </div>
                 <div class="layer">
                     <div class="layer-number">6</div>
                     <div class="layer-content">
-                        <h3>AI时代视角</h3>
-                        <p>互联网是「会对话的系统」——理解确定性与概率性的共存</p>
+                        <h3>💬 AI时代视角</h3>
+                        <p>互联网是"会对话的系统" — 理解确定性与概率性的共存</p>
                     </div>
+                </div>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number">6</div>
+                    <div class="stat-label">认知层级</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">50</div>
+                    <div class="stat-label">关键问题</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">探索可能</div>
                 </div>
             </div>
         </div>
 
         <div class="card">
             <h2>❓ 50个问句锚点</h2>
-            <p style="margin-bottom: 25px; color: #666;">
+            <p class="card-intro">
                 50个问题，每个都可以作为一个知识入口，带你一层一层深入理解互联网。
             </p>
-            <a href="questions/00-question-map.html" class="btn btn-outline">查看知识地图 →</a>
+            <a href="questions/00-question-map.html" class="btn btn-outline">📋 问题清单</a>
+            <a href="questions/knowledge-graph.html" class="btn">🗺️ 知识图谱</a>
         </div>
 
         <div class="card">
             <div class="quote">
-                "它为什么会这样工作？"
+                "它为什么会这样工作?"
             </div>
-            <p style="text-align: center; color: #666;">
+            <p class="card-intro" style="text-align: center;">
                 当你开始这样问的时候，你其实就已经走上这条路了。<br>
                 不是从知道答案开始，而是从不再把一切都当成理所当然开始。
             </p>
@@ -262,7 +254,9 @@
 
         <footer>
             <p>&copy; 2024 互联网大帝是如何炼成的</p>
+            <p style="margin-top:10px; font-size: 0.85rem;">💡 快捷键: T 切换主题 · H 首页 · Ctrl+K 知识地图</p>
         </footer>
     </div>
+    <script src="assets/js/enhance.js"></script>
 </body>
 </html>

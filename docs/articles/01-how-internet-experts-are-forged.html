@@ -4,44 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>互联网大帝是如何炼成的</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            line-height: 1.8;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 60px 20px;
-        }
-
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
         .content {
             background: white;
             border-radius: 16px;
@@ -58,44 +22,63 @@
             font-size: 1.3rem;
             font-weight: 600;
             color: #764ba2;
-            padding: 15px 0;
+            padding: 18px 20px;
             border-top: 1px solid #eee;
             border-bottom: 1px solid #eee;
             margin: 20px 0;
-        }
-
-        .back-btn {
-            display: inline-block;
-            padding: 12px 30px;
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-            text-decoration: none;
-            border-radius: 30px;
-            font-weight: 600;
-            margin-bottom: 30px;
+            border-radius: 8px;
             transition: all 0.2s;
         }
 
-        .back-btn:hover {
-            background: #667eea;
-            color: white;
+        .question:hover {
+            background: #F9F6FF;
+            transform: translateX(5px);
         }
 
-        footer {
+        .question a {
+            color: inherit;
+            text-decoration: none;
+            display: block;
+        }
+
+        .question a:hover {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .question a::after {
+            content: " →";
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .question a:hover::after {
+            opacity: 1;
+        }
+
+        .section-divider {
             text-align: center;
-            color: white;
-            padding: 40px 0;
-            opacity: 0.8;
+            padding: 30px 0;
+            margin: 20px 0;
+            font-size: 2rem;
+            color: #ddd;
+        }
+
+        .nav-footer {
             margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
         }
 
         @media (max-width: 600px) {
-            h1 {
-                font-size: 1.8rem;
-            }
             .content {
                 padding: 30px 20px;
+            }
+            .nav-footer {
+                flex-direction: column;
             }
         }
     </style>
@@ -163,12 +146,14 @@
             <p>在这个阶段,一个人不会去追问太多底层问题。<br>
             因为没有这个必要。</p>
 
-            <div class="question">为什么输入一个网址,页面就会出现在眼前?</div>
-            <div class="question">为什么一条消息发出去,几乎立刻就能到另一个人的手机上?</div>
-            <div class="question">为什么平台会越来越懂你喜欢看什么?</div>
-            <div class="question">为什么地图知道你现在在哪?</div>
-            <div class="question">为什么你删除的东西,有时候又像并没有真的消失?</div>
-            <div class="question">为什么AI能像在和人说话一样回答你?</div>
+            <div class="section-divider">🎯 第1层认知</div>
+
+            <div class="question"><a href="question.html?q=1">为什么输入一个网址,页面就会出现在眼前?</a></div>
+            <div class="question"><a href="question.html?q=2">为什么一条消息发出去,几乎立刻就能到另一个人的手机上?</a></div>
+            <div class="question"><a href="question.html?q=3">为什么平台会越来越懂你喜欢看什么?</a></div>
+            <div class="question"><a href="question.html?q=4">为什么地图知道你现在在哪?</a></div>
+            <div class="question"><a href="question.html?q=5">为什么你删除的东西,有时候又像并没有真的消失?</a></div>
+            <div class="question"><a href="question.html?q=6">为什么AI能像在和人说话一样回答你?</a></div>
 
             <p>这些问题,普通人通常都能感受到它们的神奇。<br>
             但并不会急着去解释它们。</p>
@@ -212,12 +197,14 @@
             它开始变成结果。<br>
             而结果的背后,是过程。</p>
 
-            <div class="question">一个网页到底是怎么做出来的?</div>
-            <div class="question">前端和后端到底分别在做什么?</div>
-            <div class="question">浏览器为什么能显示出你写的页面?</div>
-            <div class="question">点击一个按钮之后,数据去了哪里?</div>
-            <div class="question">注册、登录、评论、点赞、下单这些功能,本质上是怎么实现的?</div>
-            <div class="question">数据库到底在存什么?</div>
+            <div class="section-divider">🔨 第2层认知</div>
+
+            <div class="question"><a href="question.html?q=7">一个网页到底是怎么做出来的?</a></div>
+            <div class="question"><a href="question.html?q=8">前端和后端到底分别在做什么?</a></div>
+            <div class="question"><a href="question.html?q=9">浏览器为什么能显示出你写的页面?</a></div>
+            <div class="question"><a href="question.html?q=10">点击一个按钮之后,数据去了哪里?</a></div>
+            <div class="question"><a href="question.html?q=11">注册、登录、评论、点赞、下单这些功能,本质上是怎么实现的?</a></div>
+            <div class="question"><a href="question.html?q=12">数据库到底在存什么?</a></div>
 
             <p>到这一步,很多人会有一种很强烈的兴奋感。</p>
 
@@ -243,13 +230,15 @@
             它是流动的。<br>
             它是会承受压力、会出现瓶颈、会产生连锁反应的。</p>
 
-            <div class="question">当你在浏览器里输入一个网址时,背后到底发生了什么?</div>
-            <div class="question">为什么有的网站打开很快,有的网站却总是很慢?</div>
-            <div class="question">为什么访问量一大,原本正常的系统就会开始超时、报错甚至崩溃?</div>
-            <div class="question">为什么一个看起来很简单的点赞、评论、下单功能,背后却要设计那么多环节?</div>
-            <div class="question">为什么大型系统总是在谈缓存、队列、负载均衡、限流、降级和熔断?</div>
-            <div class="question">为什么数据库常常会成为系统的瓶颈?</div>
-            <div class="question">为什么一个接口超时,最后可能拖垮整条业务链?</div>
+            <div class="section-divider">🌊 第3层认知</div>
+
+            <div class="question"><a href="question.html?q=13">当你在浏览器里输入一个网址时,背后到底发生了什么?</a></div>
+            <div class="question"><a href="question.html?q=14">为什么有的网站打开很快,有的网站却总是很慢?</a></div>
+            <div class="question"><a href="question.html?q=15">为什么访问量一大,原本正常的系统就会开始超时、报错甚至崩溃?</a></div>
+            <div class="question"><a href="question.html?q=16">为什么一个看起来很简单的点赞、评论、下单功能,背后却要设计那么多环节?</a></div>
+            <div class="question"><a href="question.html?q=17">为什么大型系统总是在谈缓存、队列、负载均衡、限流、降级和熔断?</a></div>
+            <div class="question"><a href="question.html?q=18">为什么数据库常常会成为系统的瓶颈?</a></div>
+            <div class="question"><a href="question.html?q=19">为什么一个接口超时,最后可能拖垮整条业务链?</a></div>
 
             <p>一旦一个人开始认真追问这些问题,他眼中的互联网就又翻开了一层。</p>
 
@@ -293,12 +282,12 @@
             <p>以前他以为系统是"能跑就行"。<br>
             现在他知道,互联网系统的世界里,"能跑"只是起点。</p>
 
-            <div class="question">为什么缓存能显著提高系统性能?</div>
-            <div class="question">为什么消息队列能帮助系统削峰填谷?</div>
-            <div class="question">为什么负载均衡可以让同一个服务同时承接大量请求?</div>
-            <div class="question">为什么分布式系统会比单机系统复杂那么多?</div>
-            <div class="question">为什么高并发场景下,最难的不是功能实现,而是稳定性保障?</div>
-            <div class="question">为什么大型网站总是在做监控、日志、链路追踪和故障演练?</div>
+            <div class="question"><a href="question.html?q=20">为什么缓存能显著提高系统性能?</a></div>
+            <div class="question"><a href="question.html?q=21">为什么消息队列能帮助系统削峰填谷?</a></div>
+            <div class="question"><a href="question.html?q=22">为什么负载均衡可以让同一个服务同时承接大量请求?</a></div>
+            <div class="question"><a href="question.html?q=23">为什么分布式系统会比单机系统复杂那么多?</a></div>
+            <div class="question"><a href="question.html?q=24">为什么高并发场景下,最难的不是功能实现,而是稳定性保障?</a></div>
+            <div class="question"><a href="question.html?q=25">为什么大型网站总是在做监控、日志、链路追踪和故障演练?</a></div>
 
             <p>很多人到了这里,会把"懂互联网"等同于"懂系统架构"。<br>
             但其实,这还不是终点。</p>
@@ -323,13 +312,15 @@
             <p>很多系统设计看起来像技术选择。<br>
             其实背后常常是现实选择。</p>
 
-            <div class="question">为什么系统设计里没有银弹?</div>
-            <div class="question">为什么一个看起来先进的架构,不一定适合当前业务?</div>
-            <div class="question">为什么单体应用并不一定落后,微服务也不一定天然先进?</div>
-            <div class="question">为什么一致性、性能、可用性、成本和复杂度之间总要做取舍?</div>
-            <div class="question">为什么很多技术方案在白板上很好看,到了线上却未必值得?</div>
-            <div class="question">为什么稳定性往往比"炫技式设计"更重要?</div>
-            <div class="question">为什么技术债从来不只是代码问题,而是时间、组织和业务共同累积出来的问题?</div>
+            <div class="section-divider">⚖️ 第4层认知</div>
+
+            <div class="question"><a href="question.html?q=26">为什么系统设计里没有银弹?</a></div>
+            <div class="question"><a href="question.html?q=27">为什么一个看起来先进的架构,不一定适合当前业务?</a></div>
+            <div class="question"><a href="question.html?q=28">为什么单体应用并不一定落后,微服务也不一定天然先进?</a></div>
+            <div class="question"><a href="question.html?q=29">为什么一致性、性能、可用性、成本和复杂度之间总要做取舍?</a></div>
+            <div class="question"><a href="question.html?q=30">为什么很多技术方案在白板上很好看,到了线上却未必值得?</a></div>
+            <div class="question"><a href="question.html?q=31">为什么稳定性往往比"炫技式设计"更重要?</a></div>
+            <div class="question"><a href="question.html?q=32">为什么技术债从来不只是代码问题,而是时间、组织和业务共同累积出来的问题?</a></div>
 
             <p>到了这一层,一个工程师开始真正理解"工程"这两个字。</p>
 
@@ -394,13 +385,15 @@
             有用户行为。<br>
             也有社会影响。</p>
 
-            <div class="question">为什么推荐系统不仅是在分发内容,也在塑造人的注意力?</div>
-            <div class="question">为什么平台不仅是在提供服务,也在制定规则?</div>
-            <div class="question">为什么一个按钮的位置、一个推荐策略、一个互动机制,都会改变人的行为?</div>
-            <div class="question">为什么互联网产品设计,最后会影响人的情绪、表达和判断?</div>
-            <div class="question">为什么组织结构会反过来影响系统架构?</div>
-            <div class="question">为什么商业目标常常决定技术路线,而不只是反过来?</div>
-            <div class="question">为什么互联网系统最终改变的,不只是信息流动方式,而是人和世界的关系方式?</div>
+            <div class="section-divider">👑 第5层认知</div>
+
+            <div class="question"><a href="question.html?q=33">为什么推荐系统不仅是在分发内容,也在塑造人的注意力?</a></div>
+            <div class="question"><a href="question.html?q=34">为什么平台不仅是在提供服务,也在制定规则?</a></div>
+            <div class="question"><a href="question.html?q=35">为什么一个按钮的位置、一个推荐策略、一个互动机制,都会改变人的行为?</a></div>
+            <div class="question"><a href="question.html?q=36">为什么互联网产品设计,最后会影响人的情绪、表达和判断?</a></div>
+            <div class="question"><a href="question.html?q=37">为什么组织结构会反过来影响系统架构?</a></div>
+            <div class="question"><a href="question.html?q=38">为什么商业目标常常决定技术路线,而不只是反过来?</a></div>
+            <div class="question"><a href="question.html?q=39">为什么互联网系统最终改变的,不只是信息流动方式,而是人和世界的关系方式?</a></div>
 
             <p>当一个人走到这里,他就会发现,自己当年第一次上网时看到的互联网,其实只是最外层的一层皮。</p>
 
@@ -431,7 +424,7 @@
 
             <p>这是互联网很重要的一次变化。</p>
 
-            <p>它第一次大规模从"信息系统"变成"对话系统"。</p>
+            <p>它第一次大规模从"信息系统"变成了"对话系统"。</p>
 
             <p>对普通人来说,这当然是一种巨大的便利。<br>
             不会搜索的人,也能提问。<br>
@@ -440,12 +433,14 @@
 
             <p>但对真正理解互联网的人来说,AI带来的不是"更简单",而是"更深的复杂性"。</p>
 
-            <div class="question">为什么AI看起来像在理解你,却不一定真的理解你?</div>
-            <div class="question">为什么AI能说得很流畅,却不一定总是正确?</div>
-            <div class="question">为什么生成式AI和传统软件系统在本质上不一样?</div>
-            <div class="question">为什么AI系统的输出带有概率性,而不是传统系统那样的确定性?</div>
-            <div class="question">为什么AI越像人,人越容易误判它的真实能力边界?</div>
-            <div class="question">为什么AI没有让互联网变简单,而只是把复杂性藏得更深?</div>
+            <div class="section-divider">💬 第6层认知 (AI时代)</div>
+
+            <div class="question"><a href="question.html?q=40">为什么AI看起来像在理解你,却不一定真的理解你?</a></div>
+            <div class="question"><a href="question.html?q=41">为什么AI能说得很流畅,却不一定总是正确?</a></div>
+            <div class="question"><a href="question.html?q=42">为什么生成式AI和传统软件系统在本质上不一样?</a></div>
+            <div class="question"><a href="question.html?q=43">为什么AI系统的输出带有概率性,而不是传统系统那样的确定性?</a></div>
+            <div class="question"><a href="question.html?q=44">为什么AI越像人,人越容易误判它的真实能力边界?</a></div>
+            <div class="question"><a href="question.html?q=45">为什么AI没有让互联网变简单,而只是把复杂性藏得更深?</a></div>
 
             <p>过去,一个工程师面对的是相对确定的系统。</p>
 
@@ -503,10 +498,12 @@
             <p>他不再满足于结果。<br>
             他开始不断追问为什么。</p>
 
-            <div class="question">为什么一个按钮背后会藏着一整条系统链路?</div>
-            <div class="question">为什么一个系统越大,越不像代码问题,而像复杂性问题?</div>
-            <div class="question">为什么技术越深入,最后越会通向对人、组织和社会的理解?</div>
-            <div class="question">为什么真正的互联网世界观,不是知道零散知识点,而是把它们连成结构?</div>
+            <div class="section-divider">🌟 总结</div>
+
+            <div class="question"><a href="question.html?q=46">为什么一个按钮背后会藏着一整条系统链路?</a></div>
+            <div class="question"><a href="question.html?q=47">为什么一个系统越大,越不像代码问题,而像复杂性问题?</a></div>
+            <div class="question"><a href="question.html?q=48">为什么技术越深入,最后越会通向对人、组织和社会的理解?</a></div>
+            <div class="question"><a href="question.html?q=49">为什么真正的互联网世界观,不是知道零散知识点,而是把它们连成结构?</a></div>
 
             <p>一个普通人使用互联网。<br>
             一个程序员开始构建互联网。<br>
@@ -542,7 +539,7 @@
 
             <p>对那些你每天都在使用、却习以为常的东西,重新认真问一次——</p>
 
-            <div class="question">它为什么会这样工作?</div>
+            <div class="question"><a href="question.html?q=50">它为什么会这样工作?</a></div>
 
             <p>当你开始这样问的时候,互联网就不再只是你手机里的几个App了。</p>
 
@@ -554,11 +551,17 @@
 
             <p>不是从知道答案开始。<br>
             而是从不再把一切都当成理所当然开始。</p>
+
+            <div class="nav-footer">
+                <a href="../index.html" class="btn btn-outline">← 返回首页</a>
+                <a href="../questions/00-question-map.html" class="btn">查看知识地图 →</a>
+            </div>
         </div>
 
         <footer>
             <p>&copy; 2024 互联网大帝是如何炼成的</p>
         </footer>
     </div>
+    <script src="../assets/js/enhance.js"></script>
 </body>
 </html>
