@@ -64,47 +64,35 @@
             position: relative;
             padding: 20px 0;
             margin: 30px 0;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 30px;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: linear-gradient(180deg, #06B6D4 0%, #0891B2 100%);
-            border-radius: 2px;
+            border-left: 2px solid #06B6D4;
+            padding-left: 24px;
         }
 
         .timeline-item {
-            display: flex;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             position: relative;
         }
 
         .timeline-marker {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: white;
-            border: 4px solid #06B6D4;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #0891B2;
-            flex-shrink: 0;
-            z-index: 1;
+            min-width: 24px;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-right: 10px;
+            vertical-align: middle;
         }
 
         .timeline-content {
-            margin-left: 30px;
             background: #F9FAFB;
             padding: 20px 25px;
             border-radius: 12px;
-            flex: 1;
         }
 
         .timeline-content h4 {
@@ -140,19 +128,19 @@
             display: grid;
             gap: 10px;
             margin: 30px 0;
+            justify-items: center;
         }
 
         .flow-step {
             background: #F9FAFB;
-            padding: 15px 20px;
+            padding: 15px 24px;
             border-radius: 8px;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 15px;
         }
 
         .flow-arrow {
-            text-align: center;
             color: #0891B2;
             font-size: 1.2rem;
         }
@@ -236,20 +224,135 @@
             margin-bottom: 8px;
         }
 
+        /* ============================================
+           SVG 拓扑图（Q13 服务器内部旅程）
+           样板复用自 Q1，配色改用多色区分组件类型
+           ============================================ */
+        .diagram-box {
+            background: var(--bg-secondary, #F9FAFB);
+            border: 2px dashed var(--border-color, #D1D5DB);
+            border-radius: 12px;
+            padding: 30px 20px 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .topology-svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+        }
+
+        .topo-node rect {
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
+            transition: transform 0.2s ease, filter 0.2s ease;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .topo-node:hover rect {
+            transform: translateY(-3px) scale(1.03);
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.22));
+        }
+
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            font-style: italic;
+        }
+
+        [data-theme="dark"] .diagram-box {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* 移动端：切换到垂直卡片列表 */
+        .topo-mobile {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .topology-svg {
+                display: none;
+            }
+            .topo-mobile {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+            }
+            .topo-mobile li {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 14px;
+                margin-bottom: 8px;
+                border-radius: 12px;
+                color: #fff;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+                position: relative;
+            }
+            .topo-mobile li[data-color="blue"]   { background: linear-gradient(135deg, #60A5FA 0%, #2563EB 100%); }
+            .topo-mobile li[data-color="cyan"]   { background: linear-gradient(135deg, #22D3EE 0%, #0891B2 100%); }
+            .topo-mobile li[data-color="violet"] { background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%); }
+            .topo-mobile li[data-color="amber"]  { background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%); }
+            .topo-mobile li[data-color="pink"]   { background: linear-gradient(135deg, #F472B6 0%, #DB2777 100%); }
+
+            .topo-mobile li:not(:last-child):not(.topo-branch)::after {
+                content: "↓";
+                position: absolute;
+                left: 50%;
+                bottom: -14px;
+                transform: translateX(-50%);
+                color: var(--text-muted, #9CA3AF);
+                font-size: 0.95rem;
+                z-index: 1;
+            }
+            /* 分支节点：换个连接符暗示"命中/未命中" */
+            .topo-mobile li.topo-branch::before {
+                content: "├─ 先查";
+                position: absolute;
+                left: 8px;
+                top: -12px;
+                font-size: 0.7rem;
+                color: var(--text-muted, #6B7280);
+                background: var(--bg-secondary, #F9FAFB);
+                padding: 0 6px;
+            }
+            .topo-mobile li.topo-branch + li::before {
+                content: "└─ 未命中";
+                position: absolute;
+                left: 8px;
+                top: -12px;
+                font-size: 0.7rem;
+                color: var(--text-muted, #6B7280);
+                background: var(--bg-secondary, #F9FAFB);
+                padding: 0 6px;
+            }
+            .topo-mobile-icon {
+                font-size: 1.6rem;
+                flex-shrink: 0;
+            }
+            .topo-mobile li strong {
+                display: block;
+                font-size: 0.96rem;
+                margin-bottom: 2px;
+            }
+            .topo-mobile li span:not(.topo-mobile-icon) {
+                display: block;
+                font-size: 0.78rem;
+                color: rgba(255, 255, 255, 0.88);
+            }
+        }
+
         @media (max-width: 600px) {
             .article-header, .article-content {
                 padding: 30px 20px;
             }
-            .timeline::before {
-                left: 15px;
-            }
-            .timeline-marker {
-                width: 40px;
-                height: 40px;
-                font-size: 1.1rem;
-            }
-            .timeline-content {
-                margin-left: 15px;
+            .timeline {
+                padding-left: 18px;
             }
             .nav-footer {
                 flex-direction: column;
@@ -357,9 +460,8 @@
 
             <div class="timeline">
                 <div class="timeline-item">
-                    <div class="timeline-marker">1</div>
                     <div class="timeline-content">
-                        <h4>📍 DNS 查询：找到服务器在哪</h4>
+                        <h4><span class="timeline-marker">1</span> 📍 DNS 查询：找到服务器在哪</h4>
                         <p>
                             浏览器先去问："google.com 的IP地址是什么？"
                             这就像查通讯录：用名字找电话号码。
@@ -372,9 +474,8 @@
                 </div>
 
                 <div class="timeline-item">
-                    <div class="timeline-marker">2</div>
                     <div class="timeline-content">
-                        <h4>🔌 TCP 握手：建立连接</h4>
+                        <h4><span class="timeline-marker">2</span> 🔌 TCP 握手：建立连接</h4>
                         <p>
                             找到IP后，浏览器开始和服务器"三次握手"：
                         </p>
@@ -386,9 +487,8 @@
                 </div>
 
                 <div class="timeline-item">
-                    <div class="timeline-marker">3</div>
                     <div class="timeline-content">
-                        <h4>🔐 TLS 握手：加密通信</h4>
+                        <h4><span class="timeline-marker">3</span> 🔐 TLS 握手：加密通信</h4>
                         <p>
                             如果是 HTTPS，现在要协商加密方式、交换密钥。
                             这就是那个小锁头图标的来源！
@@ -397,9 +497,8 @@
                 </div>
 
                 <div class="timeline-item">
-                    <div class="timeline-marker">4</div>
                     <div class="timeline-content">
-                        <h4>📤 HTTP 请求：发出需求</h4>
+                        <h4><span class="timeline-marker">4</span> 📤 HTTP 请求：发出需求</h4>
                         <p>
                             浏览器终于说正事了：
                         </p>
@@ -413,30 +512,177 @@ Accept: text/html
                 </div>
 
                 <div class="timeline-item">
-                    <div class="timeline-marker">5</div>
                     <div class="timeline-content">
-                        <h4>🏭 服务器处理：内部的旅程</h4>
+                        <h4><span class="timeline-marker">5</span> 🏭 服务器处理：内部的旅程</h4>
                         <p>
-                            请求到达服务器后，事情才真正开始！
+                            请求到达服务器后，事情才真正开始！它会穿越一整条基础设施链路：
                         </p>
-                        <div class="tech-stack">
-                            <div class="tech-item">
-                                <div class="tech-icon">⚖️</div>
-                                <div>负载均衡</div>
-                            </div>
-                            <div class="tech-item">
-                                <div class="tech-icon">🚀</div>
-                                <div>CDN/缓存</div>
-                            </div>
-                            <div class="tech-item">
-                                <div class="tech-icon">🔙</div>
-                                <div>后端服务</div>
-                            </div>
-                            <div class="tech-item">
-                                <div class="tech-icon">🗄️</div>
-                                <div>数据库</div>
-                            </div>
+
+                        <div class="diagram-box diagram-svg-wrap">
+                            <svg viewBox="0 0 960 320" class="topology-svg" role="img"
+                                 aria-label="请求进入服务器后的拓扑路径：用户 → CDN → 负载均衡 → Web 集群 → 缓存 / 数据库">
+                                <defs>
+                                    <linearGradient id="node-blue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#60A5FA"/>
+                                        <stop offset="100%" stop-color="#2563EB"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-cyan" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#22D3EE"/>
+                                        <stop offset="100%" stop-color="#0891B2"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-violet" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#A78BFA"/>
+                                        <stop offset="100%" stop-color="#7C3AED"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-amber" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#FBBF24"/>
+                                        <stop offset="100%" stop-color="#D97706"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-pink" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#F472B6"/>
+                                        <stop offset="100%" stop-color="#DB2777"/>
+                                    </linearGradient>
+                                    <marker id="topo-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                                            markerWidth="7" markerHeight="7" orient="auto">
+                                        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+                                    </marker>
+                                </defs>
+
+                                <!-- 主链路：user -> CDN -> LB -> Web -> App -->
+                                <g style="color: var(--color-level-3, #06B6D4);">
+                                    <line x1="90"  y1="160" x2="146" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                    <line x1="266" y1="160" x2="322" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                    <line x1="442" y1="160" x2="498" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                    <line x1="618" y1="160" x2="674" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                </g>
+                                <!-- 应用服务 -> 缓存 / DB 的分叉 -->
+                                <g style="color: var(--color-level-5, #F59E0B);">
+                                    <path d="M 795 145 Q 830 100, 866 90"
+                                          fill="none" stroke="currentColor" stroke-width="2.5"
+                                          stroke-dasharray="6 5" marker-end="url(#topo-arrow)"/>
+                                </g>
+                                <g style="color: var(--color-level-6, #EC4899);">
+                                    <path d="M 795 180 Q 830 225, 866 240"
+                                          fill="none" stroke="currentColor" stroke-width="2.5"
+                                          marker-end="url(#topo-arrow)"/>
+                                </g>
+
+                                <!-- 节点：用户 -->
+                                <g class="topo-node" transform="translate(20 120)">
+                                    <rect width="70" height="80" rx="12" fill="url(#node-blue)"/>
+                                    <text x="35" y="36" text-anchor="middle" font-size="24" fill="#fff">👤</text>
+                                    <text x="35" y="60" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">用户</text>
+                                    <text x="35" y="75" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">浏览器</text>
+                                </g>
+
+                                <!-- CDN -->
+                                <g class="topo-node" transform="translate(146 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-cyan)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">🚀</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">CDN 缓存</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">就近命中静态资源</text>
+                                </g>
+
+                                <!-- 负载均衡 -->
+                                <g class="topo-node" transform="translate(322 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-violet)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">⚖️</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">负载均衡</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">派发到某台服务器</text>
+                                </g>
+
+                                <!-- Web 集群 -->
+                                <g class="topo-node" transform="translate(498 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-blue)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">🖥️</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">Web 集群</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">Nginx / 反向代理</text>
+                                </g>
+
+                                <!-- 应用服务 -->
+                                <g class="topo-node" transform="translate(674 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-violet)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">🧩</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">应用服务</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">跑业务逻辑</text>
+                                </g>
+
+                                <!-- 缓存 Redis -->
+                                <g class="topo-node" transform="translate(866 50)">
+                                    <rect width="80" height="80" rx="12" fill="url(#node-amber)"/>
+                                    <text x="40" y="34" text-anchor="middle" font-size="22" fill="#fff">⚡</text>
+                                    <text x="40" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">缓存</text>
+                                    <text x="40" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">Redis</text>
+                                </g>
+
+                                <!-- 数据库 -->
+                                <g class="topo-node" transform="translate(866 220)">
+                                    <rect width="80" height="80" rx="12" fill="url(#node-pink)"/>
+                                    <text x="40" y="34" text-anchor="middle" font-size="22" fill="#fff">🗄️</text>
+                                    <text x="40" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">数据库</text>
+                                    <text x="40" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">MySQL / PG</text>
+                                </g>
+
+                                <!-- 分叉说明标签 -->
+                                <text x="820" y="90" text-anchor="start" font-size="10"
+                                      fill="var(--text-muted, #6B7280)">先查缓存</text>
+                                <text x="820" y="235" text-anchor="start" font-size="10"
+                                      fill="var(--text-muted, #6B7280)">未命中回源</text>
+                            </svg>
+
+                            <!-- 移动端 fallback -->
+                            <ol class="topo-mobile" aria-hidden="true">
+                                <li data-color="blue">
+                                    <span class="topo-mobile-icon">👤</span>
+                                    <div><strong>用户</strong><span>浏览器发起请求</span></div>
+                                </li>
+                                <li data-color="cyan">
+                                    <span class="topo-mobile-icon">🚀</span>
+                                    <div><strong>CDN 缓存</strong><span>命中就直接返回静态资源</span></div>
+                                </li>
+                                <li data-color="violet">
+                                    <span class="topo-mobile-icon">⚖️</span>
+                                    <div><strong>负载均衡</strong><span>派发到当前最空闲的机器</span></div>
+                                </li>
+                                <li data-color="blue">
+                                    <span class="topo-mobile-icon">🖥️</span>
+                                    <div><strong>Web 集群</strong><span>Nginx / 反向代理</span></div>
+                                </li>
+                                <li data-color="violet">
+                                    <span class="topo-mobile-icon">🧩</span>
+                                    <div><strong>应用服务</strong><span>跑业务逻辑</span></div>
+                                </li>
+                                <li data-color="amber" class="topo-branch">
+                                    <span class="topo-mobile-icon">⚡</span>
+                                    <div><strong>缓存（先查）</strong><span>Redis · 毫秒级</span></div>
+                                </li>
+                                <li data-color="pink">
+                                    <span class="topo-mobile-icon">🗄️</span>
+                                    <div><strong>数据库（未命中回源）</strong><span>MySQL / PostgreSQL</span></div>
+                                </li>
+                            </ol>
+
+                            <p class="diagram-caption">图：一次请求穿越基础设施的典型拓扑 · 缓存命中即返回，未命中才落到数据库</p>
                         </div>
+
                         <p>
                             请求可能经过好几个服务，调用好几个数据库，
                             最后才把数据组装好。
@@ -445,9 +691,8 @@ Accept: text/html
                 </div>
 
                 <div class="timeline-item">
-                    <div class="timeline-marker">6</div>
                     <div class="timeline-content">
-                        <h4>📥 HTTP 响应：内容回来</h4>
+                        <h4><span class="timeline-marker">6</span> 📥 HTTP 响应：内容回来</h4>
                         <p>
                             服务器把HTML、CSS、JS发回来：
                         </p>
@@ -462,9 +707,8 @@ Content-Length: 1234<br>
                 </div>
 
                 <div class="timeline-item">
-                    <div class="timeline-marker">7</div>
                     <div class="timeline-content">
-                        <h4>🔄 继续请求：拿到资源</h4>
+                        <h4><span class="timeline-marker">7</span> 🔄 继续请求：拿到资源</h4>
                         <p>
                             HTML只是开始！浏览器发现还需要CSS、JS、图片...
                             于是又发起更多请求，并行加载。
@@ -473,9 +717,8 @@ Content-Length: 1234<br>
                 </div>
 
                 <div class="timeline-item">
-                    <div class="timeline-marker">8</div>
                     <div class="timeline-content">
-                        <h4>🎨 渲染显示：页面出现！</h4>
+                        <h4><span class="timeline-marker">8</span> 🎨 渲染显示：页面出现！</h4>
                         <p>
                             浏览器解析HTML、应用CSS、运行JS、绘制画面。
                             最后——你终于看到了页面！
