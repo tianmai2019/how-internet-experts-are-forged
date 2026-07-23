@@ -147,7 +147,7 @@
             z-index: 10;
         }
 
-        .question-node.published::after {
+        .question-node.read::after {
             content: '✓';
             position: absolute;
             top: -6px;
@@ -260,7 +260,7 @@
 
         <div class="intro-card">
             <h2>点击任意节点开始探索</h2>
-            <p>50个问题按认知层级分布，每个节点都是一个知识入口。绿色 ✓ 表示已发布深度文章。</p>
+            <p>50个问题按认知层级分布，每个节点都是一个知识入口。右上角绿色 ✓ 表示你已读过。</p>
 
             <div class="legend">
                 <div class="legend-item">
@@ -300,7 +300,7 @@
                 <div class="stat-label">总问题数</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="published-count">11</div>
+                <div class="stat-number" id="published-count">50</div>
                 <div class="stat-label">已发布</div>
             </div>
             <div class="stat-card">
@@ -320,8 +320,16 @@
     </div>
 
     <script>
-        // 已发布的问题列表
-        const PUBLISHED_LIST = [1, 7, 13, 26, 33, 40, 46, 47, 48, 49, 50];
+        // 全部 50 篇均已发布，直接指向真实文章
+        // 「已读」状态由 localStorage 中的 ihef-read-articles 决定
+
+        function getReadList() {
+            try {
+                return JSON.parse(localStorage.getItem('ihef-read-articles') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
 
         // 层级信息
         const LEVELS = [
@@ -336,6 +344,7 @@
 
         function renderGraph() {
             const container = document.getElementById('graph-container');
+            const readList = getReadList();
             let html = '';
 
             LEVELS.forEach(level => {
@@ -350,12 +359,10 @@
                 level.ids.forEach(qid => {
                     const q = QUESTIONS[qid];
                     if (!q) return;
-                    const published = PUBLISHED_LIST.includes(qid);
-                    const href = published
-                        ? `../articles/q${String(qid).padStart(2,'0')}.html`
-                        : `../articles/question.html?q=${qid}`;
+                    const isRead = readList.includes(qid);
+                    const href = `../articles/q${String(qid).padStart(2,'0')}.html`;
 
-                    html += `<a href="${href}" class="question-node level-${level.id} ${published ? 'published' : ''}">
+                    html += `<a href="${href}" class="question-node level-${level.id} ${isRead ? 'read' : ''}">
                         ${qid}
                         <div class="tooltip">${q.text}</div>
                     </a>`;
@@ -368,16 +375,11 @@
         }
 
         function updateStats() {
-            // 已发布数
-            document.getElementById('published-count').textContent = PUBLISHED_LIST.length;
+            // 已发布数（全部 50 篇）
+            document.getElementById('published-count').textContent = 50;
 
             // 已阅读数
-            try {
-                const read = JSON.parse(localStorage.getItem('ihef-read-articles') || '[]');
-                document.getElementById('read-count').textContent = read.length;
-            } catch(e) {
-                document.getElementById('read-count').textContent = 0;
-            }
+            document.getElementById('read-count').textContent = getReadList().length;
         }
 
         renderGraph();

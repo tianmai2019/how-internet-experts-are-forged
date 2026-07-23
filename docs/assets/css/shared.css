@@ -56,7 +56,7 @@
     --text-primary: #F1F5F9;
     --text-secondary: #CBD5E1;
     --text-muted: #94A3B8;
-    --text-inverse: #0F172A;
+    --text-inverse: #F1F5F9;
 
     --border-color: #334155;
     --border-hover: #475569;
@@ -111,8 +111,15 @@ body {
 
 header {
     text-align: center;
-    color: var(--text-inverse);
+    /* header 永远坐在渐变（紫/深蓝）背景上，无论主题都需要浅色文字 */
+    color: #FFFFFF;
     margin-bottom: 40px;
+}
+
+header h1,
+header .subtitle,
+header p {
+    color: #FFFFFF;
 }
 
 h1 {
@@ -324,6 +331,284 @@ footer {
 }
 
 /* ============================================
+   搜索按钮 + 模态框
+   ============================================ */
+.search-toggle {
+    position: fixed;
+    bottom: 30px;
+    right: 85px;
+    z-index: 1000;
+    background: var(--card-bg);
+    border: 2px solid var(--accent-primary);
+    color: var(--accent-primary);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--card-shadow-sm);
+    transition: all 0.2s;
+}
+
+.search-toggle:hover {
+    transform: translateY(-4px) scale(1.1);
+    box-shadow: var(--card-shadow);
+}
+
+.search-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 60px 20px 20px;
+}
+
+.search-modal.open {
+    display: flex;
+    animation: search-fade-in 0.15s ease-out;
+}
+
+@keyframes search-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.search-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+.search-modal-panel {
+    position: relative;
+    width: 100%;
+    max-width: 680px;
+    max-height: calc(100vh - 100px);
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.search-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.search-input-icon {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    padding: 6px 0;
+    font-family: inherit;
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.search-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.search-close:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.search-status {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-results {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.search-item {
+    border-radius: 10px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.search-item a {
+    display: block;
+    padding: 12px 14px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.search-item:hover,
+.search-item.active {
+    background: var(--bg-secondary);
+}
+
+.search-item.active {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: -2px;
+}
+
+.search-item-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.search-item-icon {
+    font-size: 1.1rem;
+}
+
+.search-item-qid {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--accent-primary);
+    color: white;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.search-item-name {
+    flex: 1;
+    min-width: 0;
+}
+
+.search-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--color-level-2);
+    color: white;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.search-item-snippet {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    /* 两行截断 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.search-item mark,
+.search-item-title mark {
+    background: rgba(245, 158, 11, 0.3);
+    color: inherit;
+    padding: 0 2px;
+    border-radius: 3px;
+    font-weight: 700;
+}
+
+[data-theme="dark"] .search-item mark,
+[data-theme="dark"] .search-item-title mark {
+    background: rgba(245, 158, 11, 0.35);
+    color: #FCD34D;
+}
+
+.search-hint {
+    padding: 10px 20px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.search-hint kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    margin: 0 3px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    box-shadow: 0 1px 0 var(--border-color);
+}
+
+@media (max-width: 700px) {
+    .search-toggle {
+        right: 65px;
+        bottom: 20px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    .search-modal {
+        padding: 20px 10px;
+    }
+    .search-modal-panel {
+        max-height: calc(100vh - 40px);
+    }
+}
+
+/* ============================================
+   Giscus 评论区外层容器
+   ============================================ */
+.comments-section {
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 2px solid var(--border-color);
+}
+
+.comments-section h2 {
+    color: var(--accent-primary);
+    font-size: 1.5rem;
+}
+
+.comments-section p {
+    margin-bottom: 20px;
+}
+
+/* ============================================
    响应式
    ============================================ */
 @media (max-width: 600px) {
@@ -347,4 +632,257 @@ footer {
         height: 40px;
         font-size: 1.2rem;
     }
+}
+
+/* ============================================
+   暗色模式全局兜底覆盖
+   ---
+   老文章（10 篇 P0 + 首页文章）里，把
+   background: white / #F9FAFB / #EFF6FF 等浅色写死在
+   内联 <style> 里。在暗色模式下会出现"浅色底 + 亮色字"
+   撞色导致完全看不清。
+
+   下面用 [data-theme="dark"] 提升特异性来覆盖它们，
+   保持原有类名不变，不改动老文章。
+   ============================================ */
+
+/* 白色/浅灰卡片 → 暗色卡片 */
+[data-theme="dark"] .content,
+[data-theme="dark"] .article-content {
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    box-shadow: var(--card-shadow);
+}
+
+[data-theme="dark"] .article-content h2 {
+    color: var(--accent-primary);
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .article-content h3 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .article-content p,
+[data-theme="dark"] .article-content li,
+[data-theme="dark"] .content p,
+[data-theme="dark"] .content li {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .article-content strong,
+[data-theme="dark"] .content strong {
+    color: var(--text-primary);
+}
+
+/* 浅色装饰块 → 暗色变体 */
+[data-theme="dark"] .diagram-box {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .highlight-box {
+    background: var(--bg-secondary);
+    border-left-color: var(--accent-primary);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .highlight-box strong {
+    color: var(--accent-primary);
+}
+
+/* Q7 的三大支柱、Q13 的层次卡片等浅灰色小卡片 */
+[data-theme="dark"] .pillar,
+[data-theme="dark"] .layer-item,
+[data-theme="dark"] .tradeoff-card,
+[data-theme="dark"] .case-study,
+[data-theme="dark"] .balance-item,
+[data-theme="dark"] .layer-card,
+[data-theme="dark"] .live-demo-box,
+[data-theme="dark"] .compare-card,
+[data-theme="dark"] .compare-left,
+[data-theme="dark"] .compare-right,
+[data-theme="dark"] .journey-box,
+[data-theme="dark"] .journey-tree,
+[data-theme="dark"] .illusion-box,
+[data-theme="dark"] .quote-box,
+[data-theme="dark"] .side-card,
+[data-theme="dark"] .side-left,
+[data-theme="dark"] .side-right,
+[data-theme="dark"] .stage-card,
+[data-theme="dark"] .stage-1,
+[data-theme="dark"] .stage-2,
+[data-theme="dark"] .step-card,
+[data-theme="dark"] .step-1,
+[data-theme="dark"] .step-2,
+[data-theme="dark"] .step-3,
+[data-theme="dark"] .step-4,
+[data-theme="dark"] .step-6,
+[data-theme="dark"] .flow-step,
+[data-theme="dark"] .tech-item,
+[data-theme="dark"] .tree-item,
+[data-theme="dark"] .timeline-item,
+[data-theme="dark"] .timeline-content,
+[data-theme="dark"] .tech-stack,
+[data-theme="dark"] .three-pillars,
+[data-theme="dark"] .layers-behind,
+[data-theme="dark"] .request-flow,
+[data-theme="dark"] .growth-stages,
+[data-theme="dark"] .final-box,
+[data-theme="dark"] .conway-diagram,
+[data-theme="dark"] .button-demo {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+/* 这些卡片里的标题 / 强调文字要能看清 */
+[data-theme="dark"] .pillar h3,
+[data-theme="dark"] .pillar h4,
+[data-theme="dark"] .layer-item h4,
+[data-theme="dark"] .tradeoff-card h4,
+[data-theme="dark"] .case-study h4,
+[data-theme="dark"] .compare-card h4,
+[data-theme="dark"] .stage-card h4,
+[data-theme="dark"] .side-card h4,
+[data-theme="dark"] .journey-box h4,
+[data-theme="dark"] .quote-box h4,
+[data-theme="dark"] .illusion-box h4 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .quote-author {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .layer-title {
+    color: var(--accent-primary);
+}
+
+[data-theme="dark"] .live-demo {
+    background: var(--bg-secondary);
+    border-color: var(--accent-primary);
+}
+
+/* 白底的 "错误示例 / 常见误区" 红色框 */
+[data-theme="dark"] .myth-box {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .myth-box h4 {
+    color: #FCA5A5;
+}
+
+/* 首页主文章的 question 卡片 hover 背景 */
+[data-theme="dark"] .question:hover {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .question {
+    color: var(--accent-secondary);
+    border-color: var(--border-color);
+}
+
+/* 首页 index.html 的卡片和层级块 */
+[data-theme="dark"] .card {
+    background: var(--card-bg);
+    box-shadow: var(--card-shadow);
+}
+
+[data-theme="dark"] .card h2 {
+    color: var(--accent-primary);
+}
+
+[data-theme="dark"] .layer {
+    background: var(--bg-secondary);
+    border-left-color: var(--accent-primary);
+}
+
+[data-theme="dark"] .layer:hover {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .layer-content h3 {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .layer-content p {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .btn-outline {
+    background: var(--card-bg);
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+/* 问题地图页 00-question-map.html */
+[data-theme="dark"] .toc,
+[data-theme="dark"] .section {
+    background: var(--card-bg);
+    box-shadow: var(--card-shadow);
+}
+
+[data-theme="dark"] .toc a {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .toc a:hover {
+    background: var(--bg-secondary);
+    color: var(--accent-primary);
+}
+
+[data-theme="dark"] .question-item {
+    background: var(--bg-secondary);
+    border-left-color: var(--accent-secondary);
+}
+
+[data-theme="dark"] .question-item:hover {
+    background: var(--bg-tertiary);
+    border-left-color: var(--accent-primary);
+}
+
+[data-theme="dark"] .question-item a {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .question-item a:hover {
+    color: var(--accent-primary);
+}
+
+[data-theme="dark"] .question-item .question-text {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .question-item .question-status {
+    color: var(--text-muted);
+}
+
+/* 相关问题药丸链接 */
+[data-theme="dark"] .related-questions a {
+    background: var(--bg-secondary);
+    color: var(--accent-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .related-questions a:hover {
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+}
+
+/* section-divider (🎯 第X层认知 分隔标题) 在暗色下的字色 */
+[data-theme="dark"] .section-divider {
+    color: var(--text-muted);
+}
+
+/* 通用兜底：任何硬编码 background:white 的容器里，
+   直接子级 p / li / span 保底一个可读色（避免暗色下
+   还有漏网的浅底 + 亮字组合）。特异性适中，不会误伤
+   本来就是深色底的 emperor-box / try-box / code-block。 */
+[data-theme="dark"] [style*="background: white"] p,
+[data-theme="dark"] [style*="background:#fff"] p,
+[data-theme="dark"] [style*="background: #fff"] p {
+    color: #1F2937;
 }
