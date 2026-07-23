@@ -107,6 +107,92 @@
             margin-bottom: 5px;
         }
 
+        /* ============================================
+           SVG 按钮闭环全链路图（Q46）
+           ============================================ */
+        .diagram-svg-wrap {
+            background: var(--bg-secondary, #F9FAFB);
+            border: 2px dashed var(--border-color, #D1D5DB);
+            border-radius: 12px;
+            padding: 24px 20px 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .loop-svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+        }
+        .loop-node rect {
+            transition: transform 0.2s ease, filter 0.2s ease;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .loop-node:hover rect {
+            transform: translateY(-2px);
+            filter: drop-shadow(0 6px 12px rgba(139, 92, 246, 0.35));
+        }
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            font-style: italic;
+        }
+        [data-theme="dark"] .diagram-svg-wrap {
+            background: rgba(102, 126, 234, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* 移动端：SVG 圆环变成"起点 → 6 阶段 → 终点"的垂直流 */
+        .loop-mobile { display: none; }
+        @media (max-width: 640px) {
+            .loop-svg { display: none; }
+            .loop-mobile {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+            }
+            .loop-mobile li {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 14px;
+                margin-bottom: 8px;
+                border-radius: 12px;
+                color: #fff;
+                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+                position: relative;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .loop-mobile li.start, .loop-mobile li.end {
+                background: linear-gradient(135deg, #F472B6 0%, #DB2777 100%);
+            }
+            .loop-mobile li:not(:last-child)::after {
+                content: "↓";
+                position: absolute;
+                left: 50%;
+                bottom: -14px;
+                transform: translateX(-50%);
+                color: var(--text-muted, #9CA3AF);
+                font-size: 0.95rem;
+                z-index: 1;
+            }
+            .loop-mobile-icon { font-size: 1.5rem; flex-shrink: 0; }
+            .loop-mobile li strong {
+                display: block;
+                font-size: 0.94rem;
+                margin-bottom: 2px;
+            }
+            .loop-mobile li span:not(.loop-mobile-icon) {
+                display: block;
+                font-size: 0.76rem;
+                color: rgba(255, 255, 255, 0.9);
+            }
+        }
+
         .highlight-box {
             background: #F9F6FF;
             border-left: 4px solid #667eea;
@@ -214,6 +300,163 @@
             <p>
                 让我们一层层剥开这个"简单"的按钮：
             </p>
+
+            <div class="diagram-svg-wrap">
+                <svg viewBox="0 0 720 380" class="loop-svg" role="img"
+                     aria-label="按钮闭环链路图：点击按钮 → 前端 → API 网关 → 业务服务 → 缓存 / 数据库 → 消息队列 → 通知 → 回到按钮显示成功">
+                    <defs>
+                        <linearGradient id="btn-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#F472B6"/>
+                            <stop offset="100%" stop-color="#DB2777"/>
+                        </linearGradient>
+                        <linearGradient id="stage-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#8B5CF6"/>
+                            <stop offset="100%" stop-color="#6D28D9"/>
+                        </linearGradient>
+                        <linearGradient id="data-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#F59E0B"/>
+                            <stop offset="100%" stop-color="#D97706"/>
+                        </linearGradient>
+                        <marker id="loop-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                                markerWidth="8" markerHeight="8" orient="auto">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+                        </marker>
+                    </defs>
+
+                    <!-- 中心：用户视角气泡 -->
+                    <g transform="translate(360 190)">
+                        <ellipse rx="130" ry="42" fill="rgba(139, 92, 246, 0.08)"
+                                 stroke="var(--border-color, #E5E7EB)" stroke-width="1.5"
+                                 stroke-dasharray="4 4"/>
+                        <text y="-4" text-anchor="middle" font-size="24">🛒</text>
+                        <text y="20" text-anchor="middle" font-size="12"
+                              fill="var(--text-muted, #6B7280)" font-style="italic">
+                            用户视角 · 只看到一个按钮
+                        </text>
+                    </g>
+
+                    <!-- 布局：上 3（1→2→3），右侧下弯到 4，下 3（4→5→6），左侧上弯回 1 -->
+                    <!-- 方框统一 130×60，间距 30。上排 y=50，下排 y=270 -->
+
+                    <!-- 1. 前端捕获（左上） -->
+                    <g class="loop-node" transform="translate(60 50)">
+                        <rect width="140" height="60" rx="12" fill="url(#stage-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">📱</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">前端捕获</text>
+                    </g>
+
+                    <!-- 2. API 网关（中上） -->
+                    <g class="loop-node" transform="translate(290 50)">
+                        <rect width="140" height="60" rx="12" fill="url(#stage-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">🌐</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">API 网关 + 鉴权</text>
+                    </g>
+
+                    <!-- 3. 业务服务（右上） -->
+                    <g class="loop-node" transform="translate(520 50)">
+                        <rect width="140" height="60" rx="12" fill="url(#stage-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">🧩</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">下单 · 风控</text>
+                    </g>
+
+                    <!-- 4. 缓存 / DB（右下，用橙色区分） -->
+                    <g class="loop-node" transform="translate(520 270)">
+                        <rect width="140" height="60" rx="12" fill="url(#data-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">⚡🗄️</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">缓存 / 数据库</text>
+                    </g>
+
+                    <!-- 5. 消息队列（中下） -->
+                    <g class="loop-node" transform="translate(290 270)">
+                        <rect width="140" height="60" rx="12" fill="url(#stage-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">📮</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">消息队列（异步）</text>
+                    </g>
+
+                    <!-- 6. 通知 · 仓储（左下） -->
+                    <g class="loop-node" transform="translate(60 270)">
+                        <rect width="140" height="60" rx="12" fill="url(#stage-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">📧📦</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">通知 · 仓储</text>
+                    </g>
+
+                    <!-- 顺时针闭环箭头：4 段直线 + 2 段 U 形转弯 -->
+                    <g fill="none" stroke-width="2.5"
+                       stroke="var(--accent-primary, #667eea)"
+                       style="color: var(--accent-primary, #667eea);">
+                        <!-- 1→2：上排直线 -->
+                        <line x1="200" y1="80" x2="278" y2="80" marker-end="url(#loop-arrow)"/>
+                        <!-- 2→3：上排直线 -->
+                        <line x1="430" y1="80" x2="508" y2="80" marker-end="url(#loop-arrow)"/>
+                        <!-- 3→4：右侧下弯 -->
+                        <path d="M 660 110 Q 690 190, 660 258" marker-end="url(#loop-arrow)"/>
+                        <!-- 4→5：下排直线（反向） -->
+                        <line x1="520" y1="300" x2="442" y2="300" marker-end="url(#loop-arrow)"/>
+                        <!-- 5→6：下排直线（反向） -->
+                        <line x1="290" y1="300" x2="212" y2="300" marker-end="url(#loop-arrow)"/>
+                        <!-- 6→1：左侧上弯 -->
+                        <path d="M 60 270 Q 30 190, 60 122" marker-end="url(#loop-arrow)"/>
+                    </g>
+
+                    <!-- 起点标签：贴着"前端捕获"上方 -->
+                    <g transform="translate(75 20)">
+                        <rect width="110" height="20" rx="10" fill="url(#btn-grad)"/>
+                        <text x="55" y="14" text-anchor="middle" font-size="11"
+                              font-weight="700" fill="#fff">👆 点击起点</text>
+                    </g>
+
+                    <!-- 终点标签：贴着"通知 · 仓储"下方 -->
+                    <g transform="translate(55 340)">
+                        <rect width="150" height="20" rx="10" fill="url(#btn-grad)"/>
+                        <text x="75" y="14" text-anchor="middle" font-size="11"
+                              font-weight="700" fill="#fff">🎉 结果回到你手上</text>
+                    </g>
+                </svg>
+
+                <!-- 移动端 fallback -->
+                <ol class="loop-mobile" aria-hidden="true">
+                    <li class="start">
+                        <span class="loop-mobile-icon">👆</span>
+                        <div><strong>你点击了按钮</strong><span>🛒 立即购买</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">📱</span>
+                        <div><strong>前端捕获事件</strong><span>JavaScript 触发一段代码</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">🌐</span>
+                        <div><strong>API 网关 + 鉴权</strong><span>确认你是登录用户</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">🧩</span>
+                        <div><strong>下单 · 风控</strong><span>业务服务处理主流程</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">⚡🗄️</span>
+                        <div><strong>缓存 / 数据库</strong><span>先查缓存，未命中回源 DB</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">📮</span>
+                        <div><strong>消息队列（异步）</strong><span>把非核心任务丢出去，别拖主流程</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">📧📦</span>
+                        <div><strong>通知 · 仓储</strong><span>邮件 / 短信 / 分配货物</span></div>
+                    </li>
+                    <li class="end">
+                        <span class="loop-mobile-icon">🎉</span>
+                        <div><strong>结果回到你手上</strong><span>你看到的一次"点击成功"</span></div>
+                    </li>
+                </ol>
+
+                <p class="diagram-caption">图：一个按钮触发的完整闭环 · 中心是"用户视角"，围绕它转的都是你看不见的系统</p>
+            </div>
 
             <div class="layers-behind">
                 <div class="layer-item">
