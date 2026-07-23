@@ -261,11 +261,11 @@
     // 6. Giscus 评论（文章页自动注入）
     // ==========================================
     const Comments = {
-        // ⚠️ 配置：到 https://giscus.app 填仓库信息后，把这里的 ID 换掉
-        REPO: '张鑫祥/HowInternetExpertsAreForged',   // 格式：owner/repo
-        REPO_ID: 'PLACEHOLDER_REPO_ID',
-        CATEGORY: 'Comments',
-        CATEGORY_ID: 'PLACEHOLDER_CATEGORY_ID',
+        // Giscus 配置（从 https://giscus.app 生成，2026-07-23 接入）
+        REPO: 'tianmai2019/how-internet-experts-are-forged',   // 格式：owner/repo
+        REPO_ID: 'R_kgDOTe0CdQ',
+        CATEGORY: 'Announcements',
+        CATEGORY_ID: 'DIC_kwDOTe0Cdc4DBziK',
 
         init: function() {
             // 仅在文章页注入：q01-q50.html 或主文章 01-how-internet-experts-are-forged.html
