@@ -108,3 +108,44 @@ git push gitee main  # 如果也用 Gitee
 
 GitHub Pages 会自动通过 Actions 部署，Gitee Pages 可能需要手动去点一下"更新"。
 
+---
+
+## 🔍 新增/修改文章后：重建搜索索引
+
+**如果动了 `docs/articles/qNN.html` 里的正文或标题**，提交前先跑一次索引构建脚本，让站内搜索能索引到最新内容：
+
+```bash
+node scripts/build-search-index.js
+```
+
+脚本会扫描 `docs/articles/` 下所有 `qNN.html` + 主文章，抽取标题和正文写入 `docs/assets/data/search-index.json`（约 350 KB，跟代码一起提交）。
+
+**什么时候需要跑？**
+
+- ✅ 新增了一篇 `qNN.html`
+- ✅ 大幅改写了某篇文章的正文
+- ❌ 只改了 CSS / JS / 排版：**不用**
+
+**忘了跑会怎样？** 网站正常运行，只是搜索里搜不到新增/新改的内容。
+
+建议在提交时把索引一起 commit：
+
+```bash
+node scripts/build-search-index.js
+git add docs/articles/ docs/assets/data/search-index.json
+git commit -m "content: 新增 QNN + 重建搜索索引"
+git push origin main
+```
+
+---
+
+## 💬 启用 Giscus 评论
+
+评论功能默认没开（`enhance.js` 里的 ID 是 placeholder）。启用：
+
+1. GitHub 仓库 → **Settings → General → Features** → 勾选 **Discussions**
+2. 仓库 → **Discussions → Categories → New category**：Name `Comments`，Type **Announcement**
+3. 到 [giscus.app](https://giscus.app) 输入仓库名，页面会给你 `data-repo-id` 和 `data-category-id`
+4. 编辑 `docs/assets/js/enhance.js`，找到 `const Comments = {`，把 `REPO_ID` / `CATEGORY_ID` 里的 `PLACEHOLDER_*` 换成拿到的 ID
+5. 提交推送即生效
+
