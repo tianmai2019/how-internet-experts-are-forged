@@ -270,9 +270,172 @@
 
 ---
 
-## 黑暗模式（计划中）
+## 黑暗模式 ✅ 已上线
 
-为夜间阅读设计的配色方案，后续实现。
+暗色配色由 `docs/assets/css/shared.css` 里 `[data-theme="dark"]` 变量组接管，🌙 按钮切换（`docs/assets/js/enhance.js` Theme 模块），保存到 localStorage。SVG 图解通过 CSS 变量自动跟随，无需单独适配。
+
+---
+
+## SVG 图解设计规范
+
+Phase B 期间为 5 篇 P0 文章升级了核心图解。以下是这套图解语言的固化规范，未来新图请照这套走。
+
+### 何时用 SVG，何时用 HTML div
+
+| 场景 | 推荐方式 | 理由 |
+|------|----------|------|
+| 3 个以内的方框 + 箭头 | HTML div + CSS | 语义清晰、便于 SEO、维护成本低 |
+| 4-8 个组件的**流程 / 拓扑 / 循环** | inline SVG | HTML 拼不出斜投影、弧形箭头、雷达对比这些形状 |
+| 大表格 / 时间线 | HTML | grid / flex 就够了 |
+| **对比性图形**（多形状叠加） | inline SVG | 半透明填充、叠加对比是 HTML 做不到的 |
+
+**不要引入外部图形库**（如 D3、Mermaid）。项目定位是零依赖静态站点，一切都是手写 inline SVG。
+
+---
+
+### 5 种图型模板
+
+已有 5 种图型可复用，选型指南：
+
+| 图型 | 适用主题 | 参考文件 |
+|------|----------|----------|
+| **水平流程图** | 「A → B → C → D → E」这种线性阶段推进 | [q01.html](../docs/articles/q01.html) 中段 |
+| **拓扑分叉图** | 请求穿越多层基础设施，有分支（缓存/DB） | [q13.html](../docs/articles/q13.html) 步骤 5 |
+| **堆叠透明片** | 「A + B + C = 组合结果」的叠加关系 | [q07.html](../docs/articles/q07.html) |
+| **多轴雷达对比** | 多方案在多维度上的权衡 | [q26.html](../docs/articles/q26.html) 权衡层 |
+| **闭环跑道** | 起点回到起点的循环链路（上 3 下 3 布局） | [q46.html](../docs/articles/q46.html) |
+
+**别再发明新样式** —— 想画图时先问自己"这属于以上哪一种"。5 种覆盖了 90% 的教学图需求。
+
+---
+
+### 通用样板结构
+
+每张 SVG 图都遵循同一个外壳：
+
+```html
+<div class="diagram-box diagram-svg-wrap">
+    <svg viewBox="0 0 W H" class="XXX-svg" role="img"
+         aria-label="一句话概括图内容（用给屏幕阅读器）">
+        <defs>
+            <!-- gradient / marker / filter -->
+        </defs>
+        <!-- 图形主体 -->
+    </svg>
+
+    <!-- 移动端 fallback：< 640px 时切换到垂直卡片列表 -->
+    <ol class="XXX-mobile" aria-hidden="true">
+        <li>...</li>
+    </ol>
+
+    <p class="diagram-caption">图 X：一句话说明这张图讲了什么</p>
+</div>
+```
+
+**必须三件套**：
+1. `viewBox` + `width: 100%` 保证响应式
+2. `role="img"` + `aria-label` 保证可访问
+3. **移动端 fallback**（`< 640px` 时 SVG display: none，切换到垂直卡片）—— **不能只靠 SVG 缩放**，宽度小于 640 时 SVG 内的字会小到看不清
+
+---
+
+### 配色约定
+
+**主色**跟着 6 层认知系统走 —— 参考 `docs/assets/css/shared.css` 的 `--color-level-N`：
+
+| 用途 | 变量 | 参考色 |
+|------|------|--------|
+| 用户 / 主流程 | `--color-level-1` | 蓝 `#3B82F6` |
+| 前端 / 客户端 | `--color-level-2` | 绿 `#10B981` |
+| 网络 / 传输 | `--color-level-3` | 青 `#06B6D4` |
+| 服务 / 权衡 | `--color-level-4` | 紫 `#8B5CF6` |
+| 数据 / 存储 | `--color-level-5` | 橙 `#F59E0B` |
+| AI / 交互 | `--color-level-6` | 粉 `#EC4899` |
+
+**渐变而非纯色**：每个节点都用 `linearGradient` 从浅到深，视觉更精致：
+```xml
+<linearGradient id="node-blue" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#60A5FA"/>
+    <stop offset="100%" stop-color="#2563EB"/>
+</linearGradient>
+```
+
+**多组件同框时用不同色区分类型**（如 Q46 里紫色是"业务服务"、橙色是"数据存储"），别让读者看到 6 个一模一样的方框。
+
+---
+
+### hover 反馈的正确写法（避坑）
+
+**❌ 错的**（会引起抖动）：
+```css
+.node {
+    transition: transform 0.2s;
+    transform-box: fill-box;
+}
+.node:hover {
+    transform: scale(1.05);
+}
+```
+理由：`<g>` 上的 `fill-box` 会包住所有子元素，scale 让子元素占的视觉空间变大 → fill-box 边界跟着扩 → 中心点漂移 → 触发新一轮补偿 → 抖动循环。
+
+**✅ 对的**：
+```css
+.node rect {
+    transition: transform 0.2s ease, filter 0.2s ease;
+    transform-origin: center;
+    transform-box: fill-box;
+}
+.node:hover rect {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25));
+}
+```
+两条规则：
+1. hover 只作用于 `<rect>`（尺寸固定），不作用于 `<g>`（会包住 text 抖动）
+2. 用 `translateY` + `drop-shadow`，不用 `scale`
+
+---
+
+### 暗色模式适配
+
+只需要外壳做适配即可，SVG 主体因为用了渐变，本身在暗色模式下也很好看：
+
+```css
+[data-theme="dark"] .diagram-svg-wrap {
+    background: rgba(59, 130, 246, 0.06);
+    border-color: rgba(148, 163, 184, 0.3);
+}
+```
+
+**要小心的**：SVG 里凡是要"读"的文字（轴标签、图例、caption），用 `fill="var(--text-primary, #1F2937)"` 或 `fill="var(--text-muted, #6B7280)"`，别写死颜色。方框上的白色文字直接 `fill="#fff"` 就行（渐变背景本身够深）。
+
+---
+
+### 移动端 fallback 的三种范式
+
+Phase B 5 张图都验证过的方案，直接抄：
+
+**范式 1：等价垂直流**（水平流程图 / 拓扑图 / 闭环 都用这个）
+- SVG 内 N 个节点 → 移动端变成 N 张垂直卡片
+- 卡片间用 `↓` 或 `+` 或 `=` 连接
+- 卡片颜色跟 SVG 内节点颜色一致
+
+**范式 2：横向进度条**（雷达图用这个）
+- SVG 多轴 → 移动端每个方案变成一张卡片
+- 卡片内每根轴变成一根横向进度条
+- 颜色跟雷达内多边形一致
+
+**范式 3：单张示意图**（堆叠透明片用这个）
+- SVG 内 N 层叠加 → 移动端垂直 N 张卡片
+- 最后加一张"= 组合结果"卡片强调关系
+
+---
+
+### 触发 Phase C 的条件
+
+**文章总数 > 100 篇** 时启动 Phase C：把 SVG 图解抽成通用 JS 组件 / CSS 类，批量替换。
+
+目前（50 篇 P0 + P1）继续保持"手工逐篇升级"—— 每张图仍然值得单独设计，工具化反而会让所有图变一个样。
 
 ---
 
@@ -285,4 +448,4 @@
 
 ---
 
-*最后更新：2024年*
+*最后更新：2026-07-23（Phase B 完成，追加 SVG 图解设计规范；黑暗模式转为已上线）*
