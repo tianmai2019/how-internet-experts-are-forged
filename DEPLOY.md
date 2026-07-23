@@ -1,118 +1,87 @@
 
 # 发布指南
 
-本项目可以同时发布到 **GitHub Pages** 和 **Gitee Pages**。
+本项目的静态站点部署到 **Cloudflare Pages**（国内可直达，免费无限流量），代码同时备份到 **GitHub** 和 **Gitee**。
 
 ---
 
-## 📦 第一步：首次提交
+## 🚀 部署方案概览
 
-```bash
-# 在项目目录下执行
-git add .
-git commit -m "Initial commit: 互联网大帝是如何炼成的"
+| 目标 | 用途 | 状态 |
+|------|------|------|
+| **Cloudflare Pages** | 生产站点，自动从 GitHub 部署 | 待启用 |
+| **GitHub** | 主代码仓库 + Cloudflare 触发源 | ✅ `tianmai2019/how-internet-experts-are-forged` |
+| **Gitee** | 国内代码备份 | ✅ `xiaolinye/how-internet-experts-are-forged` |
+
+> ⚠️ **Gitee Pages 已下线**（2024 年起）：仓库仍作为国内代码备份用，但网页托管改用 Cloudflare Pages。
+
+---
+
+## 📦 首次部署：Cloudflare Pages
+
+### 1. 注册 Cloudflare 账号
+
+- 访问 https://dash.cloudflare.com/sign-up 用邮箱注册
+- 不需要备案、不需要信用卡
+- 登录后左侧菜单找 **Workers & Pages**
+
+### 2. 创建 Pages 项目
+
+- 点 **Create application** → **Pages** → **Connect to Git**
+- 授权 Cloudflare 访问你的 GitHub（首次会跳到 GitHub 授权页）
+- 选中仓库 `tianmai2019/how-internet-experts-are-forged`
+- 点 **Begin setup**
+
+### 3. 构建配置
+
+填写以下字段（**只有 output directory 是关键项**）：
+
+| 字段 | 填写 |
+|------|------|
+| Production branch | `main` |
+| Framework preset | **None**（保留空） |
+| Build command | **留空**（我们没有构建步骤） |
+| Build output directory | **`docs`** ← 关键 |
+| Root directory (advanced) | 留空 |
+| Environment variables | 不需要 |
+
+点 **Save and Deploy**。第一次部署约 1-2 分钟。
+
+### 4. 拿到站点 URL
+
+部署完成后会拿到默认域名，类似：
+
+```
+https://how-internet-experts-are-forged.pages.dev
 ```
 
----
-
-## 🚀 方式一：发布到 GitHub Pages
-
-### 1. 创建 GitHub 仓库
-
-- 访问 https://github.com/new
-- 仓库名：`HowInternetExpertsAreForged`
-- 选择 **Public** 或 **Private**（Public 推荐）
-- **不要**初始化 README、.gitignore 或 LICENSE（我们已经有了）
-- 点击 "Create repository"
-
-### 2. 推送到 GitHub
-
-按照 GitHub 页面上的提示操作：
-
-```bash
-git remote add origin https://github.com/你的用户名/HowInternetExpertsAreForged.git
-git branch -M main
-git push -u origin main
-```
-
-### 3. 启用 GitHub Pages
-
-- 进入仓库的 **Settings**
-- 左侧菜单找到 **Pages**
-- 在 **Build and deployment** 下：
-  - Source: 选择 `Deploy from a branch` 或 `GitHub Actions`（推荐用 Actions）
-  - 如果用 Actions，我们已经配置好了 `.github/workflows/deploy.yml`
-- 稍等几分钟，你的网站就会上线：
-
-`https://你的用户名.github.io/HowInternetExpertsAreForged/`
+这个域名**国内可直连**（无需备案），HTTPS 已自动配置。
 
 ---
 
-## 🚀 方式二：发布到 Gitee Pages（国内速度快）
+## 🔄 日常更新流程
 
-### 1. 创建 Gitee 仓库
-
-- 访问 https://gitee.com/projects/new
-- 仓库名：`HowInternetExpertsAreForged`
-- 选择 **公开** 或 **私有**（公开推荐）
-- **不要**初始化任何东西
-- 点击 "创建"
-
-### 2. 推送到 Gitee
-
-```bash
-# 添加 Gitee 远程仓库
-git remote add gitee https://gitee.com/你的用户名/HowInternetExpertsAreForged.git
-
-# 推送到 Gitee
-git push -u gitee main
-```
-
-### 3. 启用 Gitee Pages
-
-- 进入仓库的 **服务** → **Gitee Pages**
-- 部署目录：填写 `docs`（不是 public）
-- 点击 "启动"
-- 稍等几分钟，你的网站就会上线：
-
-`https://你的用户名.gitee.io/HowInternetExpertsAreForged/`
-
----
-
-## 🔄 同时使用 GitHub 和 Gitee
-
-你可以把代码同时推送到两个平台：
-
-```bash
-# 推送到 GitHub
-git push origin main
-
-# 推送到 Gitee
-git push gitee main
-```
-
-这样你就有两个备份，而且国内用户访问 Gitee Pages 速度更快。
-
----
-
-## 📝 更新内容后
-
-修改内容后，只需要：
+因为 Cloudflare 已经连了 GitHub，你**只要 push 到 GitHub 就自动部署**：
 
 ```bash
 git add .
-git commit -m "Update: 更新内容"
-git push origin main
-git push gitee main  # 如果也用 Gitee
+git commit -m "..."
+git push          # 推到 Gitee (origin)
+git push github   # 推到 GitHub，触发 Cloudflare 部署
 ```
 
-GitHub Pages 会自动通过 Actions 部署，Gitee Pages 可能需要手动去点一下"更新"。
+**Cloudflare Pages 观察面板**：
+- 到 Workers & Pages → 你的项目 → **Deployments**
+- 每次 push 会自动创建 deployment，可以看构建日志和历史版本
+- 每个 PR / feature 分支还会自动生成预览域名
+
+**回滚**：某次部署坏了？在 Deployments 页面找到旧的成功版本，点 **Rollback** 即可。
 
 ---
 
 ## 🔍 新增/修改文章后：重建搜索索引
 
-**如果动了 `docs/articles/qNN.html` 里的正文或标题**，提交前先跑一次索引构建脚本，让站内搜索能索引到最新内容：
+**如果动了 `docs/articles/qNN.html` 里的正文或标题**，提交前先跑一次索引构建脚本：
 
 ```bash
 node scripts/build-search-index.js
@@ -134,18 +103,42 @@ node scripts/build-search-index.js
 node scripts/build-search-index.js
 git add docs/articles/ docs/assets/data/search-index.json
 git commit -m "content: 新增 QNN + 重建搜索索引"
-git push origin main
+git push
+git push github
 ```
 
 ---
 
-## 💬 启用 Giscus 评论
+## 💬 Giscus 评论
 
-评论功能默认没开（`enhance.js` 里的 ID 是 placeholder）。启用：
+已接入（2026-07-23）。仓库指向 `tianmai2019/how-internet-experts-are-forged` 的 Discussions。
 
-1. GitHub 仓库 → **Settings → General → Features** → 勾选 **Discussions**
-2. 仓库 → **Discussions → Categories → New category**：Name `Comments`，Type **Announcement**
-3. 到 [giscus.app](https://giscus.app) 输入仓库名，页面会给你 `data-repo-id` 和 `data-category-id`
-4. 编辑 `docs/assets/js/enhance.js`，找到 `const Comments = {`，把 `REPO_ID` / `CATEGORY_ID` 里的 `PLACEHOLDER_*` 换成拿到的 ID
-5. 提交推送即生效
+Cloudflare Pages 上 Giscus 会正常工作，无需额外配置。如果哪天想换仓库：编辑 `docs/assets/js/enhance.js` 里 `Comments = { REPO / REPO_ID / CATEGORY / CATEGORY_ID }` 的 4 个值。
 
+---
+
+## 🌐 自定义域名（可选）
+
+想用自己的域名（比如 `book.example.com`）？
+
+1. Cloudflare Pages → 你的项目 → **Custom domains** → **Set up a custom domain**
+2. 输入你的域名，跟着提示添加 CNAME 记录到你的 DNS 提供商
+3. HTTPS 证书 Cloudflare 自动签发
+
+---
+
+## 🔧 Gitee 仓库（代码备份）
+
+即使不再托管站点，Gitee 仓库仍然有价值：
+- **国内网络快** —— 拉代码不用翻墙
+- **多平台备份** —— GitHub 若不可访问时可从这里恢复
+
+保持双推的流程见"日常更新"段。
+
+---
+
+## 📚 参考仓库
+
+- **GitHub 主仓库**：https://github.com/tianmai2019/how-internet-experts-are-forged
+- **Gitee 备份仓库**：https://gitee.com/xiaolinye/how-internet-experts-are-forged
+- **生产站点**：待启用后填入 Cloudflare 分配的 URL
