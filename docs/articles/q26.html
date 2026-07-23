@@ -218,6 +218,103 @@
             color: #7C3AED;
         }
 
+        /* ============================================
+           SVG 四轴雷达对比图（Q26）
+           ============================================ */
+        .diagram-svg-wrap {
+            background: var(--bg-secondary, #F9FAFB);
+            border: 2px dashed var(--border-color, #D1D5DB);
+            border-radius: 12px;
+            padding: 24px 20px 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .radar-svg {
+            width: 100%;
+            height: auto;
+            max-width: 620px;
+            display: block;
+            margin: 0 auto;
+        }
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            font-style: italic;
+        }
+        [data-theme="dark"] .diagram-svg-wrap {
+            background: rgba(139, 92, 246, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* 移动端 fallback：三张方案卡片 + 每轴横向进度条 */
+        .radar-mobile { display: none; }
+        @media (max-width: 640px) {
+            .radar-svg { display: none; }
+            .radar-mobile {
+                display: grid;
+                gap: 14px;
+                text-align: left;
+            }
+            .plan-card {
+                background: #fff;
+                border-radius: 12px;
+                padding: 14px 16px;
+                border-left: 4px solid;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            }
+            .plan-card-a { border-color: #7C3AED; }
+            .plan-card-b { border-color: #0891B2; }
+            .plan-card-c { border-color: #D97706; }
+            [data-theme="dark"] .plan-card {
+                background: var(--bg-tertiary, #334155);
+            }
+            .plan-title {
+                font-weight: 700;
+                font-size: 0.98rem;
+                margin-bottom: 8px;
+                color: var(--text-primary, #1F2937);
+            }
+            .plan-axis {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin: 4px 0;
+                font-size: 0.82rem;
+                color: var(--text-secondary, #4B5563);
+            }
+            .plan-axis span {
+                flex: 0 0 76px;
+            }
+            .plan-axis .bar {
+                display: block;
+                height: 8px;
+                border-radius: 4px;
+                background: var(--border-color, #E5E7EB);
+                position: relative;
+                flex: 1;
+                overflow: hidden;
+            }
+            .plan-axis .bar::before {
+                content: "";
+                position: absolute;
+                left: 0; top: 0; bottom: 0;
+                background: linear-gradient(90deg, #8B5CF6, #EC4899);
+                border-radius: 4px;
+            }
+            .plan-card-b .plan-axis .bar::before {
+                background: linear-gradient(90deg, #06B6D4, #0891B2);
+            }
+            .plan-card-c .plan-axis .bar::before {
+                background: linear-gradient(90deg, #F59E0B, #D97706);
+            }
+            .plan-axis .b-1::before { width: 20%; }
+            .plan-axis .b-2::before { width: 40%; }
+            .plan-axis .b-3::before { width: 60%; }
+            .plan-axis .b-4::before { width: 80%; }
+            .plan-axis .b-5::before { width: 100%; }
+        }
+
         @media (max-width: 600px) {
             .article-header, .article-content {
                 padding: 30px 20px;
@@ -324,6 +421,134 @@
 
             <p>
                 让我们看看最常见的几大权衡：
+            </p>
+
+            <div class="diagram-box diagram-svg-wrap">
+                <svg viewBox="0 0 640 500" class="radar-svg" role="img"
+                     aria-label="四轴雷达对比图：一致性 / 性能 / 可用性 / 低成本。三种典型方案（单体强一致、读写分离+缓存、分布式最终一致）叠加后呈现完全不同的形状">
+                    <defs>
+                        <!-- 三种方案的填充色，都是半透明，能看到叠加 -->
+                        <linearGradient id="plan-a" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.55"/>
+                            <stop offset="100%" stop-color="#6D28D9" stop-opacity="0.35"/>
+                        </linearGradient>
+                        <linearGradient id="plan-b" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.55"/>
+                            <stop offset="100%" stop-color="#0891B2" stop-opacity="0.35"/>
+                        </linearGradient>
+                        <linearGradient id="plan-c" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.55"/>
+                            <stop offset="100%" stop-color="#D97706" stop-opacity="0.35"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- 底层网格：4 圈同心正方形（旋转 45° 变菱形） -->
+                    <g transform="translate(320 220)" stroke="var(--border-color, #D1D5DB)"
+                       fill="none" stroke-width="1">
+                        <!-- 5 圈 (r = 30, 60, 90, 120, 150) 用菱形（对角线在轴上） -->
+                        <polygon points="30,0 0,-30 -30,0 0,30"/>
+                        <polygon points="60,0 0,-60 -60,0 0,60"/>
+                        <polygon points="90,0 0,-90 -90,0 0,90"/>
+                        <polygon points="120,0 0,-120 -120,0 0,120"/>
+                        <polygon points="150,0 0,-150 -150,0 0,150"
+                                 stroke="var(--text-muted, #9CA3AF)" stroke-width="1.5"/>
+                        <!-- 4 根轴 -->
+                        <line x1="0" y1="-150" x2="0" y2="150"/>
+                        <line x1="-150" y1="0" x2="150" y2="0"/>
+                    </g>
+
+                    <!-- 轴标签 -->
+                    <text x="320" y="55"  text-anchor="middle" font-size="14"
+                          font-weight="700" fill="var(--text-primary, #1F2937)">🛡️ 一致性</text>
+                    <text x="490" y="225" text-anchor="start" font-size="14"
+                          font-weight="700" fill="var(--text-primary, #1F2937)">⚡ 性能</text>
+                    <text x="320" y="400" text-anchor="middle" font-size="14"
+                          font-weight="700" fill="var(--text-primary, #1F2937)">🌐 可用性</text>
+                    <text x="150" y="225" text-anchor="end" font-size="14"
+                          font-weight="700" fill="var(--text-primary, #1F2937)">💰 低成本</text>
+
+                    <!-- 小刻度：外圈右侧标 5，内圈标 1 -->
+                    <text x="330" y="76"  font-size="10" fill="var(--text-muted, #6B7280)">5（满）</text>
+                    <text x="330" y="196" font-size="10" fill="var(--text-muted, #6B7280)">1</text>
+
+                    <!-- 方案 A：单体 + 强一致（MySQL） 一致性 5 / 性能 2 / 可用性 2 / 低成本 5 -->
+                    <!-- 4 轴顺序：上=一致性、右=性能、下=可用性、左=低成本 -->
+                    <!-- 坐标：轴刻度 1..5，对应距圆心 30..150。数值 n => r = 30*n -->
+                    <!-- 计算： A 上=150、右=60、下=60、左=150 -->
+                    <g transform="translate(320 220)">
+                        <polygon points="0,-150 60,0 0,60 -150,0"
+                                 fill="url(#plan-a)" stroke="#7C3AED" stroke-width="2"/>
+                    </g>
+
+                    <!-- 方案 B：读写分离 + 缓存  一致性 3 / 性能 5 / 可用性 4 / 低成本 3 -->
+                    <!-- 上=90、右=150、下=120、左=90 -->
+                    <g transform="translate(320 220)">
+                        <polygon points="0,-90 150,0 0,120 -90,0"
+                                 fill="url(#plan-b)" stroke="#0891B2" stroke-width="2"/>
+                    </g>
+
+                    <!-- 方案 C：分布式最终一致  一致性 2 / 性能 4 / 可用性 5 / 低成本 1 -->
+                    <!-- 上=60、右=120、下=150、左=30 -->
+                    <g transform="translate(320 220)">
+                        <polygon points="0,-60 120,0 0,150 -30,0"
+                                 fill="url(#plan-c)" stroke="#D97706" stroke-width="2"/>
+                    </g>
+
+                    <!-- 图例（底部） -->
+                    <g transform="translate(30 435)">
+                        <rect width="14" height="14" fill="url(#plan-a)" stroke="#7C3AED" stroke-width="1.5"/>
+                        <text x="22" y="12" font-size="12" fill="var(--text-primary, #1F2937)">
+                            🏛️ 单体 + 强一致（MySQL）
+                        </text>
+                    </g>
+                    <g transform="translate(30 460)">
+                        <rect width="14" height="14" fill="url(#plan-b)" stroke="#0891B2" stroke-width="1.5"/>
+                        <text x="22" y="12" font-size="12" fill="var(--text-primary, #1F2937)">
+                            ⚡ 读写分离 + 缓存
+                        </text>
+                    </g>
+                    <g transform="translate(340 435)">
+                        <rect width="14" height="14" fill="url(#plan-c)" stroke="#D97706" stroke-width="1.5"/>
+                        <text x="22" y="12" font-size="12" fill="var(--text-primary, #1F2937)">
+                            🌐 分布式最终一致
+                        </text>
+                    </g>
+                    <text x="340" y="472" font-size="11" fill="var(--text-muted, #6B7280)" font-style="italic">
+                        每种方案都在某几个轴上妥协
+                    </text>
+                </svg>
+
+                <!-- 移动端 fallback：三张方案卡片 + 每个轴的横向进度条 -->
+                <div class="radar-mobile" aria-hidden="true">
+                    <div class="plan-card plan-card-a">
+                        <div class="plan-title">🏛️ 单体 + 强一致</div>
+                        <div class="plan-axis"><span>🛡️ 一致性</span><b class="bar b-5"></b></div>
+                        <div class="plan-axis"><span>⚡ 性能</span><b class="bar b-2"></b></div>
+                        <div class="plan-axis"><span>🌐 可用性</span><b class="bar b-2"></b></div>
+                        <div class="plan-axis"><span>💰 低成本</span><b class="bar b-5"></b></div>
+                    </div>
+                    <div class="plan-card plan-card-b">
+                        <div class="plan-title">⚡ 读写分离 + 缓存</div>
+                        <div class="plan-axis"><span>🛡️ 一致性</span><b class="bar b-3"></b></div>
+                        <div class="plan-axis"><span>⚡ 性能</span><b class="bar b-5"></b></div>
+                        <div class="plan-axis"><span>🌐 可用性</span><b class="bar b-4"></b></div>
+                        <div class="plan-axis"><span>💰 低成本</span><b class="bar b-3"></b></div>
+                    </div>
+                    <div class="plan-card plan-card-c">
+                        <div class="plan-title">🌐 分布式最终一致</div>
+                        <div class="plan-axis"><span>🛡️ 一致性</span><b class="bar b-2"></b></div>
+                        <div class="plan-axis"><span>⚡ 性能</span><b class="bar b-4"></b></div>
+                        <div class="plan-axis"><span>🌐 可用性</span><b class="bar b-5"></b></div>
+                        <div class="plan-axis"><span>💰 低成本</span><b class="bar b-1"></b></div>
+                    </div>
+                </div>
+
+                <p class="diagram-caption">图：四种能力的雷达对比 · 三种方案叠加后形状完全不同 —— 这就是"没有银弹"</p>
+            </div>
+
+            <p>
+                每一根轴都想拉满？不可能。<br>
+                下面我们把三大典型权衡各自拆开看：
             </p>
 
             <div class="balance">
