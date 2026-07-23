@@ -70,6 +70,115 @@
             font-family: monospace;
         }
 
+        /* SVG 图解：可交互、可响应、暗色友好 */
+        .diagram-svg-wrap {
+            font-family: inherit;
+            padding: 30px 20px 20px;
+        }
+
+        .flow-svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+        }
+
+        /* 阶段方框：悬停微上浮，暗示可读 */
+        .flow-stage rect {
+            filter: drop-shadow(0 4px 8px rgba(37, 99, 235, 0.18));
+            transition: transform 0.2s ease, filter 0.2s ease;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .flow-stage:hover rect {
+            transform: translateY(-3px) scale(1.02);
+            filter: drop-shadow(0 8px 16px rgba(37, 99, 235, 0.32));
+        }
+
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-family: inherit;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* 暗色模式：让 SVG 主色更亮一点，不然对比度不够 */
+        [data-theme="dark"] .diagram-svg-wrap {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* 移动端：SVG 挤成一坨看不清，切换到垂直卡片列表 */
+        .flow-mobile {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .flow-svg {
+                display: none;
+            }
+            .flow-mobile {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+                font-family: system-ui, -apple-system, "PingFang SC", sans-serif;
+            }
+            .flow-mobile li {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 14px 16px;
+                margin-bottom: 10px;
+                background: linear-gradient(135deg, #60A5FA 0%, #2563EB 100%);
+                color: #fff;
+                border-radius: 12px;
+                box-shadow: 0 4px 10px rgba(37, 99, 235, 0.18);
+                position: relative;
+            }
+            /* 卡片之间的 ↓ 连接线 */
+            .flow-mobile li:not(:last-child)::after {
+                content: "↓";
+                position: absolute;
+                left: 50%;
+                bottom: -18px;
+                transform: translateX(-50%);
+                color: var(--text-muted, #9CA3AF);
+                font-size: 1rem;
+                z-index: 1;
+            }
+            .flow-mobile-icon {
+                font-size: 1.8rem;
+                flex-shrink: 0;
+            }
+            .flow-mobile li strong {
+                display: block;
+                font-size: 0.98rem;
+                margin-bottom: 2px;
+            }
+            .flow-mobile-sub {
+                display: block;
+                font-size: 0.78rem;
+                color: rgba(255, 255, 255, 0.85);
+            }
+            .flow-mobile-time {
+                display: inline-block;
+                margin-top: 4px;
+                padding: 2px 8px;
+                font-size: 0.72rem;
+                background: rgba(255, 255, 255, 0.22);
+                border-radius: 10px;
+                color: #fff;
+            }
+            /* 移动端把外层 padding 收紧一点 */
+            .diagram-svg-wrap {
+                padding: 20px 14px 14px;
+            }
+        }
+
         .step-box {
             display: inline-block;
             background: #3B82F6;
@@ -258,16 +367,152 @@
                 你会发现，原来背后是这样的：
             </p>
 
-            <div class="diagram-box">
-                <div class="step-box">📝 URL解析</div>
-                <div class="arrow">→</div>
-                <div class="step-box">📖 DNS查询</div>
-                <div class="arrow">→</div>
-                <div class="step-box">📤 HTTP请求</div>
-                <div class="arrow">→</div>
-                <div class="step-box">📥 响应回来</div>
-                <div class="arrow">→</div>
-                <div class="step-box">🎨 浏览器渲染</div>
+            <div class="diagram-box diagram-svg-wrap">
+                <svg viewBox="0 0 900 240" class="flow-svg" role="img"
+                     aria-label="从输入网址到页面出现：URL 解析、DNS 查询、HTTP 请求、响应返回、浏览器渲染五个阶段">
+                    <defs>
+                        <!-- 阶段方框的渐变（跟着 --color-level-1 走） -->
+                        <linearGradient id="flow-stage-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%"  stop-color="#60A5FA"/>
+                            <stop offset="100%" stop-color="#2563EB"/>
+                        </linearGradient>
+                        <!-- 箭头头 -->
+                        <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5"
+                                markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+                        </marker>
+                        <!-- 主线：手绘感的轻微弯曲 -->
+                        <path id="flow-line" d="M 90 120 C 200 90, 260 150, 340 120
+                                                 S 490 90, 590 120
+                                                 S 740 150, 830 120"
+                              fill="none" stroke="currentColor" stroke-width="2.5"
+                              stroke-linecap="round" stroke-dasharray="4 6"/>
+                    </defs>
+
+                    <!-- 手绘曲线（虚线，暗示"过程中"） -->
+                    <use href="#flow-line" style="color: var(--border-color, #D1D5DB);"/>
+
+                    <!-- 5 个阶段方框 -->
+                    <!-- Stage 1: URL 解析 -->
+                    <g class="flow-stage" transform="translate(20 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📝</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">URL 解析</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">拆分协议 / 域名 / 路径</text>
+                    </g>
+
+                    <!-- Stage 2: DNS -->
+                    <g class="flow-stage" transform="translate(180 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📖</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">DNS 查询</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">域名 → IP 地址</text>
+                    </g>
+
+                    <!-- Stage 3: HTTP 请求 -->
+                    <g class="flow-stage" transform="translate(340 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📤</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">HTTP 请求</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">向服务器要东西</text>
+                    </g>
+
+                    <!-- Stage 4: 响应回来 -->
+                    <g class="flow-stage" transform="translate(500 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📥</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">响应回来</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">HTML / CSS / JS</text>
+                    </g>
+
+                    <!-- Stage 5: 浏览器渲染 -->
+                    <g class="flow-stage" transform="translate(720 60)">
+                        <rect width="160" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="80" y="42" text-anchor="middle" font-size="28" fill="#fff">🎨</text>
+                        <text x="80" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">浏览器渲染</text>
+                        <text x="80" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">画到屏幕上</text>
+                    </g>
+
+                    <!-- 箭头（水平方向的短箭头，暗示传递） -->
+                    <g style="color: var(--color-level-1, #3B82F6);">
+                        <line x1="162" y1="110" x2="176" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                        <line x1="322" y1="110" x2="336" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                        <line x1="482" y1="110" x2="496" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                        <line x1="642" y1="110" x2="716" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                    </g>
+
+                    <!-- 底部时间轴标注 -->
+                    <text x="90"  y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~几毫秒</text>
+                    <text x="250" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~几十毫秒</text>
+                    <text x="410" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~百毫秒</text>
+                    <text x="570" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">取决于网速</text>
+                    <text x="800" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~几十毫秒</text>
+                </svg>
+
+                <!-- 移动端 fallback：垂直卡片列表，视觉风格跟 SVG 保持一致 -->
+                <ol class="flow-mobile" aria-hidden="true">
+                    <li>
+                        <span class="flow-mobile-icon">📝</span>
+                        <div>
+                            <strong>URL 解析</strong>
+                            <span class="flow-mobile-sub">拆分协议 / 域名 / 路径</span>
+                            <span class="flow-mobile-time">~几毫秒</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">📖</span>
+                        <div>
+                            <strong>DNS 查询</strong>
+                            <span class="flow-mobile-sub">域名 → IP 地址</span>
+                            <span class="flow-mobile-time">~几十毫秒</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">📤</span>
+                        <div>
+                            <strong>HTTP 请求</strong>
+                            <span class="flow-mobile-sub">向服务器要东西</span>
+                            <span class="flow-mobile-time">~百毫秒</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">📥</span>
+                        <div>
+                            <strong>响应回来</strong>
+                            <span class="flow-mobile-sub">HTML / CSS / JS</span>
+                            <span class="flow-mobile-time">取决于网速</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">🎨</span>
+                        <div>
+                            <strong>浏览器渲染</strong>
+                            <span class="flow-mobile-sub">画到屏幕上</span>
+                            <span class="flow-mobile-time">~几十毫秒</span>
+                        </div>
+                    </li>
+                </ol>
+
+                <p class="diagram-caption">图 1：一次网页加载的 5 个核心阶段 · 底部标注是量级参考</p>
             </div>
 
             <p>
