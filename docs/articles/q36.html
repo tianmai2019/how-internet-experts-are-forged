@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q36：为什么互联网产品设计，最后会影响人的情绪、表达和判断？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-5">
+            <div class="level-badge">👑 第5层认知 · 大帝视角</div>
+            <h1>为什么互联网产品设计，最后会影响人的情绪、表达和判断？</h1>
+            <p class="subtitle">当技术媒介重塑了情感的语法</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                你有没有过这些感觉？
+            </p>
+
+            <ul>
+                <li>看完 15 分钟短视频，情绪莫名烦躁；</li>
+                <li>刷完一晚上评论区，忍不住想跟人吵架；</li>
+                <li>看到一个新闻标题，还没读完就已经愤怒；</li>
+                <li>在朋友圈刷到"别人的生活"，突然焦虑起来。</li>
+            </ul>
+
+            <p>
+                这些情绪不是"你"，也不是"内容"，而是<strong>你和产品设计的共同产物</strong>。
+                同样一件事，报纸上读到、朋友嘴里听到、抖音上刷到、微博热搜上看到——
+                你的<strong>情绪反应完全不同</strong>。
+            </p>
+
+            <div class="highlight-box">
+                <strong>产品设计，是情绪的"扬声器"。</strong><br><br>
+                它决定了什么情绪被放大、什么情绪被压制、<br>
+                什么样的表达能传播、什么样的观点会消失。
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li><strong>为什么"愤怒"在互联网上传播最快？</strong></li>
+                <li><strong>为什么评论区容易极端化？</strong></li>
+                <li><strong>为什么"信息茧房"会重塑判断？</strong></li>
+                <li><strong>为什么表达变得越来越"表演化"？</strong></li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                普通用户的感受：<strong>"这个平台戾气好重。""网友怎么这么极端？""网上都是键盘侠。"</strong>
+            </p>
+
+            <p>
+                但你注意到没——离开这个 App，那些"戾气"就没了。<strong>不是人变了，是环境变了。</strong>
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                内容分发的核心逻辑，用一段简化的伪代码就能表达：
+            </p>
+
+            <div class="code-block">// 一条内容能不能被推荐？看它的"互动率"
+score = weight_1 * click_rate
+      + weight_2 * complete_rate
+      + weight_3 * comment_rate       // 评论最贵！
+      + weight_4 * share_rate
+      + weight_5 * follow_rate
+
+// 什么内容最容易触发评论和转发？
+// —— 情绪强烈的内容
+// —— 立场鲜明的内容
+// —— 令人愤怒/惊讶/焦虑的内容
+
+// 于是算法自然会"选择"这些内容，
+// 因为它们最能带来"高价值互动"</div>
+
+            <p>
+                算法本身没有情绪倾向，但因为它优化"互动率"——而<strong>愤怒是最能引发互动的情绪</strong>——
+                所以它<strong>系统性地放大了愤怒</strong>。这不是阴谋，是数学的自然结果。
+            </p>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                一个"情绪的正反馈循环"是这样发生的：
+            </p>
+
+            <div class="diagram-box">
+                愤怒的内容 → 高互动率 → 算法多推
+                <span class="arrow">↓</span>
+                更多人看到 → 更多人评论 → 更多人转发
+                <span class="arrow">↓</span>
+                <strong>愤怒的评论区，进一步激发新的愤怒</strong>
+                <span class="arrow">↓</span>
+                创作者发现"愤怒有流量" → 生产更多愤怒
+                <span class="arrow">↓</span>
+                <strong>整个平台的"情绪基线"被抬高</strong>
+            </div>
+
+            <p>
+                这就是 MIT 那篇著名论文说的："<strong>Falsehood diffuses faster than truth.</strong>"
+                （谣言比真相传播得快，因为它更令人惊讶。）
+            </p>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                你可能会问：为什么不让算法优化"温和的、深思熟虑的内容"？
+                答案是<strong>那样做，平台会失去流量，用户会流失</strong>：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>愤怒驱动的设计</h4>
+                    <p>用户停留久、互动多、广告收入高——但社会情绪被撕裂。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>平静驱动的设计</h4>
+                    <p>用户理性、内容更好——但停留时间短、增长慢，商业上竞争不过对手。</p>
+                </div>
+            </div>
+
+            <p>
+                在<strong>商业竞争的压力下</strong>，几乎所有平台最终都被拉向前者。
+                这不是某个人的选择，是<strong>整个行业的均衡</strong>。
+            </p>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>🔍 情绪日记实验</h3>
+                <p>
+                    做一次为期 3 天的观察：
+                </p>
+                <ol>
+                    <li>每次打开某个 App 前，记录你的情绪（1-10 分）；</li>
+                    <li>关闭后，再记录一次；</li>
+                    <li>看看：哪些 App 让你情绪变好了？哪些让你变差了？</li>
+                    <li>额外一步：找一天完全不刷微博 / 抖音 / 朋友圈，看看你会想些什么。</li>
+                </ol>
+                <p>
+                    很多人做完这个实验会震惊——<strong>某些 App 每次刷完，我都变得更烦躁，但我停不下来。</strong>
+                    这就是"情绪工程"的具体体现。
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=33">Q33: 推荐系统如何塑造注意力？</a>
+                <a href="question.html?q=35">Q35: 一个按钮如何改变行为？</a>
+                <a href="question.html?q=39">Q39: 互联网如何改变人和世界的关系？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>技术媒介重塑了情感的语法</h3>
+                <p>
+                    Marshall McLuhan 说："The medium is the message."（媒介即讯息。）
+                    这句话在 2020 年代变得极其精准：
+                </p>
+                <ul>
+                    <li><strong>Twitter/X 的 280 字符</strong>——培养了"金句思维"，鼓励尖锐、简化、极端；</li>
+                    <li><strong>短视频的 15 秒</strong>——奖励强刺激开头，让深度表达无处生存；</li>
+                    <li><strong>评论区的按序展示</strong>——让"最激烈的评论"永远排在最前；</li>
+                    <li><strong>点赞数的可见</strong>——让"表演性表达"胜过"真实表达"。</li>
+                </ul>
+                <p>
+                    你在这些平台上"发言"，其实是在<strong>参加一场特定规则的比赛</strong>。
+                    比赛规则奖励什么，你就慢慢学会说什么、感受什么、相信什么。
+                </p>
+                <p>
+                    最深的影响不是"你今天生气了"——而是<strong>你的情绪反应模式，被这些平台重新校准了</strong>。
+                    过去让你愤怒需要一件大事，现在一个标题就够；过去表达一个观点要想半天，现在几秒就能"输出"；
+                    过去我们说"我理解你"，现在我们说"我 diss 你"。
+                </p>
+                <p>
+                    这是<strong>技术媒介重塑情感语法</strong>的力量——比任何广告都深，比任何政治都久。
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，为什么互联网产品设计，最后会影响人的情绪、表达和判断？
+            </p>
+
+            <p>
+                <strong>答案是：</strong>因为产品设计不只是"承载"信息，它<strong>决定了信息如何流动、什么被放大、什么被压抑</strong>。
+                当几十亿人每天几小时地生活在同一个"信息流动规则"里，
+                这个规则最终会塑造他们感受世界的方式。
+            </p>
+
+            <div class="highlight-box">
+                <strong>看到这一点，你就可以问自己一个真正重要的问题：</strong><br><br>
+                我最近的"感受"，有多少是真实世界给我的？<br>
+                有多少，只是某个推荐算法给我的？
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=37" class="btn">继续探索 Q37 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

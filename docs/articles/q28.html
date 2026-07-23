@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q28：为什么单体应用并不一定落后，微服务也不一定天然先进？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-4">
+            <div class="level-badge">⚖️ 第4层认知 · 高级工程师视角</div>
+            <h1>为什么单体应用并不一定落后，微服务也不一定天然先进？</h1>
+            <p class="subtitle">架构不是先进程度的比赛，是「合适度」的博弈</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>过去十年，"微服务"几乎成了技术圈的政治正确。招聘 JD 上写"微服务经验优先"，技术分享大会上讲"如何拆分微服务"，公司内部技术评审时，谁提议做单体谁就像在裸奔。</p>
+
+            <p>但真实的现场却在悄悄反转：</p>
+
+            <ul>
+                <li><strong>Segment</strong> 把 140 个微服务合并回单体，性能反而变好；</li>
+                <li><strong>Uber</strong> 曾经拆到 2200 个微服务，然后开始搞"服务合并"运动；</li>
+                <li><strong>Amazon Prime Video</strong> 2023 年发论文说：把无服务器微服务架构合并成单体后，成本降低了 90%；</li>
+                <li><strong>Basecamp/37signals</strong> 用一个 20 年的 Ruby on Rails 单体，服务着百万级用户。</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>这些不是"退步"，是「祛魅」。</strong>技术圈开始承认：微服务是一种<em>解决方案</em>，而不是一种<em>优越性</em>。
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li>单体和微服务，到底在解决什么问题？</li>
+                <li>为什么康威定律说"架构会长成组织的样子"？</li>
+                <li>微服务的隐藏成本有哪些？</li>
+                <li>什么规模、什么组织，才真的需要微服务？</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>用户从来不会因为「后面是不是微服务」而选择用不用一个产品。用户看到的是：<strong>响应快不快、稳不稳、功能全不全。</strong>单体做得好，用户觉得优秀；微服务做得差，用户觉得垃圾。<strong>用户不奖励架构，只奖励结果。</strong></p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>单体和微服务的核心差异，不在技术栈，而在<strong>「一个进程还是多个进程」+「一个数据库还是多个数据库」</strong>：</p>
+
+            <div class="code-block">单体：
+  一个仓库 → 一个二进制 → 一个进程 → 一个数据库
+  函数调用是「本地调用」（纳秒级）
+  事务是「本地事务」（数据库保证）
+
+微服务：
+  多个仓库 → 多个二进制 → 多个进程 → 多个数据库
+  函数调用变成「网络调用」（毫秒级，可能失败）
+  事务变成「分布式事务」（要靠 Saga/最终一致性保证）</div>
+
+            <p>看清楚这层的关键变化：<strong>你把「函数调用」升级成了「网络协议」，把「本地事务」升级成了「分布式协调」。</strong>每一个升级都意味着一个新的失败点。</p>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>微服务化后，一个用户请求可能要经过 10 个服务：</p>
+
+            <div class="diagram-box">
+                <span class="step-box">API Gateway</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Auth</span>
+                <span class="arrow">→</span>
+                <span class="step-box">User</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Order</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Payment</span>
+                <br>
+                <span class="step-box">Inventory</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Notification</span>
+                <span class="arrow">→</span>
+                <span class="step-box">...</span>
+            </div>
+
+            <p>每一个箭头，都可能：网络延迟、超时、失败、重试。要保证整条链路的可用性 99.9%，每个环节都必须做到 99.99% 以上——这个复合可用性是<strong>指数级衰减</strong>的。</p>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>单体的真相</h4>
+                    <p>✅ 开发简单：一个 IDE 开一个项目<br>✅ 调试简单：断点即可<br>✅ 事务简单：ACID 天生支持<br>✅ 部署简单：一个 jar/一个镜像<br>❌ 团队规模上限：50 人左右<br>❌ 单个模块出问题会拖垮整体<br>❌ 单点扩展粒度粗</p>
+                </div>
+                <div class="compare-card">
+                    <h4>微服务的真相</h4>
+                    <p>✅ 团队可以独立并行<br>✅ 服务可以独立扩展<br>✅ 局部故障可以隔离<br>✅ 技术栈可以多样化<br>❌ 分布式复杂度爆炸<br>❌ 数据一致性难保证<br>❌ 运维成本 3-10 倍<br>❌ 排障需要全链路追踪</p>
+                </div>
+            </div>
+
+            <h2>🏢 康威定律：架构会长成组织的样子</h2>
+
+            <p>1968 年，Melvin Conway 提出：</p>
+
+            <div class="highlight-box">
+                <strong>"组织设计的系统，其结构必然复制组织的沟通结构。"</strong>
+            </div>
+
+            <p>换句话说：<strong>你有几个团队，你的系统就会自然长出几个模块</strong>。</p>
+
+            <p>所以微服务的本质，不是"技术拆分"，而是"组织拆分"：</p>
+
+            <div class="code-block">10 人团队 → 单体最优
+  一个团队 = 一个仓库 = 一个部署单元
+  拆微服务 = 制造无谓的沟通成本
+
+50 人团队 → 模块化单体或粗粒度服务
+  按业务域拆几个大服务
+  每个服务由 5-10 人小团队负责
+
+500 人团队 → 微服务是必选项
+  没有微服务，团队之间会陷入无休止的合并冲突
+  每个团队必须能独立发布、独立部署、独立扩展
+
+5000 人团队 → 服务网格 + 平台化
+  微服务本身也需要"元架构"来治理</div>
+
+            <div class="callout callout--warning">
+                <strong>破除迷思：</strong>如果你的团队只有 20 个人，拆了 30 个微服务，不叫「先进」，叫「用微服务架构解决沟通不足的问题」。这就像用高铁通勤上班——技术上没错，只是完全用不上。
+            </div>
+
+            <h2>💥 真实案例：Uber 的反向工程</h2>
+
+            <p>Uber 是微服务最狂热的践行者之一，一度拆到 2200+ 个微服务。然后他们发现：</p>
+
+            <ul>
+                <li>一个简单的乘车流程要跨越几十个服务；</li>
+                <li>排查一个 bug 要看几百个 dashboard；</li>
+                <li>发布一个新功能要协调 10+ 个团队；</li>
+                <li>新员工要几个月才能理解一个业务流程。</li>
+            </ul>
+
+            <p>于是 Uber 在 2020 年后开始搞"Domain-Oriented Microservice Architecture (DOMA)"：<strong>把 2200 个微服务按业务域重新聚合成 70 个"域"，域内高度耦合，域间松散通信。</strong>本质上就是把过度拆分的微服务，重新变成"粗粒度的服务"。</p>
+
+            <h2>💰 Amazon Prime Video 的省钱故事</h2>
+
+            <p>2023 年 Amazon Prime Video 团队发了篇文章："Scaling up the Prime Video audio/video monitoring service and reducing costs by 90%"。</p>
+
+            <p>他们把一个基于 AWS Lambda + Step Functions 的"云原生微服务架构"，重构成一个<strong>单体应用</strong>，运行在 ECS 上。结果：</p>
+
+            <div class="highlight-box">
+                <strong>成本下降 90%，扩展性反而更好。</strong><br><br>
+                原因：微服务架构下，服务之间通过 S3 和网络传数据，光是传输成本和调度延迟就吃掉了大部分算力。改成单体后，数据在同一个进程内传递，不再需要序列化、网络往返、状态编排。
+            </div>
+
+            <p>Amazon 自己的团队公开承认："微服务不是万能的。"这在 2023 年之前是不可想象的政治不正确。</p>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>做一次"架构合适度自评"</h3>
+                <p>回答下面 6 个问题，每个"是"计 1 分：</p>
+                <ol>
+                    <li>我们的团队超过 50 人？</li>
+                    <li>我们的多个团队经常在同一份代码里合并冲突？</li>
+                    <li>我们的发布流程已经变成"排队等窗口期"？</li>
+                    <li>我们的不同业务模块，流量差距超过 10 倍？</li>
+                    <li>我们有专职的 SRE/DevOps 团队？</li>
+                    <li>我们的故障复盘里，「上线互相影响」是高频原因？</li>
+                </ol>
+                <p><strong>0-2 分：</strong>好好做单体，微服务会拖垮你。<br>
+                <strong>3-4 分：</strong>考虑做"模块化单体"或"粗粒度服务"。<br>
+                <strong>5-6 分：</strong>可以认真评估微服务化了。</p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=23">Q23: 大型互联网系统怎么支撑亿级用户？</a>
+                <a href="question.html?q=26">Q26: 为什么系统设计里没有银弹？</a>
+                <a href="question.html?q=27">Q27: 先进架构不一定适合当前业务</a>
+                <a href="question.html?q=29">Q29: 一致性、性能、可用性怎么取舍？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>架构不是先进程度的比赛，是「合适度」的博弈</h3>
+                <p>我们这一代工程师，太容易被"架构叙事"绑架。一个架构好不好，答案往往不是从"是否解决了具体问题"出发，而是从"它是不是符合当下的技术潮流"出发。这本质上是一种<strong>技术审美的路径依赖</strong>。</p>
+                <p>但真正走过几个技术周期的老手会告诉你：<strong>架构没有"进化论"，只有"匹配论"。</strong>单体、SOA、微服务、Serverless、服务网格……它们不是一条线性上升的技术阶梯，而是一个个针对不同规模、不同组织、不同问题的<em>工具</em>。</p>
+                <p>大帝视角看到的是：<strong>技术潮流会变，但「合适」这个标准永远不变。当所有人都在追新的时候，敢于说"我们不需要"，才是真正的成熟。</strong></p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>为什么单体应用并不一定落后，微服务也不一定天然先进？</p>
+
+            <div class="highlight-box">
+                <strong>因为架构的价值从来不在于"新不新"，而在于"配不配"。</strong><br><br>
+                单体和微服务不是替代关系，是<strong>阶段关系</strong>——每一个从单体做起、又走到微服务、又回过头来重新聚合的团队，都会告诉你同一句话：<br><br>
+                <em>"最好的架构，是那个让你现在的团队跑得最快的架构。"</em>
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=29" class="btn">继续探索 Q29 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

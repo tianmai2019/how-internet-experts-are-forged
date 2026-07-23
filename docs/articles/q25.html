@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q25：为什么大型网站总是在做监控、日志、链路追踪和故障演练？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3层认知 · 工程师视角</div>
+            <h1>为什么大型网站总是在做监控、日志、链路追踪和故障演练？</h1>
+            <p class="subtitle">看不见的系统 = 失控的系统；故障演练是给系统打疫苗</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                你可能听过程序员这样说："今天不上线，我们要压测。""周末做一次全链路故障演练。""这个 bug 我们看链路 traceId 排查。"
+                外行听起来像天书，但这些其实是大厂运转的"心跳"。
+            </p>
+
+            <p>
+                在 100 台机器、几千个服务的系统里，出了问题，你怎么<strong>知道</strong>是哪出问题？靠猜？靠命？
+                答案是——大公司花了海量精力，就为了做一件事：<strong>让系统"看得见"</strong>。
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心观点：</strong><br><br>
+                <strong>看不见的系统，等于失控的系统。</strong><br>
+                你如果不能"观察到"系统的状态，你就没法维护它。<br>
+                你如果没有"预演过"故障，它真来了你就是瞎子摸象。
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li><strong>系统里到底有什么东西"看不见"？</strong></li>
+                <li><strong>监控、日志、追踪——到底有什么区别？</strong></li>
+                <li><strong>一次故障到底怎么排查？</strong></li>
+                <li><strong>为什么要"故意搞坏"自己的系统？</strong></li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                用户对可观测性的感知是：<strong>什么都感觉不到，但结果就是"这家的服务真稳"</strong>。
+            </p>
+
+            <ul>
+                <li>某天 10 点开始，抖音开屏偶尔白屏——你不会看到，但工程师的告警已经响了 100 次</li>
+                <li>某个地方支付有延迟——工程师从链路追踪看到"支付 → 风控"那一步 P99 从 100ms 涨到了 2000ms</li>
+                <li>某次微博服务器出问题——热搜可能"扛住"了，因为演练过 47 次类似场景</li>
+            </ul>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                最原始的"观察"就是——<code>print</code>。
+            </p>
+
+            <div class="code-block">
+def buy(item_id):
+    print(f"[INFO] user buying item {item_id}")
+    try:
+        result = do_buy(item_id)
+        print(f"[INFO] success: {result}")
+    except Exception as e:
+        print(f"[ERROR] failed: {e}")
+            </div>
+
+            <p>
+                这就是<strong>日志（Log）</strong>最朴素的样子。
+                但当你有 1000 台机器、每台 QPS 上万时，几十亿行日志散落各处——
+                你怎么知道"哪一行是问题？"、"哪一个用户的请求走过哪些机器？"、"这一秒系统整体是什么状态？"
+            </p>
+
+            <p>
+                于是，可观测性演化出了三个不同"维度"：
+            </p>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                业界公认的<strong>可观测性三支柱</strong>（Three Pillars of Observability）：
+            </p>
+
+            <div class="diagram-box">
+                【Metrics 指标】<br>
+                → 时序数字，回答"现状"<br>
+                → 例：QPS、CPU、错误率、P99 延迟<br>
+                → 工具：Prometheus + Grafana<br>
+                <br>
+                【Logs 日志】<br>
+                → 结构化文本，回答"发生了什么"<br>
+                → 例：某个请求打印的详细信息、报错堆栈<br>
+                → 工具：ELK（Elasticsearch + Logstash + Kibana）、Loki<br>
+                <br>
+                【Traces 链路追踪】<br>
+                → 一次请求的全流程，回答"跨服务的问题在哪一段"<br>
+                → 例：一个下单请求：网关 3ms → 用户 5ms → 库存 200ms(⚠️) → 支付 20ms<br>
+                → 工具：Jaeger、SkyWalking、OpenTelemetry
+            </div>
+
+            <p>
+                三者是<strong>互补的</strong>，不是替代关系：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Metrics（指标）</h4>
+                    <p>看<strong>整体健康度</strong>：CPU 是不是 100%？错误率有没有涨？<br>特点：轻量、能长期存、适合告警。<br>缺点：只能告诉你"有问题"，不告诉你"为什么"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Logs（日志）</h4>
+                    <p>看<strong>细节</strong>：哪一行代码报错？堆栈是什么？<br>特点：信息最全、能查最深。<br>缺点：量太大、查询贵、跨服务时难串起来。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Traces（追踪）</h4>
+                    <p>看<strong>路径</strong>：一次请求经过了 20 个服务，哪一段慢了？<br>特点：跨服务、跨机器可视化。<br>关键：需要<strong>traceId</strong> 贯穿全链路。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Events / Alerts</h4>
+                    <p>看<strong>变化</strong>：什么时候发布过？什么时候扩容过？<br>把"人为动作"和"系统变化"关联起来，是排查故障的第 4 支柱。</p>
+                </div>
+            </div>
+
+            <p>
+                真实排查案例：某天 <code>P99</code> 延迟从 100ms 涨到 800ms。
+            </p>
+
+            <ol>
+                <li>先看 <strong>Metrics</strong>——发现只有支付服务的延迟涨了</li>
+                <li>再看 <strong>Traces</strong>——发现是支付服务里"调用风控"那一步慢</li>
+                <li>再看 <strong>Logs</strong>——找到风控服务的报错："connection pool exhausted"</li>
+                <li>关联 <strong>Events</strong>——发现半小时前风控服务发布了新版本</li>
+                <li>结论：新版本连接池配置错了，回滚</li>
+            </ol>
+
+            <p>
+                这就是一次"从告警到根因"的完整闭环——<strong>没有可观测性，这半小时你根本查不出来</strong>。
+            </p>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                你可能会问：既然日志这么好，为啥不"啥都记下来"？——因为代价惊人。
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心权衡：</strong><br>
+                <strong>观察力</strong> ↔ <strong>成本 & 性能</strong><br>
+                记得越细越全，存储成本越高、系统性能越差。<br>
+                真实系统会做<strong>采样</strong>——只记录 1% 的请求详情。
+            </div>
+
+            <ul>
+                <li><strong>Metrics 是"预聚合"</strong>：不存原始数据，只存"每秒的 QPS 数值"。便宜、快。</li>
+                <li><strong>Logs 需要采样和轮转</strong>：INFO 保留 7 天，DEBUG 只保留几小时，超时自动删除。</li>
+                <li><strong>Traces 需要头部采样</strong>：不能每个请求都追踪，通常只追 1%~10%，但"错误请求"和"慢请求"永远采。</li>
+            </ul>
+
+            <h3>💥 故障演练：给系统打疫苗</h3>
+
+            <p>
+                做完了监控、日志、追踪，还有一件"变态"的事：<strong>故障演练（Chaos Engineering）</strong>——主动往自己的系统里注入故障。
+            </p>
+
+            <div class="diagram-box">
+                周四下午 3 点：<br>
+                <br>
+                运维工程师："今天演练开始。"<br>
+                → 随机杀掉 5% 的机器<br>
+                → 让某个可用区断网 3 分钟<br>
+                → 让数据库延迟涨 500ms<br>
+                → 让缓存击穿 10%<br>
+                <br>
+                观察：<br>
+                · 告警响了吗？<br>
+                · 有没有自动扩容？<br>
+                · 用户端有没有报错？<br>
+                · 恢复用了多久？
+            </div>
+
+            <p>
+                这个方法论最早由 Netflix 提出，他们的著名工具叫 <strong>Chaos Monkey</strong>——真的会在<strong>生产环境</strong>随机搞破坏。
+                你可能觉得疯了，但他们的逻辑是：
+            </p>
+
+            <div class="highlight-box">
+                <strong>"故障总会发生的。<br>
+                与其等到最坏那天才发现自己没准备好，<br>
+                不如现在主动制造小故障，看看系统能不能扛住。"</strong>
+            </div>
+
+            <p>
+                这就是"给系统打疫苗"的思想——<strong>用小剂量、可控的故障，让系统产生对故障的免疫力</strong>。
+                阿里叫"红蓝对抗"、字节叫"混沌工程"、腾讯叫"故障演习"——名字不同，本质相同。
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>常见误区：</strong>"监控告警越多越好"。<br>
+                告警一多，就没人看了——这叫"告警疲劳"。真正好的监控是：<strong>只在需要人工介入时才响，能自愈的问题让系统自己修</strong>。
+                比如 P99 抖一下不用响，抖 5 分钟才响；单机 CPU 100% 不用响，整个集群平均 80% 才响。
+            </div>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>给你自己的项目加一个 traceId</h3>
+                <p>
+                    在任意一个 Web 应用里试试：<br>
+                    1. 请求进来时生成一个 UUID，叫 <code>traceId</code>。<br>
+                    2. 把它塞到日志的每一行前面：<code>[trace=abc123] user login</code>。<br>
+                    3. 传给下游服务（用 HTTP Header <code>X-Trace-Id</code>）。<br>
+                    4. 下游也把这个 <code>traceId</code> 打到自己的日志里。
+                </p>
+                <p>
+                    然后，当某个用户报"这次操作有问题"时，你只需要问他要那次请求的 <code>traceId</code>，
+                    <strong>就能在 N 个服务的日志里搜出他这一次请求的完整路径</strong>——
+                    这就是链路追踪的雏形。
+                    一旦体会过，你就再也回不去"没有 traceId"的日志时代了。
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=19">Q19: 为什么部署上线这件事这么复杂？</a>
+                <a href="question.html?q=24">Q24: 高并发下最难的是稳定性</a>
+                <a href="question.html?q=31">Q31: 为什么稳定性比炫技更重要？</a>
+                <a href="question.html?q=23">Q23: 分布式系统为什么这么复杂？</a>
+                <a href="question.html?q=22">Q22: 负载均衡怎么承接大流量？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>看不见的系统 = 失控的系统</h3>
+                <p>
+                    一个大道至简的真理：<strong>你无法管理你无法测量的东西。</strong><br><br>
+                    这句话不只适用于系统，也适用于——
+                </p>
+                <ul style="color:white;">
+                    <li><strong>公司管理：</strong>没有仪表盘的 CEO，就是在盲开飞机。KPI、财报、月度复盘——都是"公司这个系统"的监控。</li>
+                    <li><strong>个人成长：</strong>没有"复盘 + 记录 + 反思"的人，永远原地打转。所谓"日志"，其实就是你人生的可观测性。</li>
+                    <li><strong>国家治理：</strong>普查、统计、审计——都是"社会这个系统"的 metrics 和 logs。数据造假，等于系统瞎眼。</li>
+                </ul>
+                <p>
+                    而"故障演练"更是深刻——<strong>它的哲学是"承认自己会出错"</strong>。<br><br>
+                    一个真正强大的系统，不是"从不出问题"的系统，而是<strong>"总在故意找自己麻烦"</strong>的系统。<br><br>
+                    · 消防演习：给城市打疫苗<br>
+                    · 军事演习：给国家打疫苗<br>
+                    · 应急预案：给组织打疫苗<br>
+                    · 复盘会：给团队打疫苗<br><br>
+                    <strong>凡是伟大的、能穿越周期的系统，都在做一件事：主动地、廉价地失败，来避免真实的、昂贵的失败。</strong>
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，为什么大型网站总是在做监控、日志、链路追踪和故障演练？
+            </p>
+
+            <p>
+                <strong>因为系统一旦复杂到某个程度，"能不能看见"比"写没写对"更重要。</strong>
+                Metrics 让你看到"发生了什么"、Logs 让你看到"细节是什么"、Traces 让你看到"路径怎么走的"，而演练让你在"真实故障来临前"就已经准备好了应对方案。
+            </p>
+
+            <div class="highlight-box">
+                <strong>成熟系统的秘密不是"从不出错"，<br>
+                而是"出错时你早就演练过 100 遍"。</strong><br><br>
+                这也是为什么工程师最贵的能力，从来不是"写代码"，<br>
+                而是"在系统着火时，5 分钟内定位问题、10 分钟内恢复服务"。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=26" class="btn">继续探索 Q26 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

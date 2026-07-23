@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q16：为什么一个看起来很简单的点赞、评论、下单功能，背后却要设计那么多环节？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3层认知 · 工程师视角</div>
+            <h1>为什么一个看起来很简单的点赞、评论、下单功能，背后却要设计那么多环节？</h1>
+            <p class="subtitle">用户看到的"简单"，是工程师用"复杂"换来的</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                你刷到一条视频，觉得不错，点了个赞。图标变红，计数 +1，你继续往下滑。
+            </p>
+
+            <p>
+                一切干净利落，不到 100ms。作为用户，你会觉得："这不就是把数字 +1 存起来吗？"
+            </p>
+
+            <div class="highlight-box">
+                <strong>但在工程师眼里，这一个点赞至少牵动了 10 个系统。</strong><br><br>
+                幂等、去重、防刷、计数一致、推荐更新、通知触发、审计留痕……
+                每一个"可有可无"的细节，都是无数事故换来的产物。
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <p>
+                我们就以"点赞"这个最小功能为例，看看它到底躲藏了多少事：
+            </p>
+
+            <ol>
+                <li>用户身份识别（谁在点？）</li>
+                <li>重复点击 / 网络重试怎么处理？（幂等）</li>
+                <li>是不是机器刷的？（风控）</li>
+                <li>计数怎么写？（一致性 vs 性能）</li>
+                <li>作者要不要收到通知？</li>
+                <li>推荐系统要不要知道？（信号回流）</li>
+                <li>要不要留一条审计日志？</li>
+                <li>如果下游服务挂了，怎么办？</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                用户视角只有一句话："<strong>点一下，红了</strong>。" 就完了。
+            </p>
+
+            <p>
+                这个"红一下"必须在 100ms 内反馈，否则用户会怀疑手机卡了、或者以为没点上再点一次——这就带来了新的问题。
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                最朴素的实现是这样：
+            </p>
+
+            <div class="code-block">// 天真版：直接 +1
+function like(userId, postId) {
+    db.execute(
+        'UPDATE post SET like_count = like_count + 1 WHERE id = ?',
+        [postId]
+    )
+}</div>
+
+            <p>
+                这段代码在教程里没问题，在生产环境是"事故温床"。它至少踩中四个雷：
+            </p>
+
+            <ul>
+                <li><strong>没做幂等：</strong>网络重试会连续 +2、+3。</li>
+                <li><strong>没记录关系：</strong>无法判断"这个人是否已经点过"。</li>
+                <li><strong>高并发下行锁：</strong>热门帖每秒 10 万人点赞，一行数据被 10 万个事务抢锁。</li>
+                <li><strong>没有解耦：</strong>推荐系统、通知系统全靠这个接口同步做完，直接卡住。</li>
+            </ul>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                真实的点赞链路，长这样：
+            </p>
+
+            <div class="diagram-box">
+[ 用户点击 ]
+     ↓
+① 身份认证 (JWT / Session)
+     ↓
+② 幂等校验（idempotency key / 唯一索引 user_id+post_id）
+     ↓
+③ 风控 / 反作弊（频率、设备指纹、行为特征）
+     ↓
+④ 写入点赞关系表（user_like: userId, postId, ts）
+     ↓
+⑤ 更新计数（Redis INCR 快速 → 异步同步回数据库）
+     ↓
+⑥ 发送事件到消息队列（Kafka: post.liked）
+     ↓
+   ├─→ 通知服务（提醒作者）
+   ├─→ 推荐服务（更新用户兴趣画像）
+   ├─→ 排行榜服务（热度更新）
+   ├─→ 数据仓库（BI 分析）
+   └─→ 审计日志（合规、追责）</div>
+
+            <p>
+                这里几乎每一步都不是"多余"，都是过去某次事故留下的：
+            </p>
+
+            <div class="highlight-box">
+                <strong>为什么要幂等？</strong>因为客户端网络抖动、按钮误触。<br>
+                <strong>为什么要风控？</strong>因为一堆机刷账号在给营销号点赞。<br>
+                <strong>为什么用 Redis 计数？</strong>因为热点数据打到 MySQL 那一行会被行锁卡死。<br>
+                <strong>为什么用消息队列？</strong>因为下游多个消费者，不能同步等。<br>
+                <strong>为什么要审计？</strong>因为哪天出诉讼、监管来问，你得说清楚"是谁在几点几分点了什么"。
+            </div>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                有意思的是，同一个"点赞"，在不同产品里可以做得完全不一样：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>朋友圈点赞</h4>
+                    <p>强一致优先：好友必须能看到"谁点过赞"，计数不多，直接数据库存关系即可。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>抖音点赞</h4>
+                    <p>最终一致优先：几十万点赞谁点的没人在乎，重要的是"计数不要卡"。Redis 计数 + 异步落库。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>电商下单</h4>
+                    <p>金钱事务：必须强一致、幂等、可回滚、可对账。数据库事务 + 分布式锁 + 状态机。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>直播点赞（爱心雨）</h4>
+                    <p>纯前端假动作：不上传每一次点击，只在客户端做动画，服务器采样统计即可。</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>常见误区：</strong>"这不就是一张表加一列吗？为什么要那么多组件？" 因为真实世界里，一个功能不是被<strong>需求</strong>定义的，而是被<strong>规模 + 边界条件</strong>定义的。10 个用户和 1 亿用户的"点赞"，是两种完全不同的系统。
+            </div>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>做一次"复杂度考古"</h3>
+                <p>
+                    找任意一个你熟悉的 App（比如某电商），完成一次"下单"。用抓包工具（Charles / mitmproxy / Chrome DevTools Network）观察从"点击下单"到"支付页面出现"，一共发起了多少个请求。
+                </p>
+                <p>
+                    你多半会数到 <strong>10~30 个</strong>：预下单、库存校验、优惠券匹配、地址校验、风控、创建订单、生成订单号、锁库存、跳支付……
+                </p>
+                <p>
+                    然后问自己：这些请求，哪个能砍？砍了会发生什么？
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=11">Q11: 前后端到底是怎么分工的？</a>
+                <a href="question.html?q=17">Q17: 大型系统为什么在谈缓存队列限流？</a>
+                <a href="question.html?q=21">Q21: 为什么要用消息队列？</a>
+                <a href="question.html?q=46">Q46: 为什么"简单产品"背后往往是复杂工程？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>用户看到的"简单"，是工程师用"复杂"换来的</h3>
+                <p>
+                    真正好的产品，都遵循一个残酷法则：<strong>把复杂留在自己这里，把简单交给用户</strong>。
+                </p>
+                <p>
+                    你觉得点赞简单，是因为字节的工程师帮你隐藏了幂等、风控、计数一致、异步分发；<br>
+                    你觉得下单流畅，是因为淘宝的中间件团队几百人在维护交易的强一致性；<br>
+                    你觉得微信秒回，是因为背后有 QQ 时代十几年攒下来的推送架构。
+                </p>
+                <p>
+                    "简单"从来不是免费的。它意味着组织愿意投入巨量的工程复杂度去为体验兜底。当你下次觉得某个功能"这也太糙了"的时候，你其实是在评价那家公司<strong>愿意为你隐藏多少复杂度</strong>。
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，为什么一个"点赞"要设计那么多环节？
+            </p>
+
+            <div class="highlight-box">
+                因为在大规模下，<strong>没有小功能</strong>。<br><br>
+                每一个用户看着简单的动作，都要在幂等、一致性、性能、安全、审计、扩展性之间取舍。<br>
+                你看到的红心 +1，是几十个系统在幕后同步完成的一次协奏。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=17" class="btn">继续探索 Q17 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

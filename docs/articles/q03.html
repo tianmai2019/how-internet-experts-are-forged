@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q3：为什么平台会越来越懂你喜欢看什么？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-1">
+            <div class="level-badge">🎯 第1层认知 · 用户视角</div>
+            <h1>为什么平台会越来越懂你喜欢看什么？</h1>
+            <p class="subtitle">你没告诉它你喜欢什么，但它就是知道</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                打开抖音，前 5 个视频还挺无聊；再刷 10 个，突然全是你感兴趣的。用一周之后，你会发现它推的东西"精准得可怕"——
+                你甚至没搜过、没点过赞，它就<em>猜到了</em>。
+            </p>
+
+            <p>
+                YouTube 会推给你下一个刚好想看的视频，网易云会做出一张让你循环一整天的私人歌单，
+                淘宝在你还没意识到自己想买什么之前，就把它摆到了首页。
+            </p>
+
+            <p>
+                这不是巧合，也不是"读心术"。这背后是一整套<strong>推荐系统</strong>在你每次滑动、停留、跳过之间悄悄学习。
+            </p>
+
+            <div class="highlight-box">
+                <strong>为什么这个问题重要？</strong><br>
+                今天你看到什么内容、买什么东西、听什么歌、约会什么人，越来越多是<em>算法在替你筛选</em>。
+                理解它的工作方式，就是理解为什么"世界"呈现在你面前的样子和别人不同。
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li><strong>平台怎么知道你喜欢什么？</strong>它从哪些行为里读出你的偏好？</li>
+                <li><strong>为什么它"越来越"懂？</strong>它是怎么"学"的？</li>
+                <li><strong>它推的是你真的喜欢的，还是你会点开的？</strong>这两者其实不一样。</li>
+                <li><strong>为什么两个人打开同一个 App，看到的完全不同？</strong></li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                你只感受到两件事：刷到喜欢的——愉悦；刷到不喜欢的——快速划走。
+            </p>
+
+            <p>
+                但你不知道的是：<strong>划走这个动作本身，就是最强的信号</strong>。你花在一个视频上的每一毫秒，都在被记录。
+                停留 3 秒 vs 停留 10 秒 vs 完播 vs 点赞 vs 转发，每一个都是一票，一起决定"下一个推什么"。
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                最经典的思路叫<strong>协同过滤（Collaborative Filtering）</strong>：找到和你行为相似的人，看他们喜欢什么，你大概率也喜欢。
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">🧍 你看过 A、B、C</div>
+                <div class="arrow">↓ 找到"很像你"的人</div>
+                <div class="step-box">🧍 他也看过 A、B、C，还看了 D</div>
+                <div class="arrow">↓ 推理</div>
+                <div class="step-box">🎯 那 D 也推给你</div>
+            </div>
+
+            <p>
+                更现代的做法是把每个用户和每个内容都变成一串数字（叫 <strong>embedding 向量</strong>），
+                然后用"两串数字有多接近"来衡量"你有多可能喜欢它"。
+            </p>
+
+            <div class="code-block"># 极简伪代码：一次推荐是怎么算出来的
+user_vec   = embed_user(user_id)           # [0.12, -0.34, 0.88, ...] 256 维
+candidates = recall(user_vec, top=5000)    # 从千万条里粗筛 5000 条
+
+# 精排：为每一条打一个"你会喜欢的概率"
+scores = []
+for item in candidates:
+    item_vec = embed_item(item.id)
+    p_click   = model_ctr(user_vec, item_vec, context)   # 会点吗
+    p_finish  = model_finish(user_vec, item_vec)         # 会看完吗
+    p_like    = model_like(user_vec, item_vec)           # 会点赞吗
+    # 多目标融合：不同产品权重不同
+    score = 0.4 * p_click + 0.3 * p_finish + 0.3 * p_like
+    scores.append((item, score))
+
+feed = sorted(scores, key=lambda x: -x[1])[:20]   # 你下拉刷出的 20 条</div>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                从"你划一下"到"推给你下一条"，其实是一个每秒运转百万次的巨大流水线：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">📱 你的每一个动作</div>
+                <div class="arrow">↓ 日志上报</div>
+                <div class="step-box">📊 行为日志系统</div>
+                <div class="arrow">↓ 特征工程</div>
+                <div class="step-box">🧠 模型训练（离线 + 实时）</div>
+                <div class="arrow">↓ 部署</div>
+                <div class="step-box">🎯 推荐服务：召回 → 粗排 → 精排 → 重排</div>
+                <div class="arrow">↓ 返回</div>
+                <div class="step-box">📱 你的下一屏</div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>整个链路里有一个隐藏武器：A/B 测试。</strong>
+                平台会同时跑几十上百个"实验版本"，随机把 1% 的用户扔进版本 A、另 1% 扔进版本 B，
+                看谁的完播率高、留存好，赢的那一版扩量。这才是"越来越懂你"的真正引擎——不是某个天才算法一次到位，
+                而是每天成千上万次的<em>小小胜出</em>累积起来。
+            </div>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                这里藏着一个让工程师和产品经理夜里睡不着的问题：<strong>"你喜欢的"和"你会点的"，其实是两回事。</strong>
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>优化"点击率"</h4>
+                    <p>短期指标飙升，你会一直刷。但内容越来越标题党、情绪化、极端化——因为这些"最能骗你点一下"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>优化"长期满意"</h4>
+                    <p>看似正确，但很难衡量：什么算"满意"？留存？回访？还是"半年后你还会推荐给朋友吗"？信号弱，训练慢。</p>
+                </div>
+            </div>
+
+            <p>
+                所以每一家平台都在偷偷权衡：多让你留一秒 vs 让你几年后还回来；给你新鲜感 vs 给你熟悉感；
+                推流量大的爆款 vs 推冷门优质。<strong>推荐系统的每一个参数背后，都是价值观的选择</strong>——
+                只是这些选择被藏在了工程师的表格和 A/B 实验的胜率里。
+            </p>
+
+            <p>
+                还有一个不得不面对的副作用：<strong>信息茧房</strong>。系统越懂你，就越倾向于给你"你会喜欢的"，
+                你就越少看到"你不会喜欢但可能重要的"。久而久之，你以为"世界就是这样"，其实是"算法眼里你以为的世界"。
+            </p>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>试试看：给自己开一个"小号"</h3>
+                <p>
+                    注册一个全新的抖音/YouTube 账号，前 30 分钟只看某一类内容（比如只看猫）。然后再随便刷 10 分钟，
+                    观察它给你推的内容占比是怎么变化的。
+                </p>
+                <p>
+                    换个身份再试一次：这次只看某个完全不同的领域（比如烹饪）。
+                    对比两个小号看到的世界，你会亲眼看到<strong>"算法眼中的你"是如何被塑造出来</strong>的。
+                </p>
+            </div>
+
+            <p>
+                想更工程一点，可以观察这段 URL 参数：
+            </p>
+
+            <div class="code-block">GET /feed?user_id=xxx&amp;last_seen=1690000000&amp;session=abc
+    &amp;ab_bucket=exp_v3_variant_b     ← 你被分到了 B 组
+    &amp;refresh_reason=pull_down       ← 你是下拉刷新的（不同来源，推的策略不同）</div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=33">Q33: 为什么平台知道你想看什么？</a>
+                <a href="question.html?q=35">Q35: 推荐算法是如何工作的？</a>
+                <a href="question.html?q=36">Q36: 什么是机器学习？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>从技术到世界</h3>
+                <p>
+                    过去我们以为"品味是自己养出来的"——你听什么歌、爱哪个电影、支持哪个球队，都是你自由选择的结果。
+                    现在越来越多的证据表明：<strong>你的品味有一半是被推荐系统塑造出来的</strong>。
+                    它先猜你会喜欢什么，你被推得多了，就真的开始喜欢，反过来又变成它下一次训练的正样本。
+                </p>
+                <p>
+                    这是一种非常安静的权力。它不告诉你不能看什么，它只是不给你看某些东西；
+                    它不告诉你必须相信什么，它只是让某些观点每天出现三次，让另一些永远不出现。
+                </p>
+            </div>
+
+            <p>
+                更让人不安的是：这些系统的目标函数（optimize target）是它的商业目标，不是你的人生目标。
+                它想让你多刷 3 分钟，而不是让你更幸福、更博学、或者更有勇气。
+                两者有时候重叠，但常常不重叠。
+            </p>
+
+            <p>
+                所以理解推荐系统，本质上是理解一件事：<strong>你面前的信息流，不是"世界"，而是"世界的一份为你定制的版本"</strong>。
+                而定制它的人，不是你自己。
+            </p>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                为什么平台会越来越懂你喜欢看什么？
+            </p>
+
+            <p>
+                <strong>答案是：</strong>因为你每一次滑动、停留、点赞、跳过，都被变成一个数字，
+                喂进一个每天都在自我更新的模型。它不是"懂你"，它是<em>用你过去的行为预测你下一秒的行为</em>，
+                然后把预测最准的那条推到你眼前。
+                久而久之，它塑造的不只是你的信息流，还有你的品味、你的情绪、你以为的自己。
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=4" class="btn">继续探索 Q4 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

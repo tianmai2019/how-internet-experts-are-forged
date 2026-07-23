@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q24：为什么高并发场景下，最难的不是功能实现，而是稳定性保障？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3层认知 · 工程师视角</div>
+            <h1>为什么高并发场景下，最难的不是功能实现，而是稳定性保障？</h1>
+            <p class="subtitle">功能是显性成本，稳定性是隐性资产</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                你有没有见过这种"神操作"——某个新出的抽奖小程序，功能看起来一样简单：点一下按钮，抽个奖。但一到抽奖的整点，页面直接白屏、崩溃、502、"服务器繁忙"……
+            </p>
+
+            <p>
+                同样是"点一下按钮"，为什么阿里的双 11、腾讯的红包、12306 的抢票能扛住？
+                <strong>不是因为它们"功能更强"，而是因为它们的"稳定性投入"是新手小程序的成千上万倍。</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心真相：</strong><br><br>
+                做出功能，可能只要 1 天。<br>
+                做出"1 亿人同时用还不崩"的功能，可能要 1 年。<br>
+                <strong>功能是加法，稳定性是乘法——每加一个 9，成本翻倍。</strong>
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li><strong>"可用性"到底怎么衡量？</strong> "4 个 9"是什么意思？</li>
+                <li><strong>为什么并发一上去，一切都变了？</strong> 单个请求正常，多个请求为啥就崩？</li>
+                <li><strong>稳定性靠什么？</strong> 是靠"更好的代码"吗？</li>
+                <li><strong>为什么大公司都在做"故障演练"？</strong> 主动搞事情？</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                用户对稳定性的期待，是一条<strong>非常残酷的曲线</strong>——
+            </p>
+
+            <ul>
+                <li>系统正常 100 次，他不会夸你</li>
+                <li>系统崩了 1 次，他会骂你并且转告 10 个人</li>
+                <li>崩在关键时刻（付款、抢票、领奖），他会永远记住</li>
+            </ul>
+
+            <p>
+                这就是为什么"看不见的稳定性"，永远比"看得见的功能"更重要。
+                功能是加分项，稳定性是<strong>不出现就没人夸、一出现就是灾难</strong>的底线。
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                工程师最初会以为——"我把代码写好，测试都过了，不就稳定了吗？"
+                然后被现实教育：
+            </p>
+
+            <div class="code-block">
+# 单个请求：完美运行
+def buy(item_id, user_id):
+    stock = db.query("SELECT stock FROM items WHERE id=?", item_id)
+    if stock > 0:
+        db.execute("UPDATE items SET stock=stock-1 WHERE id=?", item_id)
+        return "success"
+
+# 一万个请求同时来：超卖了！
+# - 都读到 stock = 5
+# - 都执行 stock - 1
+# - 结果卖出了 10000 件，实际只有 5 件
+            </div>
+
+            <p>
+                这就是<strong>并发</strong>把简单问题变复杂的经典例子。
+                同样的代码，1 个人用是对的，10000 个人同时用就是错的。
+                稳定性问题的第一课是——<strong>"正确"是有条件的</strong>。
+            </p>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                衡量稳定性有一个业界通用的语言——<strong>可用性 SLA</strong>。它用"几个 9"表示一年可以宕机多久：
+            </p>
+
+            <div class="diagram-box">
+                99%（2 个 9）→ 每年宕机 87.6 小时（≈ 3.65 天）<br>
+                99.9%（3 个 9）→ 每年宕机 8.76 小时<br>
+                99.99%（4 个 9）→ 每年宕机 52.6 分钟 <span style="color:#06B6D4">⬅ 电商标配</span><br>
+                99.999%（5 个 9）→ 每年宕机 5.26 分钟 <span style="color:#06B6D4">⬅ 金融/电信</span><br>
+                99.9999%（6 个 9）→ 每年宕机 31.5 秒 <span style="color:#06B6D4">⬅ 天价</span>
+            </div>
+
+            <p>
+                多一个 9，成本可能<strong>指数级上升</strong>。因为你不再和"代码错误"斗争，而是要和光速、磁盘、宇宙射线、人为失误等所有小概率事件斗争。
+            </p>
+
+            <p>
+                另外两个关键指标：
+            </p>
+
+            <ul>
+                <li><strong>MTBF</strong>（Mean Time Between Failures）：平均无故障时间——衡量"多久出一次事"。</li>
+                <li><strong>MTTR</strong>（Mean Time To Recovery）：平均恢复时间——衡量"出事之后多久能好"。</li>
+            </ul>
+
+            <p>
+                有意思的是，现代互联网公司大多不再幻想"MTBF 无限大"（永远不出事），而是<strong>拼命降低 MTTR</strong>（出事了 30 秒内恢复）。这是一种成熟的哲学转向：从"避免失败"到"快速恢复"。
+            </p>
+
+            <p>
+                稳定性保障的完整"武器库"大致是这样：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>限流 + 熔断 + 降级</h4>
+                    <p><strong>限流：</strong>每秒最多 1000 个请求进来。<br><strong>熔断：</strong>下游 5 秒都在超时，直接不再调用。<br><strong>降级：</strong>非核心功能先关掉，保住主链路。<br>三件套是高并发系统的"命门"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>故障域隔离</h4>
+                    <p>把系统切成多个"故障单元"（多机房、多可用区），一个挂了其他还能跑。<br>不要把所有鸡蛋放一个篮子。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>容量规划</h4>
+                    <p>预估峰值 QPS、精确到 CPU/内存/带宽，然后<strong>预留 3~5 倍容量</strong>。<br>双 11 之前几个月，阿里就在做"容量压测"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>发布策略</h4>
+                    <p>不要全量发布。用<strong>灰度</strong>（先 1%，再 10%，再 100%）、<strong>金丝雀</strong>（一小撮用户先试）、<strong>蓝绿部署</strong>（两套环境切流）来降低出事概率。</p>
+                </div>
+            </div>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                稳定性保障最反直觉的一点是——<strong>你要主动"变慢"、主动"拒绝服务"、主动"少做点事"</strong>。
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心权衡：</strong><br>
+                <strong>让每个请求都成功</strong> ↔ <strong>让整个系统不崩</strong><br>
+                两者不可兼得。<br>
+                真正稳定的系统，会主动拒绝一部分请求，来保护自己不进入雪崩状态。
+            </div>
+
+            <p>
+                典型的例子——微博热搜爆了怎么办？不是"让所有人都能刷"，而是：
+            </p>
+
+            <ul>
+                <li>先<strong>限流</strong>，多余的请求直接返回"稍后再试"</li>
+                <li><strong>降级</strong>：热搜列表暂时不实时更新，用缓存里的静态版本</li>
+                <li><strong>熔断</strong>：如果推荐系统超时，就跳过它，只返回基础内容</li>
+                <li><strong>扩容</strong>：紧急拉起备用机器，扩大处理能力</li>
+            </ul>
+
+            <p>
+                这些操作的哲学都是一样的：<strong>宁可让 10% 的人稍等，也别让 100% 的人全挂</strong>。
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>常见误区：</strong>"我把代码写好、测试写全，就是稳定了"。<br>
+                稳定性不是代码质量问题，是<strong>系统性问题</strong>。它涉及：
+                网络、硬件、依赖、部署、发布、监控、恢复……一个环节没考虑，全盘皆输。
+                你可能永远查不出"为什么周三下午 3 点系统会抖一下"——直到有人告诉你那时候正好在批量重启一个下游服务。
+            </div>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>用 wrk 压一压你自己的服务</h3>
+                <p>
+                    如果你有一个 Web 服务（哪怕是 Flask hello world），试试：<br>
+                    1. 安装 wrk：<code>brew install wrk</code>（Mac）<br>
+                    2. 运行压测：<code>wrk -t4 -c1000 -d30s http://localhost:8080/</code><br>
+                    （4 个线程，1000 个并发连接，压 30 秒）<br>
+                    3. 观察结果：QPS、平均延迟、P99 延迟、错误率<br>
+                    4. 逐步加压：<code>-c 2000</code>、<code>-c 5000</code>……直到你看到<strong>错误率飙升</strong>。
+                </p>
+                <p>
+                    这一步做完，你就知道自己写的"简单接口"，其实<strong>在什么并发量下会崩</strong>。
+                    这是稳定性思维的第一次觉醒——<strong>不要问"能不能跑"，要问"能扛多少"</strong>。
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=15">Q15: 前后端如何分工？</a>
+                <a href="question.html?q=23">Q23: 分布式系统为什么这么复杂？</a>
+                <a href="question.html?q=25">Q25: 为什么大厂总在做监控、日志、演练？</a>
+                <a href="question.html?q=31">Q31: 为什么稳定性比炫技更重要？</a>
+                <a href="question.html?q=22">Q22: 负载均衡怎么承接大流量？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>功能是显性成本，稳定性是隐性资产</h3>
+                <p>
+                    新工程师对功能有一种<strong>迷之骄傲</strong>——
+                    "我一个下午就实现了别人一周做的东西！"
+                    然后他会发现，这个东西在真实流量下 1 分钟就挂了。<br><br>
+                    资深工程师看待"功能"时，会不自觉多算一笔账：<br>
+                    · 这个功能上线后，多几倍的下游调用？<br>
+                    · 高峰期能扛多少？<br>
+                    · 出错时如何恢复？<br>
+                    · 会不会引起雪崩？<br><br>
+                    <strong>"功能"是老板能看见的、能吹的，是显性成本。</strong><br>
+                    <strong>"稳定性"是没人夸、但是命根子的，是隐性资产。</strong><br><br>
+                    这个视角推广到现实社会同样成立：<br>
+                    · <strong>一家餐厅</strong>——菜好吃很重要（功能），但"从不食物中毒"更重要（稳定）。<br>
+                    · <strong>一段婚姻</strong>——浪漫时刻是加分项，但"吵架不冷战"是底线（稳定）。<br>
+                    · <strong>一个国家</strong>——GDP 增长是显性成就，但"社会不动荡"才是根本（稳定）。<br><br>
+                    所有真正伟大的系统，都不是"能做多惊艳"，而是"<strong>能在最糟的时刻依然靠谱</strong>"。
+                    你在互联网大厂看到的所有"看似过度设计"的东西——多机房、多副本、演练、灰度、熔断——
+                    都不是给你炫技的，是给"最坏那天"准备的保险单。
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，为什么高并发场景下，最难的不是功能实现，而是稳定性保障？
+            </p>
+
+            <p>
+                <strong>因为功能是有限维的问题，稳定性是无穷维的问题。</strong>
+                你要防的不再是"这行代码错没错"，而是"流量突增、依赖挂掉、机器炸了、网络抖动、发布出错、误操作"等等等等无数种小概率事件的组合。
+                每多防一种，成本翻一番；每漏一种，可能全盘皆输。
+            </p>
+
+            <div class="highlight-box">
+                成长的分水岭在这里：<br>
+                初级工程师问："这个功能能实现吗？"<br>
+                资深工程师问："这个功能<strong>在最糟的一天</strong>能实现吗？"<br>
+                <br>
+                前者做的是"功能"，后者做的是"系统"。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=25" class="btn">继续探索 Q25 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

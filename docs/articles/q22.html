@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q22：为什么负载均衡可以让同一个服务同时承接大量请求？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3层认知 · 工程师视角</div>
+            <h1>为什么负载均衡可以让同一个服务同时承接大量请求？</h1>
+            <p class="subtitle">让"一个服务"变成"一群服务"的错觉</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                你有没有想过一个奇怪的事：全国 10 亿人都在同一个"www.taobao.com"上刷刷刷，为什么这台机器不会累死？
+                甚至更神奇：如果它累死了，怎么可能还没有一个用户察觉到？
+            </p>
+
+            <p>
+                答案是——<strong>你以为你在访问"一台淘宝服务器"，其实你面对的是一整个机房、上万台机器。</strong>
+                中间悄悄替你把请求分配下去的那个东西，就叫<strong>负载均衡（Load Balancer，LB）</strong>。
+            </p>
+
+            <div class="highlight-box">
+                <strong>负载均衡的本质是什么？</strong><br><br>
+                一句话：<strong>让"一个服务"看起来是一台机器，其实是一群机器。</strong><br>
+                外面看是单点，里面藏着一支军队。
+            </div>
+
+            <p>
+                理解负载均衡，你就理解了"横向扩展"这个互联网架构里最重要的概念——为什么大厂能"加机器就撑住流量"，不需要重写代码。
+            </p>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li><strong>用户怎么"以为"自己在访问一台机器？</strong></li>
+                <li><strong>请求怎么被分配下去？</strong> 谁决定"这次给谁处理"？</li>
+                <li><strong>如果一台机器坏了，用户会不会察觉？</strong></li>
+                <li><strong>为什么有人叫 L4，有人叫 L7？</strong></li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                普通用户对负载均衡的感知——<strong>零</strong>。
+                他们只会觉得：
+            </p>
+            <ul>
+                <li>这个网站怎么这么"稳"？双 11 那么多人都能刷？</li>
+                <li>偶尔哪次请求慢了一下，刷新就好了（其实换了一台机器）</li>
+                <li>他们从来不知道，同一秒里，"淘宝"其实由几千台机器同时在为不同用户服务</li>
+            </ul>
+
+            <p>
+                这就是负载均衡最伟大的地方——<strong>它让复杂消失在用户视野里</strong>。
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                最简单的负载均衡就是<strong>轮询（Round Robin）</strong>：
+                请求来了，第一个给机器 A，第二个给机器 B，第三个给机器 C，第四个再回到 A……如此循环。
+            </p>
+
+            <div class="code-block">
+# 一个极简的"应用级"负载均衡（伪代码）
+servers = ["10.0.0.1", "10.0.0.2", "10.0.0.3"]
+counter = 0
+
+def pick_server():
+    global counter
+    server = servers[counter % len(servers)]
+    counter += 1
+    return server
+
+def handle_request(req):
+    backend = pick_server()
+    return forward(req, backend)   # 把请求转发过去
+            </div>
+
+            <p>
+                真实世界当然复杂得多，但精神完全一致：<strong>一个"分发者"站在最前面，把请求匀开来打到后面一堆"干活的"</strong>。
+            </p>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                真实互联网系统里，负载均衡不止一层，而是环环相扣的多层结构。
+            </p>
+
+            <div class="diagram-box">
+                【用户】<br>
+                ↓ 通过域名 www.taobao.com<br>
+                <br>
+                【DNS 负载均衡】（就近返回不同机房的 IP）<br>
+                ↓<br>
+                【L4 负载均衡】（LVS / F5，按 IP 端口分流，超快）<br>
+                ↓<br>
+                【L7 负载均衡】（Nginx / Envoy，按 URL/Header 精细分流）<br>
+                ↓<br>
+                【后端服务集群】机器 A、B、C、D、E……
+            </div>
+
+            <p>
+                这一路上，每一层都在"分发"——只是分发的粒度不一样：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>DNS 负载均衡</h4>
+                    <p>粒度最粗：<strong>按地理位置</strong>返回不同的机房 IP。<br>北京用户去北京机房，广州用户去广州机房。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>L4 负载均衡（传输层）</h4>
+                    <p>基于 <strong>IP + 端口</strong> 分流，不看请求内容。<br>极快，一台 LVS 可以扛几十万 QPS，但没法"看内容"做智能路由。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>L7 负载均衡（应用层）</h4>
+                    <p>能看 <strong>HTTP URL、Header、Cookie</strong>。<br>可以"把 /video 的请求打到视频集群，/pay 的请求打到支付集群"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>服务网格（Service Mesh）</h4>
+                    <p>更细：<strong>服务内部之间的调用</strong>也做负载均衡。<br>典型代表：Istio、Envoy。这是微服务时代的必需品。</p>
+                </div>
+            </div>
+
+            <p>
+                除了"怎么分"，负载均衡还有一个关键武器：<strong>健康检查（Health Check）</strong>。
+                每隔几秒，LB 会 ping 一下后面的机器："你还活着吗？"
+                死了的机器会被<strong>自动从池子里踢出去</strong>，新请求不再打过去。
+                这就是"一台机器坏了用户毫无察觉"的秘密。
+            </p>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                负载均衡看似简单，但里面藏着几个非常烧脑的权衡：
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心权衡：</strong>
+                <strong>均匀分发</strong> ↔ <strong>会话粘性</strong><br>
+                想要真正均匀 → 用户每次可能被打到不同机器 → 登录状态丢失。<br>
+                想要"同一用户去同一台机器"（Session Sticky）→ 部分机器会累一些。
+            </div>
+
+            <p>
+                几个经典策略你迟早要选一个：
+            </p>
+
+            <ul>
+                <li><strong>轮询（Round Robin）：</strong> 最公平，但不考虑机器性能。</li>
+                <li><strong>加权轮询：</strong> 好机器多分点。</li>
+                <li><strong>最少连接：</strong> 谁手上活儿最少就给谁。适合请求耗时不均匀的场景。</li>
+                <li><strong>一致性哈希（Consistent Hashing）：</strong> 同一个用户 / 同一个 Key 永远打到同一台机器，用于缓存亲和性。加机器时只有一小部分请求需要"搬家"。</li>
+                <li><strong>IP Hash：</strong> 按客户端 IP 分流，简单实现"粘性会话"。</li>
+            </ul>
+
+            <div class="callout callout--warning">
+                <strong>常见误区：</strong>"负载均衡后就一定不宕机了"。<br>
+                LB 自己也是单点！如果 LB 挂了，后面几百台机器一起变成"孤岛"。
+                所以真实系统会做<strong>多个 LB 互为主备</strong>（Keepalived + VIP、云上的 SLB 高可用集群），甚至 DNS 层就多返回几个 LB 地址。
+                <strong>没有真正的单点，只有更多的备份。</strong>
+            </div>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>亲眼看看"你在访问哪一台"</h3>
+                <p>
+                    在命令行里执行：
+                </p>
+                <div class="code-block" style="background:#111827;">
+$ nslookup www.baidu.com<br>
+Server: 8.8.8.8<br>
+Address: 8.8.8.8#53<br>
+Non-authoritative answer:<br>
+Name: www.a.shifen.com<br>
+Address: 110.242.68.66<br>
+Address: 110.242.68.4
+                </div>
+                <p>
+                    看到没？返回了<strong>好几个 IP 地址</strong>。这就是 DNS 负载均衡最直接的证据——同一个域名，背后是一堆 IP。
+                    你的浏览器会挑一个连接，其他 IP 是它的"备胎"。
+                </p>
+                <p>
+                    再来一遍，试试用 <code>curl</code>：<br>
+                    <code>curl -I https://www.taobao.com</code> —— 观察 <code>Server</code> 或 <code>Set-Cookie</code> 头，你可能会看到不同的机房标识。
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=15">Q15: 前端和后端到底怎么分工？</a>
+                <a href="question.html?q=17">Q17: 为什么要谈缓存、队列、负载均衡？</a>
+                <a href="question.html?q=21">Q21: 消息队列如何削峰填谷？</a>
+                <a href="question.html?q=23">Q23: 分布式系统为什么这么复杂？</a>
+                <a href="question.html?q=20">Q20: 缓存为何能提升性能？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>负载均衡 = 可扩展性的语法糖</h3>
+                <p>
+                    在没有负载均衡的时代，"变强"只有一种方式——<strong>把这台机器换成更贵的</strong>。
+                    这叫"垂直扩展"，代价高、天花板明确、故障时一夜回到解放前。<br><br>
+                    负载均衡带来了另一种"变强"的可能——<strong>横向扩展</strong>：
+                    机器不够？加就是了。加 10 台，就有 10 倍处理能力。
+                    从此，"性能"这个词不再是硬件问题，而是钱和架构问题。<br><br>
+                    这背后暗藏着一个大帝视角的洞察：<br>
+                    <strong>"一个服务" 是一种叙事，"一群服务" 才是真相。</strong><br><br>
+                    这个思路超越技术，直接影响到组织管理：<br>
+                    · 一家公司为什么能"扩张 100 倍还不崩"？因为它把"CEO 一人决策"拆成了"多个业务群独立决策"（组织上的负载均衡）。<br>
+                    · 一个国家的行政系统为什么能覆盖几亿人？因为它有"中央-省-市-县-乡"的分层派发（层级负载均衡）。<br>
+                    · 一个大学讲座为什么要分教室？因为一间教室装不下所有人（会话粘性 + 分流）。<br><br>
+                    <strong>凡是"面对海量请求还能稳定输出"的系统——不管是软件、组织、还是社会——都在做同一件事：把"一个入口"变成"一支军队"。</strong>
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，为什么负载均衡可以让同一个服务同时承接大量请求？
+            </p>
+
+            <p>
+                <strong>因为它把"一个服务"这个概念解耦成了"一群机器 + 一个入口"。</strong>
+                入口负责路由和保活，机器负责干活。请求变多？加机器；机器坏了？踢掉换一台。
+                外面的世界永远只看到一个稳稳当当的"服务"。
+            </p>
+
+            <div class="highlight-box">
+                负载均衡真正伟大的地方，不是它有多快，<br>
+                而是它让"扩展"成为了一种<strong>加法运算</strong>——<br>
+                你不再需要重构，只需要加机器。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=23" class="btn">继续探索 Q23 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

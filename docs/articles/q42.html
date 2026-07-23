@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q42：为什么生成式AI和传统软件系统在本质上不一样？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-6">
+            <div class="level-badge">🤖 第6层认知 · AI 时代视角</div>
+            <h1>为什么生成式AI和传统软件系统在本质上不一样？</h1>
+            <p class="subtitle">从"规则→输出"，到"分布→采样"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                过去 60 年，我们对"软件"的直觉是这样的：
+                你写代码，代码规定"如果 A，就做 B"，然后机器按你写的做。
+                Excel 一定按公式算，登录接口一定按逻辑判断密码——软件是<strong>可预期的机器</strong>。
+            </p>
+
+            <p>
+                但用过 ChatGPT 的人都有这种感觉：<em>"这东西怎么用起来完全不一样？"</em>
+                同一个问题问两次，答案不一样；有时候特别聪明，有时候特别蠢。
+                它更像一个<strong>捉摸不定的合作者</strong>，而不是一台机器。
+            </p>
+
+            <div class="highlight-box">
+                <strong>为什么会这样？</strong><br>
+                因为它压根不是"传统意义上的软件"。<br>
+                传统软件的核心是<em>规则</em>，生成式 AI 的核心是<em>分布</em>——这是两种世界观。
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li><strong>传统软件是怎么"决定"输出的？</strong></li>
+                <li><strong>生成式 AI 是怎么"决定"输出的？</strong></li>
+                <li><strong>为什么两者会长得越来越像，本质却完全相反？</strong></li>
+                <li><strong>这对我们做工程有什么根本影响？</strong></li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                作为用户，你看不出计算器和 ChatGPT 有什么"本质"区别——都是输入一段文字，出来一段结果。
+                但你会隐约感觉到：<strong>计算器是"工具"，ChatGPT 更像"对象"</strong>。
+                你不会跟计算器"讨价还价"，但你会跟 AI 反复"聊"，希望它答得更好。
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                在实现层，两者的差别一览无余。传统软件是<strong>显式规则</strong>，代码写死了逻辑：
+            </p>
+
+            <div class="code-block">// 传统软件：SQL 查询
+SELECT price FROM products WHERE id = 42;
+
+// 结果是"确定的"：只要数据没变，答案永远一样。
+// 42 号产品的价格是 128.00 元。就是这样。就是这样。</div>
+
+            <p>
+                生成式 AI 完全不同。它没有 <code>if/else</code>，没有查询表——它是一个<strong>装着几千亿参数的大矩阵</strong>，
+                这些参数（weights，权重）在训练时被"喂海量数据"调整过：
+            </p>
+
+            <div class="code-block">// 生成式 AI：LLM 补全
+prompt = "42号产品的价格是"
+→ 前向计算通过神经网络（几百层 Transformer）
+→ 每一层做的都是矩阵乘法 + 非线性变换
+→ 最终输出一个"下一个 token 的概率分布"
+→ 采样得到："128 元"
+
+// 结果是"分布的"：同样输入两次，可能得到不同答案。
+// 因为它是从概率分布里采样，不是查表。</div>
+
+            <p>
+                这里的 <code>权重</code> 你可以粗暴理解为：一堆学出来的数字，
+                它们编码了模型"见过的所有文字之间的统计关系"。<strong>模型不存文字，模型存的是"模式"。</strong>
+            </p>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                当你把这两种系统放到"整个链路"里看，它们的差异是惊人的：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🏛️ 传统软件</h4>
+                    <p>
+                        <strong>范式：</strong>规则 → 输出<br>
+                        <strong>逻辑写在哪：</strong>代码里，人类写的<br>
+                        <strong>可解释性：</strong>可以逐行读<br>
+                        <strong>可预测性：</strong>同输入 → 同输出<br>
+                        <strong>失败方式：</strong>抛异常、报错<br>
+                        <strong>调试方式：</strong>加日志、打断点
+                    </p>
+                </div>
+                <div class="compare-card">
+                    <h4>🌀 生成式 AI</h4>
+                    <p>
+                        <strong>范式：</strong>分布 → 采样<br>
+                        <strong>逻辑写在哪：</strong>权重里，训练时"长出来的"<br>
+                        <strong>可解释性：</strong>只能观察，无法逐行读<br>
+                        <strong>可预测性：</strong>同输入 → 分布相同、样本可能不同<br>
+                        <strong>失败方式：</strong>不报错，只是输出错的但看起来对的<br>
+                        <strong>调试方式：</strong>改 prompt、加 RAG、微调、评估
+                    </p>
+                </div>
+            </div>
+
+            <p>
+                注意最扎心的那一行：<strong>失败方式</strong>。
+                传统软件失败时会大声报错（"NullPointerException！"），你至少知道出错了。
+                生成式 AI 失败时<strong>安静地继续说话</strong>——你可能读了半天都没意识到它错了。
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>常见误区：</strong>"AI 只是复杂一点的软件。"<br>
+                不对。它是<em>另一类</em>软件。
+                你不能用"给传统软件调 bug"的姿势去用 AI——那会让你既失望又困惑。
+            </div>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                有人会问：既然分布式采样这么不确定，为什么不干脆做成确定式规则？
+                答案是——<strong>做不到</strong>。
+            </p>
+
+            <p>
+                写一段"总结这篇文章"的规则？你没法把"总结"变成 if/else。写一段"识别猫的图片"的规则？
+                过去 30 年计算机视觉尝试了，效果远不如深度学习。
+                <strong>只要问题涉及"人类语言、感知、创意"，规则式思路就会撞墙</strong>——
+                因为这些问题的复杂度，超过了人类能显式写下的规则数量。
+            </p>
+
+            <p>
+                生成式 AI 的关键突破，是"跳过定义规则"这一步——直接从数据中<strong>涌现</strong>（emerge）出能力。
+                翻译、推理、写代码这些能力，没人显式教它，只是模型"变大后自动会了"。
+                这是我们从没在传统软件里见过的现象。
+            </p>
+
+            <div class="highlight-box">
+                <strong>关键差异总结：</strong>
+                <ul>
+                    <li>传统软件：<em>人先想清楚规则，再让机器执行。</em></li>
+                    <li>生成式 AI：<em>人先给数据，让机器自己"长出"某种能力。</em></li>
+                </ul>
+                这意味着<strong>工程师的角色也变了</strong>：从"规则设计者"变成"数据策展人 + 行为观察者"。
+            </div>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>让两个系统"同题作答"</h3>
+                <p>
+                    打开一个计算器 App 和一个 AI 助手（ChatGPT / Claude / Gemini 都行）。<br>
+                    在两边分别输入：<em>"128 × 47 等于多少？"</em>
+                </p>
+                <p>
+                    观察三件事：<br>
+                    1️⃣ 计算器：每次都得同一个数，快、稳、无解释。<br>
+                    2️⃣ AI：可能算对，也可能算错；换个问法结果会变；它还会"解释推理过程"。<br>
+                    3️⃣ 让 AI 多试几次同样的问题——它可能给出不同的解释路径，甚至不同的错法。
+                </p>
+                <p>
+                    这就是"规则 → 输出" vs "分布 → 采样"最直观的对比。
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=40">Q40: 为什么AI看起来像在理解你？</a>
+                <a href="question.html?q=41">Q41: 为什么AI能说得流畅却不一定正确？</a>
+                <a href="question.html?q=43">Q43: 为什么AI的输出带有概率性？</a>
+                <a href="question.html?q=45">Q45: 为什么AI没让互联网变简单？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>软件工程正在离开"精确定义"，进入"概率共舞"</h3>
+                <p>
+                    过去，"程序员"这个词代表的是：<em>精确、逻辑、可预测</em>。
+                    你写下的每一行代码，都是一句刻在石头上的判决。
+                </p>
+                <p>
+                    生成式 AI 打破了这个契约。它引入了一种全新的工程文化：
+                </p>
+                <ul>
+                    <li><strong>测试从"断言相等"变成"评估质量"</strong>——你不能再断言输出等于某字符串。</li>
+                    <li><strong>迭代从"改代码"变成"改 prompt + 改数据"</strong>——bug 可能在文本里，不在代码里。</li>
+                    <li><strong>可靠性从"每次一样"变成"分布上够好"</strong>——你接受偶尔翻车，只要频率可控。</li>
+                </ul>
+                <p>
+                    这不是软件工程的死亡，而是它的<strong>第二次成年</strong>——
+                    我们第一次要和一种自己不完全理解的东西共同构建产品。
+                    在第 6 层认知里，你要接受一件事：<em>控制感的减少，是能力扩展的代价。</em>
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                为什么生成式 AI 和传统软件在本质上不一样？
+            </p>
+
+            <p>
+                <strong>因为它们运行在两种不同的世界观里。</strong>
+                传统软件的世界，是由人类显式规则搭起来的确定性积木；
+                生成式 AI 的世界，是从数据里生长出来的概率分布，
+                每次采样都是从这片分布里"扔一次骰子"。
+            </p>
+
+            <p>
+                当你意识到这一点，你就不会再把它当成"更聪明的搜索引擎"，
+                也不会再期待它"每次都一样"。你会开始学一门新的语言——
+                <strong>如何在不确定性中做工程</strong>。
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=43" class="btn">继续探索 Q43 → </a>
+            </div>
+        </div>
+
+        <footer><p>&copy; 2024 互联网大帝是如何炼成的</p></footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

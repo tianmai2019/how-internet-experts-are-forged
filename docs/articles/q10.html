@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q10:点击一个按钮之后,数据去了哪里?</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 第2层认知 · 程序员入门视角</div>
+            <h1>点击一个按钮之后,数据去了哪里?</h1>
+            <p class="subtitle">一次点击,是一整条流水线的"信任传递"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角:这个问题为什么重要?</h2>
+
+            <p>
+                你点了"下单"按钮,弹出"支付成功",然后你的手机就多了一张订单。
+                但你有没有想过:<strong>你刚才手指按下的那 0.1 秒之间,发生了多少事?</strong>
+            </p>
+
+            <p>
+                这个问题重要,是因为一次点击背后的完整链路,正是<strong>互联网世界如何"记住一件事"</strong>的最小样本。
+                看懂了它,你就看懂了 App 是怎么工作的、外卖为什么会迟到、双十一为什么会崩。
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心洞察:</strong><br><br>
+                你的"点击"其实是一个信号——它触发了一条<strong>浏览器 → 网络 → 服务器 → 数据库 → 再原路返回</strong>的旅程。<br><br>
+                这条旅程中的每一步,都是几十年积累下来的工程约定,专门为"让世界记住这件事"服务。
+            </div>
+
+            <h2>🧩 拆解:把大问题拆成小问题</h2>
+
+            <ol>
+                <li>点击这个动作,谁最先感知到?</li>
+                <li>浏览器怎么知道"这次点击要发一个请求"?</li>
+                <li>请求怎么飞过大半个地球?</li>
+                <li>服务器拿到请求后,内部发生了什么?</li>
+                <li>结果又怎么回到你手上,让页面更新?</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层:只看结果</h3>
+
+            <p>
+                你按下按钮——按钮变灰、转个圈、然后跳出"提交成功"。
+                你感觉:嗯,操作完成了。
+            </p>
+
+            <p>
+                但如果你在电梯里网差,同样的按钮可能会转 5 秒,然后弹一个"网络错误,请重试"。
+                这时你会本能地想:"我的数据到底传出去没有?"
+            </p>
+
+            <p>
+                这个疑问,就是理解"数据去哪了"最好的入口。
+            </p>
+
+            <h3 class="section-code">实现层:开始理解构造</h3>
+
+            <p>
+                我们看一个具体的例子——"给某条帖子发一条评论"。前端代码大致长这样:
+            </p>
+
+            <div class="code-block">// ① 找到"发送"按钮
+const btn = document.getElementById('submit-comment');
+
+// ② 给它绑定一个"点击时要做什么"的函数
+btn.addEventListener('click', async () =&gt; {
+  // ③ 从输入框拿数据
+  const text = document.getElementById('comment-input').value;
+
+  // ④ 打包成一个 JSON,发到后端
+  const res = await fetch('/api/comments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ postId: 42, text })
+  });
+
+  // ⑤ 拿到后端的回复
+  const data = await res.json();
+
+  // ⑥ 更新页面
+  if (data.ok) {
+    showToast('评论成功!');
+    appendCommentToList(data.comment);
+  }
+});</div>
+
+            <p>
+                短短几行,它做了 6 件事。而其中的<strong>第 4 步 fetch</strong>——那才是真正的分水岭:
+                从这一行开始,数据<strong>离开了你的设备</strong>。
+            </p>
+
+            <h3 class="section-system">系统层:看到完整链路</h3>
+
+            <p>
+                我们把这次点击放慢 100 万倍,看看数据到底走了哪条路:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">① 👆 你的手指按下按钮</div>
+                <div class="arrow">↓ 浏览器捕获事件</div>
+                <div class="step-box">② 🎯 事件监听器触发</div>
+                <div class="arrow">↓ 打包 JSON</div>
+                <div class="step-box">③ 📦 HTTP 请求成形</div>
+                <div class="arrow">↓ 走 DNS + TCP + TLS</div>
+                <div class="step-box">④ 🌍 数据包上路</div>
+                <div class="arrow">↓ 经过运营商、光缆、数据中心</div>
+                <div class="step-box">⑤ 🚪 到达负载均衡</div>
+                <div class="arrow">↓ 分发给一台服务器</div>
+                <div class="step-box">⑥ 🔧 后端路由到具体接口</div>
+                <div class="arrow">↓ 校验、执行业务</div>
+                <div class="step-box">⑦ 💾 写入数据库</div>
+                <div class="arrow">↓ 打包响应</div>
+                <div class="step-box">⑧ 📨 返回 JSON</div>
+                <div class="arrow">↓ 原路返回</div>
+                <div class="step-box">⑨ 🎨 浏览器更新页面</div>
+            </div>
+
+            <p>
+                我们看几个关键节点:
+            </p>
+
+            <div class="highlight-box">
+                <strong>后端接口内部长什么样?</strong>
+            </div>
+
+            <div class="code-block"># 后端(用 Python/FastAPI 举例)
+@app.post("/api/comments")
+def create_comment(request):
+    # 1. 认证:你到底是谁?
+    user = verify_token(request.headers["Authorization"])
+    if not user:
+        return {"ok": False, "error": "请先登录"}, 401
+
+    # 2. 校验:数据合法吗?
+    body = request.json
+    if not body.get("text") or len(body["text"]) &gt; 500:
+        return {"ok": False, "error": "评论内容不合法"}, 400
+
+    # 3. 存储:写进数据库
+    comment = db.execute(
+        "INSERT INTO comments(user_id, post_id, text, created_at) "
+        "VALUES (?, ?, ?, NOW()) RETURNING *",
+        [user.id, body["postId"], body["text"]]
+    )
+
+    # 4. 返回:告诉前端结果
+    return {"ok": True, "comment": comment}</div>
+
+            <p>
+                看到没?后端要做的事,可以浓缩成 4 个字:<strong>认证 → 校验 → 存储 → 响应</strong>。
+                几乎所有 Web 接口,都是这个套路的变体。
+            </p>
+
+            <div class="highlight-box">
+                <strong>为什么中间要经过"负载均衡"?</strong><br><br>
+                因为一台服务器扛不住几百万人同时用。<br>
+                负载均衡就像商场门口的引导员——把用户请求分给几十台、几千台服务器,<br>
+                任何一台挂掉,其他的照样服务。
+            </div>
+
+            <h3 class="section-tradeoff">权衡层:为什么这样设计?</h3>
+
+            <p>
+                你可能会问:为啥不直接把评论存在我手机上?为啥非要走一趟服务器?
+            </p>
+
+            <p>
+                因为存在你手机上的东西,<strong>只有你能看到</strong>。可评论的意义就是给别人看的——它必须存在一个"大家都能访问"的地方,那就是<strong>服务器</strong>。
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>💭 幼稚的设计</h4>
+                    <p>点了按钮 → 直接改数据库 → 返回结果</p>
+                    <p>问题:任何人都能改任何东西,系统一分钟就崩。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>✅ 真实的设计</h4>
+                    <p>点了按钮 → <strong>身份验证</strong> → <strong>参数校验</strong> → <strong>业务规则</strong> → 写库 → 返回</p>
+                    <p>每一步都在为"信任"和"安全"设置关卡。</p>
+                </div>
+            </div>
+
+            <p>
+                更进一步,工程师们还发展出了一堆保命机制:
+            </p>
+
+            <ul>
+                <li><strong>幂等性</strong>:重复点击"提交",不能变成两条评论——通过请求 ID 或数据库唯一约束保证。</li>
+                <li><strong>乐观 UI</strong>:先在前端假装成功,如果后端返回失败再回退——让用户觉得"很快"。</li>
+                <li><strong>重试机制</strong>:请求超时?自动再试一次——但要小心别引发重复。</li>
+                <li><strong>限流</strong>:一秒内点 1000 次?对不起,先冷静一下——防刷防攻击。</li>
+            </ul>
+
+            <p>
+                每一次点击背后,都藏着这些工程师<strong>用血泪教训</strong>换来的智慧。
+            </p>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>试试看:亲眼追踪一次点击</h3>
+                <p>
+                    1. 打开知乎(或任意需要登录的网站),按 <code>F12</code> 打开开发者工具<br>
+                    2. 切到 <strong>Network</strong> 标签,勾选 <strong>Fetch/XHR</strong> 只看接口请求<br>
+                    3. 给某条内容<strong>点一下赞</strong><br>
+                    4. 你会看到一条新请求飞出来——通常是 <code>POST</code>,URL 里带 <code>like</code> 或 <code>vote</code>
+                </p>
+                <p>
+                    点开它,看看这四样东西:<br>
+                    • <strong>Headers</strong>:请求头,包含你的 cookie / token(证明你是谁)<br>
+                    • <strong>Payload</strong>:发过去的 JSON,告诉后端点的哪条<br>
+                    • <strong>Response</strong>:后端回来的 JSON,通常带最新点赞数<br>
+                    • <strong>Timing</strong>:从发起到收到花了多少毫秒
+                </p>
+                <p>
+                    这就是"数据去了哪里"的完整证据。恭喜你,你刚才做了一次"网络侦探"!
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索:</h3>
+                <a href="question.html?q=8">Q8: 前后端在做什么?</a>
+                <a href="question.html?q=11">Q11: 注册、登录、评论……本质是什么?</a>
+                <a href="question.html?q=13">Q13: 大流量下系统怎么不崩?</a>
+                <a href="question.html?q=46">Q46: 一次网络请求的完整旅程</a>
+            </div>
+
+            <h2>👑 大帝视角:这如何塑造现实?</h2>
+
+            <div class="emperor-box">
+                <h3>一次点击,是"信任被组装"的过程</h3>
+                <p>
+                    你点击"确认支付"的那 300 毫秒,发生的事情比你想象的多得多:
+                </p>
+                <p>
+                    • 银行的验证器确认这个卡号能刷<br>
+                    • 支付网关确认商家真的存在<br>
+                    • 风控系统确认这不是欺诈<br>
+                    • 库存系统确认商品还有<br>
+                    • 订单系统写下永久记录<br>
+                    • 通知系统告诉商家发货……
+                </p>
+                <p>
+                    每一步都是不同的公司、不同的服务器、不同的数据库、不同的工程团队维护的。
+                    它们互不认识,却按一份份"合同"(API 规范)紧密合作,让你相信:<em>"我付了钱,他们就会发货。"</em>
+                </p>
+                <p>
+                    <strong>你按下按钮的那一刻,你不只是在"操作软件",你在<em>召唤</em>一个横跨全球的信任协议。</strong>
+                </p>
+                <p>
+                    这就是现代互联网的本质:<em>把陌生人之间的信任,变成一条可以复现的软件流程。</em>
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以,点击一个按钮之后,数据去了哪里?
+            </p>
+
+            <p>
+                <strong>它先离开你的浏览器,变成一个 HTTP 请求;然后穿过运营商网络,到达云端的负载均衡;
+                再被分发给某台后端服务器,那里发生认证、校验、写数据库;然后原路返回,回到你的浏览器,让页面更新。</strong>
+            </p>
+
+            <p>
+                这条路径,是互联网世界里最常见、最基础、也最深刻的一次"信任传递"。
+            </p>
+
+            <div class="highlight-box">
+                <strong>下一次点按钮的时候,你会知道:</strong><br><br>
+                在你手指下那 0.3 秒内,几百公里外的机器正在为你工作,<br>
+                几个国家之外的数据库正在为你写下一行记录,<br>
+                几十种协议正在协同,只为让这一次"成功"成真。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=11" class="btn">继续探索 Q11 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

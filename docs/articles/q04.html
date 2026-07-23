@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q4：为什么地图知道你现在在哪？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-1">
+            <div class="level-badge">🎯 第1层认知 · 用户视角</div>
+            <h1>为什么地图知道你现在在哪？</h1>
+            <p class="subtitle">你没告诉它你在哪，可它精确到楼层</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                你打开高德，地图上那颗蓝色小圆点就<em>已经</em>停在你所在的位置上了。
+                你走两步，它跟着走两步。哪怕你在地下商场，它都能标出你走到了 B1 层的星巴克。
+            </p>
+
+            <p>
+                这件事我们已经习惯到"理所当然"——但仔细想想很奇怪：你的手机怎么知道它自己在哪？
+                它没有窗户去认路，它甚至不认识"北京"或"上海"。
+            </p>
+
+            <p>
+                更奇怪的是：如果你把手机放进电梯里，它有时候还能猜到你到了几楼；
+                如果你从外面走进商场，它甚至知道你现在在哪家店门口。
+            </p>
+
+            <div class="highlight-box">
+                <strong>为什么这个问题重要？</strong><br>
+                定位是几乎所有 O2O 服务（外卖、打车、共享单车、约会、健身）的地基。
+                理解它，你不仅明白蓝点怎么来的，还能看到<em>你的位置</em>作为一种"数据商品"，是如何被生产和交易的。
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li><strong>手机到底靠什么"看到自己在哪"？</strong>是天上有卫星？还是地面有信标？</li>
+                <li><strong>为什么室外精度高、室内也不差？</strong>它们是同一套原理吗？</li>
+                <li><strong>为什么有时候刚打开地图，蓝点跳来跳去？</strong>这是"漂移"还是"融合"？</li>
+                <li><strong>谁知道你在哪？</strong>是你的手机，还是地图 App 背后的服务器？</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                在你眼里，就是一个蓝点。它跟着你走，误差偶尔大一点，但一般都够用。
+            </p>
+
+            <p>
+                如果你留心过，会发现两个细节：
+                <strong>刚打开地图那几秒它经常"跳"一下</strong>——从很远的地方跳到你身边；
+                进了大商场，蓝点的精度变差，但它还是能大致猜对楼层。
+            </p>
+
+            <p>
+                这两个细节其实揭示了：定位不是"一个方法"，是<strong>几种方法在打架 + 融合</strong>。
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                手机常用的定位手段有<strong>四种</strong>，各有长短：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🛰️ GPS / 北斗</h4>
+                    <p>接收 4 颗以上卫星的时间信号，用几何算距离。精度 5–10 米。<br><strong>缺点：</strong>启动慢（30 秒+），室内几乎失效。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📡 基站</h4>
+                    <p>手机总是连接着周围的基站，运营商知道每个基站的经纬度。精度几百米到几公里。<br><strong>优点：</strong>永远可用；<strong>缺点：</strong>糙。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📶 WiFi</h4>
+                    <p>你附近每个 WiFi 都在广播 MAC 地址，地图公司提前扫过整个城市，把"这个 MAC 在哪"存成一张巨大表格。精度 20 米。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📍 蓝牙信标 / 惯导</h4>
+                    <p>大商场部署 iBeacon 蓝牙点，帮你在室内定位到"星巴克门口"。加速度计、陀螺仪则记录你的移动趋势。</p>
+                </div>
+            </div>
+
+            <p>
+                GPS 的核心原理其实很几何：几颗卫星同时"喊"当前时间，手机比较收到的时间差算出距离，再用三球相交定位：
+            </p>
+
+            <div class="code-block">// 简化的 GPS 定位思路（伪代码）
+// 每颗卫星广播: (卫星位置 sat_x,y,z, 卫星时间 t_sat)
+// 手机计算: (距离 d = 光速 × (t_now - t_sat))
+
+方程组:
+  (x - sat1_x)² + (y - sat1_y)² + (z - sat1_z)² = d1²
+  (x - sat2_x)² + (y - sat2_y)² + (z - sat2_z)² = d2²
+  (x - sat3_x)² + (y - sat3_y)² + (z - sat3_z)² = d3²
+  (x - sat4_x)² + (y - sat4_y)² + (z - sat4_z)² = d4²
+
+解出 (x, y, z) = 你的经纬度和海拔
+第 4 颗卫星用来矫正"手机时钟不准"的问题</div>
+
+            <p>
+                但 GPS 有个大问题：冷启动要找齐卫星要几十秒。所以现代手机用 <strong>A-GPS（辅助 GPS）</strong>：
+                通过网络从服务器直接下载"卫星在哪儿"的星历数据，几秒就能定位。你觉得"打开就定位好了"，其实是网络先帮它抄了作业。
+            </p>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                真正的"我在哪"，是<strong>多种信号融合</strong>出来的一个"最可信的猜测"：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">🛰️ GPS：粗略 8 米</div>
+                <div class="step-box">📡 基站：大致方向</div>
+                <div class="step-box">📶 WiFi：室内 20 米</div>
+                <div class="step-box">📍 蓝牙/惯导：连续追踪</div>
+                <div class="arrow">↓ 卡尔曼滤波等算法融合</div>
+                <div class="step-box">🎯 蓝点：一个平滑的当前位置</div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>关键动作：地图公司做了什么？</strong>
+                <ul>
+                    <li>派车（街景车）+ 用户手机匿名上报，构建了全球每一个 WiFi MAC 到经纬度的映射。</li>
+                    <li>在大型室内空间部署或采集蓝牙信标，绘制"室内地图"。</li>
+                    <li>建立"电梯气压→楼层"的经验模型：气压计一秒内明显下降 = 你上楼了。</li>
+                </ul>
+                你以为定位是"你的手机自己算的"，其实<em>大半个功劳属于事先躺在服务器里的一张巨大地图</em>。
+            </div>
+
+            <p>
+                所以蓝点的"跳一下"是有原因的：一开始只有基站信号，蓝点扔在几公里外；几秒后 WiFi 匹配上，蓝点跳到你附近；
+                再过几秒 GPS 锁定，蓝点稳稳趴在你脚下。你看到的"越来越准"，其实是<em>几套系统前后接力</em>的过程。
+            </p>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                每一种定位手段都是一次权衡：
+            </p>
+
+            <ul>
+                <li><strong>精度 vs 耗电</strong>：全开 GPS 精度高，但一小时耗电 30%。所以后台定位大多只用低功耗的基站+WiFi。</li>
+                <li><strong>速度 vs 隐私</strong>：A-GPS 快，但代价是你要把"我在这附近"告诉服务器。</li>
+                <li><strong>覆盖 vs 成本</strong>：全国部署蓝牙信标覆盖每栋楼？成本天文数字。所以只重点部署商圈、机场、地铁。</li>
+                <li><strong>准确性 vs 可用性</strong>：GPS 卡在山谷里没信号，与其显示"未知"，不如用基站给个粗略估计——用户宁愿看到"大致对"也不愿看到"没有"。</li>
+            </ul>
+
+            <p>
+                还有一个隐藏权衡：<strong>谁承担这套系统的成本？</strong>Apple 和 Google 免费提供这些服务的代价，
+                是他们收集了几十亿部手机的位置和 WiFi 数据。你的定位越准，是因为每一个使用同款设备的人都在贡献信号。
+                你在为地球上其他 20 亿人绘图，反过来别人也在为你绘图。
+            </p>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>试试看：观察蓝点是怎么"演化"的</h3>
+                <p>
+                    1. 找一个刚出地铁站的时刻，立刻打开地图 App，盯着蓝点看 30 秒。
+                    你会看到它从一大坨模糊的圆圈慢慢收缩到一个准确的点——这就是从"基站+WiFi粗定位"过渡到"GPS 锁定"的过程。
+                </p>
+                <p>
+                    2. 进入一家大商场，观察蓝点在几秒内切换到"室内定位"，能标出你在哪家店旁边。
+                    再看看这时候如果你打开设置里的"精确位置"开关，精度会立刻变粗——那就是操作系统把 GPS 精度做了模糊化。
+                </p>
+            </div>
+
+            <p>
+                想更技术一点，可以在浏览器里试：
+            </p>
+
+            <div class="code-block">navigator.geolocation.getCurrentPosition(
+  (pos) =&gt; {
+    console.log("纬度:", pos.coords.latitude);
+    console.log("经度:", pos.coords.longitude);
+    console.log("精度(米):", pos.coords.accuracy);   // ← 关注这个数字
+  },
+  (err) =&gt; console.log("失败:", err.message),
+  { enableHighAccuracy: true }  // 打开这个开关，会调用 GPS
+);</div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=1">Q1: 为什么输入一个网址，页面就会出现在眼前？</a>
+                <a href="question.html?q=5">Q5: 为什么删除的东西不真的消失？</a>
+                <a href="question.html?q=34">Q34: 为什么隐私很难保护？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>从技术到世界</h3>
+                <p>
+                    "你在哪"曾经是一个人最私密的信息之一。今天，它变成了一种<strong>持续生成的商品</strong>：
+                    你的每一秒轨迹，都可能被打包成"人流量热力图"卖给零售业、被拼接成"通勤画像"卖给广告商、被聚合成"到店率"卖给品牌方。
+                </p>
+                <p>
+                    定位技术让"精准营销"成为可能，也让"跟踪"成为廉价商品。
+                    有些国家已经用它做疫情追踪、犯罪追查、政治画像；有些公司用它判断你在哪个商圈上班、能承担多贵的通勤、值多少信用额度。
+                </p>
+            </div>
+
+            <p>
+                更深一层：定位不只是"知道你在哪"，还悄悄改变了<strong>"哪里值钱"</strong>。
+                大众点评的一个高评分能让一家店流量翻倍；一个外卖平台把某小区圈成"外送范围外"，那里的租金就会跌。
+                位置数据让物理世界变成一张可以实时打分、可以被算法奖惩的地图。
+            </p>
+
+            <p>
+                当你以为你在使用地图，地图也在使用你。
+            </p>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                为什么地图知道你现在在哪？
+            </p>
+
+            <p>
+                <strong>答案是：</strong>你的手机同时在听卫星、基站、WiFi、蓝牙四种信号，
+                地图公司提前扫过整个世界的 WiFi 和信标，服务器上有一张巨大的位置字典。
+                然后一个融合算法把这些参差不齐的线索拼成一个"最可信的位置"，就是屏幕上的那颗蓝点。
+                <em>你以为它在追踪你，其实是你和几十亿人一起，共同绘制了让它能追踪你的那张地图。</em>
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=5" class="btn">继续探索 Q5 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q8：前端和后端到底分别在做什么？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 第2层认知 · 程序员入门视角</div>
+            <h1>前端和后端到底分别在做什么？</h1>
+            <p class="subtitle">一间餐厅的前厅与后厨</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                你可能听身边做程序员的朋友说过："我是做前端的"、"我是搞后端的"。
+                听着好像在讲两种完全不同的工作，但网页明明就是一个网页啊——为什么要分成两拨人来做？
+            </p>
+
+            <p>
+                这个问题重要，是因为它藏着互联网系统<strong>最基本的分工逻辑</strong>：
+                <strong>什么应该在你的设备上跑？什么应该在远方的服务器上跑？</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心洞察：</strong><br><br>
+                前端＝你能看到、能摸到、跑在你手机/电脑里的东西<br>
+                后端＝你看不到、跑在别人机器上、掌管数据的东西<br><br>
+                两者之间靠 <code>HTTP + JSON</code> 说话。
+            </div>
+
+            <p>
+                一旦理解了这个分工，你会突然看懂：为什么"网卡了刷不出来"和"服务器崩了大家都用不了"是两种完全不同的故障。
+            </p>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <p>要理解前后端，只需要问自己 4 个问题：</p>
+
+            <ol>
+                <li><strong>谁在跑代码？</strong> 是你的浏览器，还是远方的机器？</li>
+                <li><strong>谁在存数据？</strong> 数据放在哪里，谁能改？</li>
+                <li><strong>它们怎么说话？</strong> 前端和后端之间用什么语言交流？</li>
+                <li><strong>为什么要这么分？</strong> 全部让浏览器做行不行？</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                你打开淘宝，点一下"我的订单"，页面里出现你昨天买的那双鞋——那一刻你完全不会想到：
+                "鞋子这条订单信息，其实是从几千公里外的一个数据库里飞过来的。"
+            </p>
+
+            <p>
+                在用户眼里，一切都是"网页"。<strong>没有前后端，只有"能用"或"不能用"。</strong>
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                让我们打个比方：<strong>互联网服务就像一家餐厅。</strong>
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🍽️ 前端 = 前厅</h4>
+                    <p>菜单、餐桌、灯光、服务员的微笑。<strong>顾客能看见的一切。</strong></p>
+                    <p>负责：把菜单展示得好看、记下顾客的需求、把菜送到桌上。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🔥 后端 = 后厨</h4>
+                    <p>食材仓库、灶台、洗碗机、账本。<strong>顾客看不见,但决定实力。</strong></p>
+                    <p>负责:炒菜、算账、管理库存、记录订单。</p>
+                </div>
+            </div>
+
+            <p>
+                所以前端做的是:<strong>页面长什么样 + 用户能怎么操作</strong>。
+                后端做的是:<strong>数据放哪里 + 业务规则怎么算</strong>。
+            </p>
+
+            <p>
+                举个具体的例子——一个"点赞"按钮:
+            </p>
+
+            <div class="code-block">// 【前端】写在浏览器里,决定按钮长啥样、点了怎么响应
+&lt;button id="like-btn"&gt;❤️ 点赞&lt;/button&gt;
+
+document.getElementById('like-btn').addEventListener('click', async () =&gt; {
+  // 变红,给用户即时反馈
+  document.getElementById('like-btn').classList.add('liked');
+
+  // 悄悄告诉后端:这个用户给这条帖子点赞了
+  await fetch('/api/like', {
+    method: 'POST',
+    body: JSON.stringify({ postId: 42 })
+  });
+});</div>
+
+            <div class="code-block"># 【后端】写在服务器里,决定"点赞"到底意味着什么
+@app.post("/api/like")
+def like(request):
+    user_id = get_current_user(request)     # 你是谁?
+    post_id = request.json["postId"]        # 点的哪条?
+    db.execute(                             # 记到数据库
+        "INSERT INTO likes(user_id, post_id) VALUES(?, ?)",
+        [user_id, post_id]
+    )
+    return {"ok": True, "total": count_likes(post_id)}</div>
+
+            <p>
+                看清楚了吗?按钮的<em>样子</em>和<em>点了变红</em>是前端的事;
+                但"这个赞真的被记住了、算进了总数"——这是后端的事。
+            </p>
+
+            <h3 class="section-system">系统层:看到完整链路</h3>
+
+            <p>
+                把它们放在一起,一次交互长这样:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">👆 你点击按钮</div>
+                <div class="arrow">↓ (浏览器里执行 JS)</div>
+                <div class="step-box">📦 打包 JSON 请求</div>
+                <div class="arrow">↓ (HTTP 走网络)</div>
+                <div class="step-box">🌐 后端接口收到</div>
+                <div class="arrow">↓ (执行业务逻辑)</div>
+                <div class="step-box">💾 读写数据库</div>
+                <div class="arrow">↓ (打包结果)</div>
+                <div class="step-box">📨 返回 JSON</div>
+                <div class="arrow">↓ (浏览器解析)</div>
+                <div class="step-box">🎨 更新页面</div>
+            </div>
+
+            <p>
+                前后端中间的这条虚线,有一个专有名字叫 <strong>API</strong>(应用程序接口)。
+                它就像餐厅的<strong>下单小票</strong>——上面写好了"要什么、加什么料、去掉什么",
+                前厅和后厨都认这个格式,谁换人都不影响。
+            </p>
+
+            <div class="highlight-box">
+                <strong>API 契约:通常长这样</strong><br><br>
+                请求:<code>POST /api/like</code>,携带 <code>{ "postId": 42 }</code><br>
+                响应:<code>{ "ok": true, "total": 133 }</code><br><br>
+                这份"合同"一旦定下来,前端后端就可以各改各的——只要还按这份合同办事。
+            </div>
+
+            <p>
+                这也是为什么大公司里,前端和后端可以是两个不同的团队,甚至用两种完全不同的语言(前端 JavaScript,后端可能是 Java/Python/Go),
+                但产品照样能跑。
+            </p>
+
+            <h3 class="section-tradeoff">权衡层:为什么这样设计?</h3>
+
+            <p>
+                你可能会想:既然浏览器越来越强了,为什么不干脆把所有事都让浏览器做?或者反过来,后端全权代理不好吗?
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🚫 全放前端的问题</h4>
+                    <p>用户能改代码!你写"付款成功再发货",他把 <code>if (paid)</code> 改成 <code>if (true)</code>,就白嫖了。</p>
+                    <p>数据也没法共享——你在手机上点的赞,电脑上刷不到。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🚫 全放后端的问题</h4>
+                    <p>每一次点击都要走一趟服务器。滚动、悬停、动画……用户体验会卡到没人愿意用。</p>
+                    <p>服务器负载也会爆炸。</p>
+                </div>
+            </div>
+
+            <p>
+                所以工程师们最后达成了一种默契:
+            </p>
+
+            <div class="highlight-box">
+                <strong>分工原则:</strong><br><br>
+                • <strong>展示、交互、动效</strong> → 前端(离用户越近越好)<br>
+                • <strong>数据、规则、权限、账单</strong> → 后端(离信任越近越好)<br>
+                • <strong>无状态的 API</strong> → 让后端可以复制多份、随便扩容
+            </div>
+
+            <p>
+                注意最后一点:大多数后端接口是<strong>无状态的</strong>——
+                每次请求都自带足够的信息(比如登录 token),后端不需要"记得你上次说了啥"。
+                这让系统可以横向扩展到几千台服务器,任何一台都能接你的请求。
+            </p>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>试试看:亲眼看到前后端在说话</h3>
+                <p>
+                    1. 打开任意一个网页(比如知乎、B 站)<br>
+                    2. 按 <code>F12</code> 打开开发者工具<br>
+                    3. 切到 <strong>Network(网络)</strong> 标签,勾选 <strong>Fetch/XHR</strong><br>
+                    4. 在页面上随便点点、滑滑、点赞、评论
+                </p>
+                <p>
+                    你会看到一条一条的请求列表——那就是<strong>前端在悄悄和后端对话</strong>!
+                    点开其中一条,你能看到:发过去的 JSON、拿回来的 JSON,一目了然。
+                </p>
+                <p>
+                    这一刻,你从"网页使用者"变成了"网页监听者"。
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索:</h3>
+                <a href="question.html?q=7">Q7: 一个网页是怎么做出来的?</a>
+                <a href="question.html?q=10">Q10: 点击按钮后数据去哪了?</a>
+                <a href="question.html?q=11">Q11: 注册、登录、评论……本质是什么?</a>
+                <a href="question.html?q=9">Q9: 浏览器为什么能显示页面?</a>
+            </div>
+
+            <h2>👑 大帝视角:这如何塑造现实?</h2>
+
+            <div class="emperor-box">
+                <h3>前后端的分裂,是"信任边界"的诞生</h3>
+                <p>
+                    今天我们觉得"前后端分离"天经地义,但历史并非如此。
+                </p>
+                <p>
+                    早期的网页(90 年代),几乎没有"前端"这个说法——服务器直接吐一整张 HTML,浏览器只是显示。
+                    直到 AJAX 出现(2005 年前后),浏览器才第一次能"背着服务器说话"。
+                    再到智能手机爆发、SPA(单页应用)崛起,前端才真正独立成一个学科。
+                </p>
+                <p>
+                    <strong>这条分界线的本质,是"信任"的边界。</strong>
+                </p>
+                <p>
+                    你的设备可以被你修改,所以任何"必须真"的东西——你的余额、你的身份、订单是否付款——都必须放在你摸不到的地方。
+                    后端不是技术选择,是<strong>规则的守门人</strong>。
+                </p>
+                <p>
+                    每次你打开一个 App,你都在同意一件事:<em>"这个世界里,有些真相不由我决定。"</em>
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以,前端和后端到底分别在做什么?
+            </p>
+
+            <p>
+                <strong>前端负责"呈现"和"交互"——让你看得见、点得动、觉得顺手。</strong><br>
+                <strong>后端负责"记忆"和"规则"——决定什么是真的、什么该发生、谁能做什么。</strong>
+            </p>
+
+            <p>
+                它们之间用 API 说话,像餐厅前厅和后厨用小票沟通。
+                前厅可以换风格、换语言,后厨可以换厨师、换灶台——只要小票上的"合同"没变,顾客就永远吃得到那盘菜。
+            </p>
+
+            <div class="highlight-box">
+                <strong>下一个思考:</strong><br><br>
+                当你写下前端代码,你在"雕琢用户体验";<br>
+                当你写下后端代码,你在"制定世界规则"。<br><br>
+                两者缺一不可,合起来才叫"产品"。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=9" class="btn">继续探索 Q9 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

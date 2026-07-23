@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q15：为什么访问量一大，原本正常的系统就会开始超时、报错甚至崩溃？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3层认知 · 工程师视角</div>
+            <h1>为什么访问量一大，原本正常的系统就会开始超时、报错甚至崩溃？</h1>
+            <p class="subtitle">稳定性，是"日常假设"在压力下的一次次崩塌</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                每年双 11 零点，你几乎能看到"淘宝崩了"上热搜；春运抢票时，12306 一度成为程序员集体嘲讽对象；世界杯的时候，直播平台一起变卡；某个明星突然官宣结婚，微博就挂了。
+            </p>
+
+            <p>
+                奇怪的是：这些系统平时都跑得好好的。凭什么用户一多，就翻车？
+            </p>
+
+            <div class="highlight-box">
+                <strong>因为系统的"正常"，其实是一堆假设——只是这些假设平时没被拆穿。</strong><br><br>
+                流量一大，所有假设一起崩塌。这就是所谓的<strong>雪崩</strong>。
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li><strong>并发是什么？</strong>为什么"很多人同时来"和"一个人来 100 次"完全不同？</li>
+                <li><strong>资源是有限的：</strong>连接、线程、内存、数据库连接池，都有天花板。</li>
+                <li><strong>慢会传染：</strong>为什么一个环节变慢，会拖垮整个系统？</li>
+                <li><strong>雪崩效应：</strong>崩溃是怎么从"局部"扩散到"全局"的？</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                用户会看到：转圈、白屏、"网络不稳定，请稍后再试"、"服务器繁忙"、直接 502 页面。
+            </p>
+
+            <p>
+                用户不会知道：这背后是几百万人同时挤进来，把某个原本能容纳 1 万连接的组件挤爆了。
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                我们平时写的服务大概长这样：
+            </p>
+
+            <div class="code-block">// 一个再普通不过的接口
+app.get('/order/:id', async (req, res) =&gt; {
+    const order = await db.query(
+        'SELECT * FROM orders WHERE id = ?', [req.params.id]
+    )
+    res.json(order)
+})</div>
+
+            <p>
+                在开发环境、在测试的时候，它一切正常。你 QPS 打到 10、100、1000，也许都还好。但当 QPS 冲到 10 万，问题一个接一个爆出来：
+            </p>
+
+            <ul>
+                <li>数据库连接池只有 100 个，第 101 个请求开始<strong>排队</strong>。</li>
+                <li>每个 SQL 平时 10ms，压力大了变成 500ms，因为磁盘 IO 拥挤 / 锁等待。</li>
+                <li>Node 的事件循环、Java 的线程池，也在被"占着不放"的慢请求逐渐吃满。</li>
+                <li>调用方等不到响应，超时，重试，把请求量<strong>又放大一倍</strong>。</li>
+            </ul>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                单点看不出雪崩，我们退一步看整条链路：
+            </p>
+
+            <div class="diagram-box">
+[ 用户流量 ×100 ]
+       ↓
+   接入层 (Nginx / LB)      ← 连接数暴涨，可能耗尽 FD
+       ↓
+   API 网关 / 应用服务       ← 线程被慢调用占满
+       ↓
+   下游微服务 A、B、C        ← 任何一个变慢都往回传染
+       ↓
+   数据库 / Redis            ← 连接池打满，锁等待激增
+       ↓
+   [ 客户端超时 → 重试 ] ────→ 再次涌回入口（正反馈！）</div>
+
+            <p>
+                注意最后那条虚线——<strong>客户端在重试</strong>。这是很多雪崩最致命的加速器：一次慢响应引发一次重试，把原本 10 万 QPS 变成 20 万、40 万，系统更慢，更多重试，直到彻底躺平。
+            </p>
+
+            <p>
+                所以雪崩的公式大致是：
+            </p>
+
+            <div class="highlight-box">
+                <strong>雪崩 = 慢 + 有限资源 + 无节制的重试 + 无边界的调用链</strong><br><br>
+                这四个因素单独都不致命，凑在一起就是灾难。
+            </div>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                你可能会问：既然会崩，为什么不一开始就设计成"永远不崩"？
+            </p>
+
+            <p>
+                因为"扛得住高并发"很贵：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>方案 A：按峰值备容</h4>
+                    <p>永远保留双 11 级别的机器数，绝大部分时间闲置，成本极高。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>方案 B：按平均备容 + 弹性扩容</h4>
+                    <p>成本低，但扩容需要时间；突发流量还没扩上来，就已经打崩了。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>方案 C：加限流 / 排队 / 降级</h4>
+                    <p>牺牲一部分体验（排队、少功能）换整体不崩，工程上最实用。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>方案 D：全异步 + 消息队列</h4>
+                    <p>吞下所有请求慢慢消化，但对实时性要求高的场景不适用。</p>
+                </div>
+            </div>
+
+            <p>
+                所有大公司都在做的，是一个组合拳：<strong>提前扩容 + 限流 + 队列削峰 + 熔断降级</strong>，这些正是 Q17 里的"六件套"。
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>常见误区：</strong>以为"系统崩溃 = 硬件不够"。事实上大多数崩溃发生时，CPU 使用率并不高——真正打满的往往是<strong>连接数、线程数、连接池、锁</strong>这些"资源计数"。加机器有时反而无效，因为瓶颈根本不在算力。
+            </div>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>亲手压一个小服务看看</h3>
+                <p>
+                    在本机跑一个最简单的 Node/Python 服务，加一句 <code>sleep(500ms)</code> 模拟慢查询。然后用压测工具打它：
+                </p>
+                <div class="code-block">ab -n 10000 -c 500 http://localhost:3000/hello
+# 或者用 hey / wrk / k6</div>
+                <p>
+                    观察：当并发 <code>-c</code> 从 10 提到 500，你的 P99 延迟、错误率、超时率会怎么变化？打开 <code>ss -s</code> 看看 TCP 连接堆积。你会亲眼看到——同样的代码，负载不同，"结果"完全不同。
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=18">Q18: 为什么数据库常常成为系统的瓶颈？</a>
+                <a href="question.html?q=19">Q19: 为什么一个接口超时会拖垮整条链路？</a>
+                <a href="question.html?q=24">Q24: 为什么要做限流和熔断？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>稳定性，是「假设」在压力下的诚实性检验</h3>
+                <p>
+                    平时跑得好好的系统，其实建立在无数条隐含假设上：
+                    <em>"用户不会同时都来"、"数据库连接够用"、"下游不会挂"、"网络不会抖"、"没人会疯狂重试"</em>。
+                </p>
+                <p>
+                    大流量的意义，是<strong>把这些假设一次性摊在阳光下</strong>。哪条假设不成立，系统就在哪里裂开一道口子。所以大厂的"双 11 大促"，本质上不只是卖货——那是每年一次<strong>组织级的假设审计</strong>。
+                </p>
+                <p>
+                    往大了看，这也是"扩张"的通用规律：一家小公司变成大公司，一个小国变成大国，都会经历这一刻——原本运作良好的规矩，被规模一压就露馅。稳定性工程，本质上是<strong>把假设写下来、量化、加护栏</strong>。
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，为什么流量一大就崩？
+            </p>
+
+            <div class="highlight-box">
+                因为"正常"是一种<strong>低负载下才成立的错觉</strong>。<br><br>
+                资源是有限的，慢会传染，重试会放大，链路会连坐。<br>
+                当所有这些一起发生，就是雪崩。<br><br>
+                所以真正牛的系统，不是永远不慢，而是<strong>慢的时候不会全挂</strong>。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=16" class="btn">继续探索 Q16 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

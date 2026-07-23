@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q12:数据库到底在存什么?</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 第2层认知 · 程序员入门视角</div>
+            <h1>数据库到底在存什么?</h1>
+            <p class="subtitle">世界被建模成表格,才能被系统"看见"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角:这个问题为什么重要?</h2>
+
+            <p>
+                你的支付宝余额、你的微信好友、你在淘宝买过的每一件东西、你去年 3 月 12 号发的那条朋友圈——它们都存在<strong>某个地方</strong>。
+                这个地方叫"数据库"。
+            </p>
+
+            <p>
+                但数据库到底长什么样?是一个巨大的文件吗?是一堆 Excel 表格吗?
+                更重要的是:<strong>什么东西能被存进去,什么不能</strong>?
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心洞察:</strong><br><br>
+                数据库不存"现实",它存的是<strong>被模型化过的现实</strong>——<br>
+                你必须先决定"这个东西有哪几个属性、和其他东西怎么关联",<br>
+                才能把它塞进数据库。<br><br>
+                <strong>没被建模的东西,系统就"看不见"。</strong>
+            </div>
+
+            <p>
+                这个问题重要,不是因为你要学 SQL——而是因为一旦你理解了"数据库如何看世界",你就理解了产品经理为什么天天在争"这个字段要不要加"、"这两个东西是不是同一类"。
+            </p>
+
+            <h2>🧩 拆解:把大问题拆成小问题</h2>
+
+            <ol>
+                <li>数据库长什么样?</li>
+                <li>为什么"表格"这种形式能存下现实?</li>
+                <li>索引、事务、schema 这些术语在说啥?</li>
+                <li>为什么会有"关系型"和"非关系型"两派?</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层:只看结果</h3>
+
+            <p>
+                你打开美团,看到你上个月点的那单奶茶——"太后奶盖抹茶,加芋圆,不加糖"。
+                你觉得,美团<strong>"记得"你买过什么</strong>。
+            </p>
+
+            <p>
+                但美团怎么"记得"?它不是像人一样有记忆——它有一张表,叫 orders,里面有一行,大致长这样:
+            </p>
+
+            <div class="code-block">order_id | user_id | shop_id | items                          | price | status  | created_at
+---------+---------+---------+--------------------------------+-------+---------+---------------------
+9382174  | 8827    | 501     | 太后奶盖抹茶(加芋圆,不加糖)   | 22.5  | 已完成   | 2024-05-13 14:22:41</div>
+
+            <p>
+                这一行,就是你的那杯奶茶被数据库"记住"的方式。<strong>它不是你的记忆的复制,它是一个"被格式化的事实"。</strong>
+            </p>
+
+            <h3 class="section-code">实现层:开始理解构造</h3>
+
+            <p>
+                最常见的一类数据库,叫<strong>关系型数据库</strong>(MySQL、PostgreSQL、SQL Server……)。
+                它把世界描述成一堆"表格",每个表格有<strong>行</strong>(row)和<strong>列</strong>(column):
+            </p>
+
+            <div class="highlight-box">
+                <strong>一个最简单的博客系统,需要什么表?</strong>
+            </div>
+
+            <div class="code-block">-- 用户表:每个用户一行
+CREATE TABLE users (
+    id           BIGINT PRIMARY KEY,
+    phone        VARCHAR(20) UNIQUE,
+    nickname     VARCHAR(50),
+    created_at   TIMESTAMP
+);
+
+-- 帖子表:每个帖子一行
+CREATE TABLE posts (
+    id           BIGINT PRIMARY KEY,
+    author_id    BIGINT REFERENCES users(id),   -- 谁写的
+    title        VARCHAR(200),
+    content      TEXT,
+    created_at   TIMESTAMP
+);
+
+-- 评论表:每条评论一行
+CREATE TABLE comments (
+    id           BIGINT PRIMARY KEY,
+    post_id      BIGINT REFERENCES posts(id),   -- 评论哪条
+    user_id      BIGINT REFERENCES users(id),   -- 谁评的
+    text         TEXT,
+    created_at   TIMESTAMP
+);</code></div>
+
+            <p>
+                注意那几个 <code>REFERENCES</code>——这是"关系"的核心。
+                comments 表的每一行,通过 <code>post_id</code> 和 <code>user_id</code> 指向另外两张表的具体一行。
+                所以叫"关系型"——表和表之间有关系。
+            </p>
+
+            <p>
+                有了表,你就可以"问问题":
+            </p>
+
+            <div class="code-block">-- 找出用户 8827 昨天写的所有帖子
+SELECT id, title, created_at
+FROM posts
+WHERE author_id = 8827
+  AND created_at &gt;= '2024-05-12'
+  AND created_at &lt;  '2024-05-13';
+
+-- 找出这条帖子下所有评论,包括评论者的昵称
+SELECT c.text, u.nickname, c.created_at
+FROM comments c
+JOIN users u ON u.id = c.user_id
+WHERE c.post_id = 42
+ORDER BY c.created_at DESC;</div>
+
+            <p>
+                SQL 就是"跟数据库对话的语言"。它读起来像英语,写起来是"我想要什么",不是"你怎么找"。
+            </p>
+
+            <h3 class="section-system">系统层:看到完整链路</h3>
+
+            <p>
+                如果数据库只是"存表格",几十年下来没什么好研究的。
+                但数据库真正难的地方,是<strong>要在"快、对、可靠"之间平衡</strong>。为此,它引入了几个关键概念:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>📇 索引(Index)</h4>
+                    <p>就像书的目录。没有目录时,查一个词要翻整本书;有了目录,秒定位。</p>
+                    <p>代价:目录本身要占空间,而且写数据时得同时更新目录。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🔒 事务(Transaction)</h4>
+                    <p>一组操作要么<strong>全部成功,要么全部失败</strong>。</p>
+                    <p>转账时,"从我账户扣 100"和"给对方账户加 100",必须同生共死——不然钱就凭空消失或凭空多出。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📐 Schema(模式)</h4>
+                    <p>数据库的"设计蓝图"——有几张表、每张表有哪些字段、字段是什么类型。</p>
+                    <p>产品迭代时,加字段、改类型都叫"schema 变更",搞不好会宕机。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>♻️ 事务的 ACID</h4>
+                    <p><strong>A</strong>tomicity 原子性、<strong>C</strong>onsistency 一致性、<strong>I</strong>solation 隔离性、<strong>D</strong>urability 持久性——数据库为"钱"和"账"提供的安全保证。</p>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>一次数据库读写,幕后发生了什么?</strong>
+            </div>
+
+            <div class="diagram-box">
+                <div class="step-box">① SQL 到达</div>
+                <div class="arrow">↓ 解析 + 优化</div>
+                <div class="step-box">② 生成执行计划</div>
+                <div class="arrow">↓ 决定用哪个索引</div>
+                <div class="step-box">③ 读磁盘/内存页</div>
+                <div class="arrow">↓ 汇总结果</div>
+                <div class="step-box">④ 返回给应用</div>
+            </div>
+
+            <p>
+                数据库不会去"遍历硬盘上的每一个字节"——它维护着一套精心设计的<strong>B+ 树、哈希表、日志文件</strong>,
+                让"查一条数据"通常只需要几次磁盘 I/O,毫秒级完成。
+            </p>
+
+            <h3 class="section-tradeoff">权衡层:关系型 vs NoSQL,为什么会分家?</h3>
+
+            <p>
+                几十年来关系型数据库统治天下,但 2010 年前后,一批"叛军"出现了——MongoDB、Redis、Cassandra、Elasticsearch……
+                它们统称 <strong>NoSQL</strong>(Not Only SQL)。
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🏛️ 关系型(MySQL, PostgreSQL)</h4>
+                    <p>结构严谨,支持复杂查询和事务。</p>
+                    <p>适合:钱、账、订单、用户关系——一切"错不得"的场景。</p>
+                    <p>短板:海量数据难以水平扩展。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🚀 NoSQL(MongoDB, Redis, Cassandra)</h4>
+                    <p>形式灵活,牺牲一些一致性换取巨大的性能和扩展性。</p>
+                    <p>适合:缓存、日志、社交动态、搜索——一切"多、快、变得快"的场景。</p>
+                    <p>短板:复杂事务和跨表查询较弱。</p>
+                </div>
+            </div>
+
+            <p>
+                真实世界的大型系统,通常<strong>两派都用</strong>:
+            </p>
+
+            <ul>
+                <li>你的账户余额、订单——放在 MySQL/PostgreSQL(要"对")</li>
+                <li>你的动态流、推荐结果——放在 Redis/MongoDB(要"快")</li>
+                <li>你的搜索关键词、日志——放在 Elasticsearch(要"能全文搜")</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>这也说明一件事:</strong><br><br>
+                "数据库"其实不是一种东西,而是<strong>一大类工具</strong>。<br>
+                工程师的活儿,是在众多数据库里挑合适的组合,来匹配业务需求。
+            </div>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>试试看:5 分钟,写下你熟悉产品的"数据模型"</h3>
+                <p>
+                    拿一张纸(或任何笔记 App),想一个你熟悉的产品——比如"微信"或"抖音"。<br>
+                    然后回答:如果你是它的工程师,你需要哪几张表?
+                </p>
+                <p>
+                    以微信为例,你可能会写下:
+                </p>
+                <ul style="color: white;">
+                    <li><strong>users</strong>: id, phone, nickname, avatar_url</li>
+                    <li><strong>friends</strong>: user_id, friend_id, added_at (谁和谁是好友)</li>
+                    <li><strong>chats</strong>: id, type(单聊/群聊), created_at</li>
+                    <li><strong>messages</strong>: id, chat_id, sender_id, content, sent_at</li>
+                    <li><strong>moments</strong>: id, user_id, text, images, posted_at</li>
+                </ul>
+                <p>
+                    做完这个练习,你会有一种奇妙的感觉:<br>
+                    <strong>一个 App,其实就是一堆表的集合。</strong>
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索:</h3>
+                <a href="question.html?q=11">Q11: 注册、登录、评论……本质是什么?</a>
+                <a href="question.html?q=18">Q18: 数据一致性如何保证?</a>
+                <a href="question.html?q=5">Q5: 我的数据到底在哪里?</a>
+                <a href="question.html?q=10">Q10: 点击按钮后数据去哪了?</a>
+            </div>
+
+            <h2>👑 大帝视角:这如何塑造现实?</h2>
+
+            <div class="emperor-box">
+                <h3>能被数据库表达的世界,才被系统"看见"</h3>
+                <p>
+                    这是一个容易被忽略的深刻现实:
+                </p>
+                <p>
+                    <strong>如果一件事情不能被建模成"表和字段",互联网系统就无法处理它。</strong>
+                </p>
+                <p>
+                    你的性别是"男/女"?——因为一开始的表里,<code>gender</code> 字段只有两个枚举值。
+                    今天很多平台开始加"其他""不愿透露""非二元",这不是社会突然进步了,而是<strong>数据库的 schema 被扩展了</strong>。
+                </p>
+                <p>
+                    你的身份证只能是 18 位数字?你的名字不能超过 20 个字?你的家庭关系必须是"父/母/子/女"?
+                    这些看似天经地义的"规则",本质都是<strong>某位工程师在定义表结构时下的决定</strong>。
+                </p>
+                <p>
+                    <strong>数据库是"现实的过滤器"。</strong>它决定了什么被系统看到、什么被系统忽略、什么被系统强行归类。
+                </p>
+                <p>
+                    每一次你在 App 里填一张表单,你都在把"活生生的自己"翻译成机器能理解的字段。
+                    你的复杂被压缩,你的多面被单选,你的模糊被枚举——这就是"数字化生存"的代价。
+                </p>
+                <p>
+                    这也是为什么每一次 schema 变更、每一次"字段新增",都可能是一场无声的社会讨论。
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以,数据库到底在存什么?
+            </p>
+
+            <p>
+                <strong>它存的不是"世界",而是"被工程师建模过的世界"——一张张有严格结构的表格,
+                行是记录,列是属性,表与表之间通过关联表达关系。</strong>
+            </p>
+
+            <p>
+                这背后有一整套精妙的机器:索引让查找变快、事务保证一致、schema 约束数据形状。
+                关系型和 NoSQL 是不同侧重的两派,现代系统通常两派并用。
+            </p>
+
+            <div class="highlight-box">
+                <strong>更深一层的真相:</strong><br><br>
+                当你以后打开任何一个 App,试着问自己:<br>
+                "如果我是它的工程师,我会怎么设计它的表?"<br><br>
+                你能想到几张表——你就理解了这个产品的几分。
+            </div>
+
+            <p>
+                至此,你已经走完了"程序员入门视角"的第一段旅程。恭喜你——从看世界的人,变成了<strong>能看穿世界结构的人</strong>。
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=13" class="btn">继续探索 Q13 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

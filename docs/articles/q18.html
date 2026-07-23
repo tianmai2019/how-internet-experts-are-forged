@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q18：为什么数据库常常会成为系统的瓶颈？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3层认知 · 工程师视角</div>
+            <h1>为什么数据库常常会成为系统的瓶颈？</h1>
+            <p class="subtitle">数据库是系统里"最后一个说真话的人"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                做过后端的人，几乎都听过这句话：<strong>"性能问题，80% 出在数据库。"</strong>
+            </p>
+
+            <p>
+                你可能会想：CPU 又不贵，SSD 又不慢，为什么数据库老是拖后腿？换个更好的行不行？加机器行不行？
+            </p>
+
+            <div class="highlight-box">
+                <strong>数据库天生就是慢的、有限的、易冲突的——但它又是唯一说真话的人。</strong><br><br>
+                所有的持久化、事务、一致性、可查询，最终都要落到它那里。这就注定它是系统里最珍贵、也最脆弱的一环。
+            </div>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li>数据库慢在哪里？（磁盘、锁、事务、连接）</li>
+                <li>为什么加机器不能像 Web 服务那样简单？</li>
+                <li>常见的瓶颈现场有哪些？（慢查询、锁等待、连接打满）</li>
+                <li>为了绕开瓶颈，工程师用了哪些手段？（缓存、读写分离、分库分表）</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                用户不会说"数据库慢"，他们会说"这个 App 卡"、"我的订单不见了"、"付款成功了但页面还没跳"。
+            </p>
+
+            <p>
+                这些症状背后，大概率就是某条 SQL 执行了 3 秒、某张表被锁住了、某个连接池打满了。
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                一句普通的 SQL：
+            </p>
+
+            <div class="code-block">SELECT * FROM orders
+WHERE user_id = 12345
+  AND status = 'PAID'
+ORDER BY created_at DESC
+LIMIT 20;</div>
+
+            <p>
+                它在数据库里发生了什么？
+            </p>
+
+            <ol>
+                <li>解析 + 优化：数据库要决定"用哪个索引"、"怎么排序"。</li>
+                <li>去 B+ 树索引里找 <code>user_id = 12345</code> 的行。</li>
+                <li>回表读实际数据行（如果不是覆盖索引）。</li>
+                <li>过滤 status、排序、取前 20 条。</li>
+                <li>如果这时有其他事务在写这些行——<strong>要等锁</strong>。</li>
+            </ol>
+
+            <p>
+                每一步都可能变慢。少一个索引，第 2 步就变成全表扫描 100 万行；status 不选择性高，第 4 步排序会慢；有热点行更新，第 5 步锁等待可能达到秒级。
+            </p>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                单机数据库的资源天花板，比想象中低得多：
+            </p>
+
+            <div class="diagram-box">
+        单机 MySQL 的天花板（粗略估算）
+    ┌──────────────────────────────────────┐
+    │  磁盘 IOPS       ~10K–100K/s（SSD）  │
+    │  连接数上限      几百到几千         │
+    │  行锁           一行同时只能一个写者 │
+    │  单事务大小     受 undo/redo 影响    │
+    │  网络带宽       几 Gbps 顶天         │
+    └──────────────────────────────────────┘
+
+而应用层可以做到：
+   Web 层：加机器就能横向扩展到几万台
+   缓存层：Redis 单机 10 万 QPS 起</div>
+
+            <p>
+                问题来了：<strong>Web 层横向扩展很便宜，数据库横向扩展很贵</strong>。因为数据库要保证 ACID，机器之间同步数据本身就是一件难事。所以真实系统里流量涌进来，最先撑不住的永远是数据库。
+            </p>
+
+            <p>
+                典型的"数据库瓶颈现场"：
+            </p>
+
+            <ul>
+                <li><strong>N+1 查询：</strong>一个列表页，每一项再单独查一次详情。10 条数据、11 次 SQL；1000 条数据、1001 次 SQL。</li>
+                <li><strong>慢查询：</strong>加错了索引、或者 <code>LIKE '%xxx%'</code>、或者 <code>ORDER BY</code> 没索引撑，一条查询 3 秒。</li>
+                <li><strong>锁等待：</strong>秒杀一件商品，1 万个事务抢同一行 <code>UPDATE stock</code>。</li>
+                <li><strong>连接池爆炸：</strong>某个慢查询把连接占着不放，后面的请求全排队。</li>
+                <li><strong>大事务：</strong>一个事务里塞了 1 万条 update，锁范围极大，回滚极痛。</li>
+            </ul>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                既然数据库是瓶颈，工程师怎么办？答案是<strong>一整套绕开策略</strong>：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>加索引 / SQL 优化</h4>
+                    <p>成本最低，收益最快。80% 的慢查询靠这个就能救。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>加缓存（Redis）</h4>
+                    <p>把读打到内存，数据库只承担 20% 的读流量。代价：一致性更难。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>读写分离（主从）</h4>
+                    <p>写主库、读从库。代价：主从有延迟，业务要能接受"读到旧数据"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>分库分表（ShardingSphere / Vitess）</h4>
+                    <p>数据切成 N 份分布到 N 个库。代价：跨库 join、跨库事务几乎不能用了。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>换 NoSQL（MongoDB / HBase）</h4>
+                    <p>放弃 SQL 的强约束，换水平扩展性。代价：不再有事务、复杂查询很痛。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>换 NewSQL（TiDB / CockroachDB）</h4>
+                    <p>兼顾横向扩展 + SQL 语义。代价：延迟略高，运维复杂。</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>常见误区：</strong>"数据库慢，就换更牛的数据库。" 90% 的情况下，问题在<strong>SQL 写得烂 + 索引没建对 + 事务范围太大</strong>——换任何数据库都救不了你。用 <code>EXPLAIN</code> 看执行计划、用慢日志抓 top 慢 SQL，效果远大于换引擎。
+            </div>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>亲眼看到一次全表扫描的代价</h3>
+                <p>
+                    在本机 MySQL 建一个 100 万行的表，插入一些数据。然后跑：
+                </p>
+                <div class="code-block">-- 无索引，全表扫描
+EXPLAIN SELECT * FROM users WHERE name = 'Alice';
+
+-- 加索引再看一次
+CREATE INDEX idx_name ON users(name);
+EXPLAIN SELECT * FROM users WHERE name = 'Alice';</div>
+                <p>
+                    对比两次的 <code>rows</code> 和 <code>type</code>：一次是 <code>ALL / rows≈1000000</code>，一次是 <code>ref / rows≈1</code>。响应时间从秒级掉到毫秒级。这就是<strong>一个索引救一条业务命</strong>。
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=12">Q12: 数据是怎么存下来的？</a>
+                <a href="question.html?q=15">Q15: 为什么流量一大系统就崩？</a>
+                <a href="question.html?q=19">Q19: 为什么一个接口超时会拖垮整条链路？</a>
+                <a href="question.html?q=20">Q20: 缓存为什么能提升性能？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>数据库，是系统里"最后一个说真话的人"</h3>
+                <p>
+                    整个应用架构里，只有数据库承诺：<strong>只要我说存了，就是真的存了</strong>——即使断电、宕机、重启，事务边界之内的东西不会丢。
+                </p>
+                <p>
+                    正因为它承担了这个"信任锚"的角色，所有的复杂都最终压到它头上：一致性、持久化、事务、锁、恢复、备份、审计。这些都是"真实"的代价。
+                </p>
+                <p>
+                    所以在大厂里，你会看到一个奇特的现象：<strong>业务逻辑可以外包，DBA 团队永远不会</strong>。因为一旦数据错了，什么都完了。数据库是系统的良心，也是系统里最贵的良心。
+                </p>
+                <p>
+                    从更远的视角看，"为什么数据库是瓶颈"这个问题，其实揭示了一个通用规律——<em>任何试图保存真相的机制，都注定是慢的、稀缺的、被争抢的</em>。金融、法律、档案、区块链……本质上都在解决同一个问题。
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，为什么数据库常常成为瓶颈？
+            </p>
+
+            <div class="highlight-box">
+                因为它承担着系统里最重的责任：<strong>说真话</strong>。<br><br>
+                而说真话是慢的、昂贵的、天生难以横向扩展的。<br>
+                工程师的一半时间，都花在"如何在保住数据库真话的前提下，让应用不慢"上——这就是 Q17 里那六件套存在的根本原因。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=19" class="btn">继续探索 Q19 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q11:注册、登录、评论、点赞、下单这些功能,本质上是怎么实现的?</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 第2层认知 · 程序员入门视角</div>
+            <h1>注册、登录、评论、点赞、下单……本质上是怎么实现的?</h1>
+            <p class="subtitle">互联网世界里,几乎所有功能都是"老砖块的新排列"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角:这个问题为什么重要?</h2>
+
+            <p>
+                你在淘宝下单、在微博点赞、在小红书评论、在知乎登录……表面上看,这些是<strong>五种完全不同的功能</strong>。
+                但如果告诉你——它们背后<strong>其实是同一套东西</strong>——你会不会有点惊讶?
+            </p>
+
+            <p>
+                这个问题重要,是因为一旦你识别出这套"底层砖块",你会发现:
+                所谓"新产品的功能",大多都是老砖块的<strong>重新排列</strong>。
+                这种"看穿"的能力,是从"用产品的人"变成"造产品的人"的分水岭。
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心洞察:</strong><br><br>
+                所有这些功能,归纳起来只有四种操作:<br>
+                <strong>C</strong>reate(创建)、<strong>R</strong>ead(读取)、<strong>U</strong>pdate(更新)、<strong>D</strong>elete(删除)<br>
+                简称 <strong>CRUD</strong>——加上"知道你是谁"(认证)和"知道你能干什么"(授权),几乎能拼出整个互联网。
+            </div>
+
+            <h2>🧩 拆解:把大问题拆成小问题</h2>
+
+            <ol>
+                <li>不同功能之间,共同的抽象是什么?</li>
+                <li>"你是谁"这件事,系统怎么记住?</li>
+                <li>"点赞"和"评论"看起来不一样,底层为啥说是一回事?</li>
+                <li>下单为什么比点赞"重"很多?"重"在哪儿?</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层:只看结果</h3>
+
+            <p>
+                你觉得:
+            </p>
+
+            <ul>
+                <li><strong>注册</strong>——填个手机号,创建了账号</li>
+                <li><strong>登录</strong>——输入密码,进入了世界</li>
+                <li><strong>评论</strong>——写点字,发出去</li>
+                <li><strong>点赞</strong>——按一下,变红</li>
+                <li><strong>下单</strong>——选商品、付款、等发货</li>
+            </ul>
+
+            <p>看起来是五件不同的事。但工程师眼里……</p>
+
+            <h3 class="section-code">实现层:开始理解构造</h3>
+
+            <p>
+                我们把这五个功能"翻译"成 CRUD 操作,你会看到魔法:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>📝 注册</h4>
+                    <p><strong>Create</strong> 一条 users 记录</p>
+                    <p><code>INSERT INTO users(phone, password_hash) VALUES(?, ?)</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>🔑 登录</h4>
+                    <p><strong>Read</strong> users 表 + 发一个 token</p>
+                    <p><code>SELECT id FROM users WHERE phone=? AND password_hash=?</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>💬 评论</h4>
+                    <p><strong>Create</strong> 一条 comments 记录</p>
+                    <p><code>INSERT INTO comments(user_id, post_id, text) VALUES(?, ?, ?)</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>❤️ 点赞</h4>
+                    <p><strong>Create</strong> 一条 likes 记录(取消赞就 <strong>Delete</strong>)</p>
+                    <p><code>INSERT INTO likes(user_id, post_id) VALUES(?, ?)</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>🛒 下单</h4>
+                    <p><strong>Create</strong> orders + <strong>Update</strong> inventory + <strong>Create</strong> payment……</p>
+                    <p>比较复杂,但每一步都是 CRUD。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>💡 结论</h4>
+                    <p>互联网的绝大多数功能 = <strong>CRUD 的组合</strong> + 认证 + 一些业务规则</p>
+                </div>
+            </div>
+
+            <p>
+                惊不惊喜?让我们看得更深一点——先看"登录"到底是怎么"记住你"的。
+            </p>
+
+            <h3 class="section-code">"你是谁"这件事:session vs token</h3>
+
+            <p>
+                HTTP 是一个<strong>无状态</strong>协议——服务器每次收到你的请求,都像失忆了一样,不知道你是谁。
+                所以,系统必须想办法在每次请求时"证明你是谁"。目前有两种主流做法:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🎟️ Session(会话)</h4>
+                    <p>登录后,服务器生成一个 session id,存在<strong>它自己的数据库</strong>里。</p>
+                    <p>下发给你一个 cookie。每次请求,浏览器带上 cookie,服务器去查。</p>
+                    <p>就像"寄存牌"——牌子在你手里,东西在店里。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🪪 Token(令牌,JWT)</h4>
+                    <p>登录后,服务器签发一个<strong>加密串</strong>(里面藏着"你是 user_123, 有效到 xxx"),交给你。</p>
+                    <p>每次请求带上,服务器验签就行,不需要查库。</p>
+                    <p>就像"身份证"——真伪一看就知道。</p>
+                </div>
+            </div>
+
+            <p>
+                前端代码里,登录后通常长这样:
+            </p>
+
+            <div class="code-block">// 登录成功后,把 token 存起来
+const res = await fetch('/api/login', {
+  method: 'POST',
+  body: JSON.stringify({ phone, password })
+});
+const { token } = await res.json();
+localStorage.setItem('token', token);
+
+// 之后所有请求都自动带上
+await fetch('/api/comments', {
+  headers: { 'Authorization': `Bearer ${token}` },
+  method: 'POST',
+  body: JSON.stringify({ postId: 42, text: '好文!' })
+});</div>
+
+            <h3 class="section-system">系统层:看到完整链路</h3>
+
+            <p>
+                我们放大一次"下单"——因为它最能体现工程师如何把 CRUD 组合成"复杂功能":
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">① 认证 · 你是谁?</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">② 校验 · 商品还在吗?</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">③ 扣库存 · Update inventory</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">④ 创建订单 · Create orders</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">⑤ 发起支付 · 调用第三方</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">⑥ 更新订单状态 · Update</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">⑦ 通知商家发货</div>
+            </div>
+
+            <p>
+                重点来了:下单和点赞的<strong>本质区别</strong>是——
+            </p>
+
+            <div class="highlight-box">
+                <strong>幂等性 · 事务性 · 一致性</strong><br><br>
+                点赞:同一个人点两次和一次没差别(去重就行) → <strong>幂等</strong><br>
+                下单:你重复点"支付",绝不能收两次钱 → 必须<strong>严格幂等</strong><br>
+                下单:扣库存和创建订单必须<strong>同时成功或同时失败</strong> → <strong>事务</strong><br>
+                下单:数据库、库存、支付、商家四个系统,数据要"最终对得上" → <strong>一致性</strong>
+            </div>
+
+            <p>
+                所以一个"下单"接口,可能有几十甚至几百行代码,内部小心翼翼地处理各种失败场景。
+                但它本质,还是几个 CRUD 拼起来的。
+            </p>
+
+            <h3 class="section-tradeoff">权衡层:为什么这样设计?</h3>
+
+            <p>
+                你可能会问:既然万变不离其宗,为什么每个功能开发起来还那么麻烦?
+            </p>
+
+            <p>
+                因为魔鬼藏在细节里——具体到每个功能,工程师要思考的东西完全不同:
+            </p>
+
+            <ul>
+                <li><strong>点赞</strong>:考虑"高并发"——热门微博一秒几万个赞,数据库能扛得住吗?通常要用<strong>计数器缓存</strong>和<strong>异步写入</strong>。</li>
+                <li><strong>评论</strong>:考虑"内容安全"——恶意刷屏、辱骂、广告怎么办?需要接入<strong>敏感词检测</strong>和<strong>限流</strong>。</li>
+                <li><strong>登录</strong>:考虑"账号安全"——密码不能明文存(要 hash + salt),要防暴力破解、防撞库,可能还要短信验证码或人机验证。</li>
+                <li><strong>下单</strong>:考虑"钱的准确性"——库存超卖、重复扣款、订单错乱都是灾难,一切都要有回滚方案。</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>所以,程序员的功力,不在于会写 CRUD——CRUD 谁都会写。<br>
+                功力在于:知道"这个场景下,需要额外考虑什么"。</strong>
+            </div>
+
+            <p>
+                这也是为什么"新手写一个下单接口"和"资深工程师写一个下单接口",代码可能差 10 倍的行数——因为后者考虑了 10 倍的失败场景。
+            </p>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>试试看:找出你熟悉 App 里的"CRUD 模式"</h3>
+                <p>
+                    随便打开一个 App(微信、抖音、B 站……),挑一个你常用的功能,试着回答:
+                </p>
+                <ul style="color: white;">
+                    <li>它对应哪个表?(users? posts? follows?)</li>
+                    <li>它是在 Create、Read、Update 还是 Delete?</li>
+                    <li>它需要认证吗?</li>
+                    <li>它需要保证幂等吗?</li>
+                </ul>
+                <p>
+                    比如:
+                </p>
+                <ul style="color: white;">
+                    <li>关注一个人 = <strong>Create</strong> follows 记录 (user_id, target_id)</li>
+                    <li>取关 = <strong>Delete</strong> 同一条记录</li>
+                    <li>刷推荐流 = <strong>Read</strong> 复杂的排序 + 分页</li>
+                    <li>发朋友圈 = <strong>Create</strong> moments 记录</li>
+                </ul>
+                <p>
+                    做几次这个练习,你就会有一种"看穿"App 的感觉。
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索:</h3>
+                <a href="question.html?q=8">Q8: 前后端在做什么?</a>
+                <a href="question.html?q=10">Q10: 点击按钮后数据去哪了?</a>
+                <a href="question.html?q=12">Q12: 数据库到底在存什么?</a>
+                <a href="question.html?q=16">Q16: 分布式系统的挑战</a>
+            </div>
+
+            <h2>👑 大帝视角:这如何塑造现实?</h2>
+
+            <div class="emperor-box">
+                <h3>产品的"新功能",大多是老砖块的新排列</h3>
+                <p>
+                    你听过"某某 App 上线了一个新功能",觉得很酷、很创新——但从工程师视角看,
+                    大多数所谓"新功能"其实都是<strong>已经存在的原语</strong>的重新拼装:
+                </p>
+                <p>
+                    • 微博的"转发" = 特殊类型的 Create<br>
+                    • 抖音的"收藏" = 类似点赞的 Create+Delete<br>
+                    • 淘宝的"购物车" = 用户级别的临时 Create,提交时批量转成订单<br>
+                    • 微信的"朋友圈" = Create post + 复杂的可见性(授权)控制<br>
+                    • 拼多多的"砍一刀" = Create + 状态机 + 通知
+                </p>
+                <p>
+                    <strong>真正的创新,不在"砖块本身",而在"砖块的组合方式"。</strong>
+                </p>
+                <p>
+                    这也是为什么优秀的产品经理和工程师,总是先问"这个功能能不能用现有的能力拼出来?"——因为拼装的成本远低于发明。
+                </p>
+                <p>
+                    当你能识别出砖块的组合模式,你就能从"用户"跃升为"设计者"。
+                    你会看到每一个流行的产品背后,都是一套精妙的"CRUD + 认证 + 业务规则"的编排。
+                </p>
+                <p>
+                    这就是互联网世界的秘密:<em>它比看起来简单得多,又比看起来精妙得多。</em>
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以,注册、登录、评论、点赞、下单……本质上是怎么实现的?
+            </p>
+
+            <p>
+                <strong>它们几乎都是 CRUD(创建、读取、更新、删除)+ 认证(你是谁)+ 授权(你能做啥)的组合。</strong>
+                只不过"下单"这类涉及钱和状态的功能,还需要加上<strong>幂等性、事务、一致性</strong>等保命机制。
+            </p>
+
+            <p>
+                一旦你掌握了这套"砖块清单",你会发现——世界上再复杂的产品,拆开来看,都是这些基础块的拼装。
+                这种"看穿一切"的能力,是通往"造产品的人"的第一张车票。
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=12" class="btn">继续探索 Q12 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

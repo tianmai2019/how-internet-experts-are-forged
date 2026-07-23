@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q20：为什么缓存能显著提高系统性能？</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <link rel="stylesheet" href="../assets/css/article.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首页</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3层认知 · 工程师视角</div>
+            <h1>为什么缓存能显著提高系统性能？</h1>
+            <p class="subtitle">用「不新鲜」换「更快」的一场时间赌博</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白视角：这个问题为什么重要？</h2>
+
+            <p>
+                你有没有注意过一个奇怪的现象——同一个淘宝商品页，第一次点开可能要"转圈"1 秒，第二次刷新就"啪"一下出来了？
+                同一个抖音视频，第一次滑到时会缓冲一下，回头再刷就再也不卡了？
+            </p>
+
+            <p>
+                这背后不是玄学，而是一个几乎所有互联网系统都在做的事情——<strong>缓存（Cache）</strong>。
+                它是让一切"看起来很快"的秘密武器。
+            </p>
+
+            <div class="highlight-box">
+                <strong>缓存的本质是什么？</strong><br><br>
+                一句话：<strong>把"上一次算过的结果"暂存起来，下一次就不用再算了。</strong><br>
+                时间被"存款"了，下一个请求就能"提款"。
+            </div>
+
+            <p>
+                理解缓存，你就理解了为什么"12306 加了缓存后能扛春运"、"微博热搜为什么这么快出结果"、"CDN 是干嘛的"。
+                这是工程师看世界的一个基础"透镜"。
+            </p>
+
+            <h2>🧩 拆解：把大问题拆成小问题</h2>
+
+            <ol>
+                <li><strong>为什么"再算一遍"这么慢？</strong> 慢的到底是什么？</li>
+                <li><strong>缓存存在哪里？</strong> 一个系统里就一层缓存吗？</li>
+                <li><strong>缓存怎么知道自己过时了？</strong> 数据变了怎么办？</li>
+                <li><strong>缓存出问题时会怎样？</strong> 穿透、雪崩这些吓人的词是什么？</li>
+            </ol>
+
+            <h2>🎯 一层一层看</h2>
+
+            <h3 class="section-user">用户层：只看结果</h3>
+
+            <p>
+                普通用户对缓存唯一的感知是：<strong>"这个网站好像变快了。"</strong>
+            </p>
+
+            <p>
+                更微妙的一些感受：
+            </p>
+            <ul>
+                <li>第一次打开某个页面稍慢，之后飞快</li>
+                <li>断网时，一些内容居然还能看（浏览器缓存）</li>
+                <li>某些页面里的数据"没最新"，刷新一下才更新</li>
+            </ul>
+
+            <p>
+                在这一层，用户看不到缓存的存在，只感受到它带来的"顺滑"。
+            </p>
+
+            <h3 class="section-code">实现层：开始理解构造</h3>
+
+            <p>
+                缓存最朴素的实现，就是一个"能快速查的字典"——通常是 <strong>Key-Value（键值对）</strong>结构。
+                Key 是"你要问什么"，Value 是"上次算出来的答案"。
+            </p>
+
+            <div class="code-block">
+# 一个极简的缓存示意（伪代码）
+def get_user(user_id):
+    if cache.has(user_id):          # 缓存命中：直接返回
+        return cache.get(user_id)
+    user = db.query(user_id)         # 缓存未命中：查数据库
+    cache.set(user_id, user, ttl=60) # 存起来，60 秒内都能复用
+    return user
+            </div>
+
+            <p>
+                这段代码几乎是"缓存模式"的全部灵魂。剩下的所有复杂性，都是围绕这四行在打转。
+            </p>
+
+            <p>
+                但这里就有个隐藏假设了：<strong>为什么"查缓存"比"查数据库"快？</strong>
+                因为它们所处的"速度层级"不同：
+            </p>
+
+            <div class="diagram-box">
+                CPU 寄存器  ≈ 1 ns<br>
+                L1 缓存    ≈ 1 ns<br>
+                内存        ≈ 100 ns<br>
+                SSD 硬盘    ≈ 100,000 ns（100 微秒）<br>
+                网络往返    ≈ 1,000,000 ns（1 毫秒）<br>
+                跨机房调用  ≈ 100,000,000 ns（100 毫秒）
+            </div>
+
+            <p>
+                从上到下，每一层慢 100 到 1000 倍。缓存就是"把数据从慢的一层，搬到快的一层"。
+                这就是它凭空变快的物理原理。
+            </p>
+
+            <h3 class="section-system">系统层：看到完整链路</h3>
+
+            <p>
+                真实互联网系统里，从来不是"一层缓存"，而是"缓存链"——数据要穿过一整排缓存，才能触达最底下的数据库。
+            </p>
+
+            <div class="diagram-box">
+                浏览器缓存<br>
+                ↓（本地就有？直接返回）<br>
+                CDN（内容分发网络，机房离你几十公里）<br>
+                ↓<br>
+                反向代理缓存（Nginx / Varnish）<br>
+                ↓<br>
+                应用进程内缓存（本地内存）<br>
+                ↓<br>
+                分布式缓存（Redis / Memcached）<br>
+                ↓<br>
+                数据库（MySQL / PostgreSQL）
+            </div>
+
+            <p>
+                一个请求从上往下走，任何一层"命中"，就立即掉头返回，不会继续往下打扰。这就是"多层缓存"的思想——<strong>最快的层拦住最多的请求</strong>。
+            </p>
+
+            <p>
+                有个关键指标衡量一层缓存好不好，叫<strong>命中率</strong>（Hit Rate）：
+                进来 100 个请求，多少个在这一层被拦下了。
+                命中率越高，下游压力越小。
+                一线大厂的 CDN 命中率经常做到 95% 以上——意味着后端只需要处理 5% 的原始流量。
+            </p>
+
+            <h3 class="section-tradeoff">权衡层：为什么这样设计？</h3>
+
+            <p>
+                缓存看起来是"白拿"的性能，但它其实是有代价的。老工程师看到缓存，第一反应是——<strong>数据一致性怎么办？</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>缓存的核心权衡：</strong><br>
+                <strong>速度</strong> ↔ <strong>数据新鲜度</strong><br>
+                想要更快，就得容忍数据"稍微过期一点"。<br>
+                想要绝对准确，就得放弃很多缓存收益。
+            </div>
+
+            <p>
+                围绕这个权衡，有几个"经典事故词"你迟早会遇到：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>缓存穿透</h4>
+                    <p>查一个<strong>根本不存在</strong>的 Key。缓存永远不命中，请求全部打到数据库。恶意攻击者常用这招压垮系统。<br>解法：给"空结果"也缓存起来。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>缓存击穿</h4>
+                    <p>某个<strong>热点 Key</strong> 突然过期，瞬间大量请求同时打到数据库。<br>解法：加锁串行回源，或延长热点数据 TTL。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>缓存雪崩</h4>
+                    <p>大量 Key <strong>同时过期</strong>，请求集中回源，数据库被打崩。<br>解法：TTL 加随机抖动，避免"同一秒全过期"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>脏读 / 一致性</h4>
+                    <p>更新了数据库，缓存还是旧的，用户读到"上个版本"。<br>解法：写入策略（Cache-Aside / Write-Through）、延迟双删。</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>常见误区：</strong>"缓存加了性能就一定变好"。<br>
+                如果命中率低于 50%，你可能既承担了缓存的复杂度，又没享受到收益——这时候删掉它反而更快。缓存不是"加了就赚"，是"命中了才赚"。
+            </div>
+
+            <p>
+                更深一层的问题是：<strong>局部性原理（Locality）</strong>。
+                缓存能有效，是因为现实中的访问模式并不均匀：少数热点被反复访问，大量冷数据几乎无人问津（俗称"二八法则"）。
+                这也是为什么<strong>缓存热点数据比缓存全部数据更划算</strong>。
+            </p>
+
+            <h2>✋ 动手试试</h2>
+
+            <div class="try-box">
+                <h3>看看你自己的浏览器缓存</h3>
+                <p>
+                    1. 打开 Chrome，按 <code>F12</code> 进入开发者工具，切到 <strong>Network</strong>。<br>
+                    2. 刷新任意一个网站（比如 zhihu.com）。<br>
+                    3. 观察 "Size" 列——你会看到很多请求写着 <code>(disk cache)</code> 或 <code>(memory cache)</code>。<br>
+                    4. 勾选顶部 <strong>Disable cache</strong>，再刷新一次。<br>
+                    5. 对比两次的"总耗时"和"总大小"——差距可能是好几倍。
+                </p>
+                <p>
+                    这一小步，你就"看见"了缓存对性能的真实影响。
+                </p>
+            </div>
+
+            <h2>🔗 延伸问题</h2>
+
+            <div class="related-questions">
+                <h3>相关问题探索：</h3>
+                <a href="question.html?q=14">Q14: 为什么有的网站快有的慢？</a>
+                <a href="question.html?q=17">Q17: 为什么要谈缓存、队列、负载均衡？</a>
+                <a href="question.html?q=18">Q18: 为什么数据库是瓶颈？</a>
+                <a href="question.html?q=21">Q21: 消息队列如何削峰填谷？</a>
+                <a href="question.html?q=22">Q22: 负载均衡怎么让"一个服务"变成"一群服务"？</a>
+            </div>
+
+            <h2>👑 大帝视角：这如何塑造现实？</h2>
+
+            <div class="emperor-box">
+                <h3>缓存 = 一场对时间的赌博</h3>
+                <p>
+                    缓存的哲学，其实很像现实里的"经验"：<br>
+                    我们大脑记住"上次这么做对了"，下次就直接照做，不再重新推理——这是缓存。<br><br>
+                    它的代价是：<strong>当世界变了，你不知道。</strong><br>
+                    习惯让人变快，也让人变得迟钝。<br><br>
+                    互联网上更放大的一个副作用是——<strong>缓存塑造了"你看到的世界"</strong>。
+                    CDN 决定了你能多快看到新闻，运营商 DNS 缓存决定了你能不能访问某个网站，
+                    甚至你所看到的搜索结果，都被某一层缓存"定格"过一次。<br><br>
+                    <strong>缓存不是白送的速度，而是用"新鲜"换的速度。</strong>
+                    工程师做的所有努力，都在小心地控制这场赌局：
+                    赌的是"世界短期内不会变化太快"。
+                </p>
+            </div>
+
+            <h2>✨ 回到问题</h2>
+
+            <p>
+                所以，为什么缓存能显著提高系统性能？
+            </p>
+
+            <p>
+                <strong>因为它把"下一次要做的事"，用"上一次做过的结果"直接顶掉了。</strong>
+                在从寄存器到跨机房调用之间，任何一次"层级下移"都意味着 100 倍以上的延迟。
+                缓存所做的，只是把数据搬近一点点——效果就是天翻地覆的快。
+            </p>
+
+            <div class="highlight-box">
+                但真正让人成为工程师的，不是"会加缓存"，<br>
+                而是<strong>知道什么时候不能加缓存</strong>——<br>
+                知道哪些数据可以过期一秒，哪些数据一秒都不能错。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知识地图</a>
+                <a href="question.html?q=21" class="btn">继续探索 Q21 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互联网大帝是如何炼成的</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>
