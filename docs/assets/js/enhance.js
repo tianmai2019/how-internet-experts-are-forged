@@ -408,33 +408,72 @@
         loading: false,
         modalOpen: false,
 
+        // 根据 <html lang> 返回 UI 文案
+        t: function() {
+            const isEn = (document.documentElement.getAttribute('lang') || '').toLowerCase().startsWith('en');
+            return isEn ? {
+                aria: 'Search articles (shortcut: /)',
+                title: 'Search articles (/)',
+                placeholder: 'Search articles…',
+                minChars: 'Type at least 2 characters',
+                noResults: (q) => `No articles found for "${q}"`,
+                titleHit: 'Title hit',
+                loading: 'Loading search index…',
+                loadError: 'Failed to load search index',
+            } : {
+                aria: '搜索文章 (快捷键 /)',
+                title: '搜索文章 (/)',
+                placeholder: '搜索文章…',
+                minChars: '请输入至少 2 个字符',
+                noResults: (q) => `未找到与 "${q}" 相关的文章`,
+                titleHit: '标题命中',
+                loading: '加载搜索索引中…',
+                loadError: '加载搜索索引失败',
+            };
+        },
+
         init: function() {
             this.buildButton();
             this.buildModal();
             this.bindKeyboard();
         },
 
-        // 计算 search-index.json 的相对路径
+        // 计算 search-index 的相对路径
+        // 路径深度：docs/ 根 = 0，articles/ | questions/ = 1，en/ = +1
+        // 英文页加载 search-index-en.json；中文页加载 search-index.json
         resolveIndexUrl: function() {
             const path = window.location.pathname;
-            if (/\/articles\//.test(path) || /\/questions\//.test(path)) {
-                return '../assets/data/search-index.json';
-            }
-            return 'assets/data/search-index.json';
+            let depth = 0;
+            if (/\/en\//.test(path)) depth++;
+            if (/\/articles\//.test(path) || /\/questions\//.test(path)) depth++;
+            const isEn = (document.documentElement.getAttribute('lang') || '').toLowerCase().startsWith('en');
+            const filename = isEn ? 'search-index-en.json' : 'search-index.json';
+            return '../'.repeat(depth) + 'assets/data/' + filename;
         },
 
         buildButton: function() {
+            const t = this.t();
             const btn = document.createElement('button');
             btn.id = 'search-toggle';
             btn.className = 'search-toggle';
-            btn.setAttribute('aria-label', '搜索文章 (快捷键 /)');
-            btn.title = '搜索文章 (/)';
+            btn.setAttribute('aria-label', t.aria);
+            btn.title = t.title;
             btn.innerHTML = '🔍';
             btn.addEventListener('click', () => this.open());
             document.body.appendChild(btn);
         },
 
         buildModal: function() {
+            const t = this.t();
+            const isEn = (document.documentElement.getAttribute('lang') || '').toLowerCase().startsWith('en');
+            const placeholder = isEn
+                ? 'Search 50 articles… (try: cache, hallucination, CAP, recommendation)'
+                : '搜索 50 篇文章…（比如：缓存、幻觉、CAP、推荐系统）';
+            const hint = isEn
+                ? '<kbd>↑</kbd><kbd>↓</kbd> Navigate &nbsp; <kbd>Enter</kbd> Open &nbsp; <kbd>Esc</kbd> Close'
+                : '<kbd>↑</kbd><kbd>↓</kbd> 选择 &nbsp; <kbd>Enter</kbd> 打开 &nbsp; <kbd>Esc</kbd> 关闭';
+            const closeAria = isEn ? 'Close' : '关闭';
+
             const modal = document.createElement('div');
             modal.id = 'search-modal';
             modal.className = 'search-modal';
@@ -446,14 +485,14 @@
                     <div class="search-input-wrap">
                         <span class="search-input-icon">🔍</span>
                         <input type="search" id="search-input" class="search-input"
-                               placeholder="搜索 50 篇文章…（比如：缓存、幻觉、CAP、推荐系统）"
+                               placeholder="${placeholder}"
                                autocomplete="off" spellcheck="false">
-                        <button class="search-close" data-close aria-label="关闭">✕</button>
+                        <button class="search-close" data-close aria-label="${closeAria}">✕</button>
                     </div>
-                    <div class="search-status" id="search-status">请输入至少 2 个字符</div>
+                    <div class="search-status" id="search-status">${t.minChars}</div>
                     <ul class="search-results" id="search-results"></ul>
                     <div class="search-hint">
-                        <kbd>↑</kbd><kbd>↓</kbd> 选择 &nbsp; <kbd>Enter</kbd> 打开 &nbsp; <kbd>Esc</kbd> 关闭
+                        ${hint}
                     </div>
                 </div>
             `;
@@ -512,7 +551,9 @@
         loadIndex: function() {
             this.loading = true;
             const status = document.getElementById('search-status');
-            status.textContent = '正在加载索引…';
+            const t = this.t();
+            const isEn = (document.documentElement.getAttribute('lang') || '').toLowerCase().startsWith('en');
+            status.textContent = t.loading;
 
             fetch(this.resolveIndexUrl())
                 .then(r => {
@@ -526,13 +567,17 @@
                     if (cur.length >= 2) {
                         this.query(cur);
                     } else {
-                        status.textContent = `已加载 ${data.length} 篇文章。输入关键词开始搜索。`;
+                        status.textContent = isEn
+                            ? `Loaded ${data.length} articles. Type a keyword to search.`
+                            : `已加载 ${data.length} 篇文章。输入关键词开始搜索。`;
                     }
                 })
                 .catch(err => {
-                    console.error('[Search] 加载索引失败:', err);
+                    console.error('[Search] load index failed:', err);
                     this.loading = false;
-                    status.textContent = '⚠️ 加载索引失败，请刷新页面重试';
+                    status.textContent = isEn
+                        ? '⚠️ Failed to load search index. Please refresh.'
+                        : '⚠️ 加载索引失败，请刷新页面重试';
                 });
         },
 
@@ -540,25 +585,31 @@
             const status = document.getElementById('search-status');
             const results = document.getElementById('search-results');
             const term = q.trim().toLowerCase();
+            const t = this.t();
 
             if (term.length < 2) {
-                status.textContent = '请输入至少 2 个字符';
+                status.textContent = t.minChars;
                 results.innerHTML = '';
                 return;
             }
+            const isEn = (document.documentElement.getAttribute('lang') || '').toLowerCase().startsWith('en');
             if (!this.docs) {
-                status.textContent = this.loading ? '正在加载索引…' : '索引未就绪';
+                status.textContent = this.loading
+                    ? t.loading
+                    : (isEn ? 'Index not ready' : '索引未就绪');
                 return;
             }
 
             const matches = this.rank(term);
             if (matches.length === 0) {
-                status.textContent = `未找到与 "${q}" 相关的文章`;
+                status.textContent = t.noResults(q);
                 results.innerHTML = '';
                 return;
             }
 
-            status.textContent = `找到 ${matches.length} 篇 (显示前 ${Math.min(20, matches.length)} 条)`;
+            status.textContent = isEn
+                ? `Found ${matches.length} (showing top ${Math.min(20, matches.length)})`
+                : `找到 ${matches.length} 篇 (显示前 ${Math.min(20, matches.length)} 条)`;
             results.innerHTML = matches.slice(0, 20).map((m, i) => this.renderItem(m, term, i)).join('');
             this.activeIndex = 0;
             this.highlightActive();
@@ -603,7 +654,8 @@
             const titleHtml = this.highlight(doc.title, term);
             const snippetHtml = this.buildSnippet(doc.text, term);
             const url = this.resolveArticleUrl(doc.url);
-            const badge = titleHits > 0 ? '<span class="search-badge">标题命中</span>' : '';
+            const t = this.t();
+            const badge = titleHits > 0 ? `<span class="search-badge">${t.titleHit}</span>` : '';
 
             return `
                 <li class="search-item" data-index="${i}" data-url="${url}">
@@ -620,12 +672,14 @@
             `;
         },
 
+        // 索引里的 url 是相对 docs/ 根的（比如 "articles/q13.html" 或 "en/articles/q13.html"）
+        // 需要根据当前页面深度加 "../" 前缀
         resolveArticleUrl: function(relUrl) {
             const path = window.location.pathname;
-            if (/\/articles\//.test(path) || /\/questions\//.test(path)) {
-                return '../' + relUrl;
-            }
-            return relUrl;
+            let depth = 0;
+            if (/\/en\//.test(path)) depth++;
+            if (/\/articles\//.test(path) || /\/questions\//.test(path)) depth++;
+            return '../'.repeat(depth) + relUrl;
         },
 
         // 从正文里挖第一个命中的上下文片段
@@ -701,6 +755,12 @@
             // 首页 / 已经包过的页面：跳过
             if (btn.closest('.nav-header')) return;
 
+            // 根据 <html lang> 决定按钮文案
+            const isEn = (document.documentElement.getAttribute('lang') || '').toLowerCase().startsWith('en');
+            const prevLabel = isEn ? '← Previous' : '← 上一页';
+            const prevAria  = isEn ? 'Go back to previous page' : '返回上一页';
+            const homeLabel = isEn ? '🏠 Home' : '🏠 首页';
+
             // 计算"返回首页"的相对路径（跟原按钮 href 保持一致）
             const homeHref = btn.getAttribute('href');
 
@@ -711,8 +771,8 @@
             const prev = document.createElement('a');
             prev.className = 'nav-back-prev';
             prev.href = '#';
-            prev.innerHTML = '← 上一页';
-            prev.setAttribute('aria-label', '返回上一页');
+            prev.innerHTML = prevLabel;
+            prev.setAttribute('aria-label', prevAria);
             prev.addEventListener('click', function(e) {
                 e.preventDefault();
                 // 只有站内跳转来的才走 history.back，否则回首页
@@ -728,13 +788,138 @@
 
             // 右：首页（复用原按钮的样式和 href）
             btn.classList.add('nav-back-home');
-            btn.textContent = '🏠 首页';
+            btn.textContent = homeLabel;
 
             // 用 nav 替换原按钮位置，再把上一页 + 原按钮塞进去
             const parent = btn.parentNode;
             parent.replaceChild(nav, btn);
             nav.appendChild(prev);
             nav.appendChild(btn);
+        }
+    };
+
+    // ==========================================
+    // 9. 语言切换（EN / 中）
+    // ==========================================
+    const LanguageSwitcher = {
+        LANG_KEY: 'ihef-lang',
+        HINT_KEY: 'ihef-lang-hint-shown',
+
+        // 检测当前页面语言
+        currentLang: function() {
+            return window.location.pathname.indexOf('/en/') !== -1 ? 'en' : 'zh';
+        },
+
+        // 计算对应另一语言的 URL
+        // /articles/q13.html  <->  /en/articles/q13.html
+        // /index.html         <->  /en/index.html
+        // /                   <->  /en/
+        targetUrl: function() {
+            const cur = this.currentLang();
+            let pathname = window.location.pathname;
+
+            if (cur === 'en') {
+                // 去掉 /en 前缀
+                pathname = pathname.replace(/^\/en(\/|$)/, '/');
+                if (pathname === '') pathname = '/';
+            } else {
+                // 插入 /en 前缀
+                // /index.html -> /en/index.html
+                // /articles/q13.html -> /en/articles/q13.html
+                // /  -> /en/
+                if (pathname === '/' || pathname === '') {
+                    pathname = '/en/';
+                } else if (pathname.charAt(0) === '/') {
+                    pathname = '/en' + pathname;
+                } else {
+                    pathname = 'en/' + pathname;
+                }
+            }
+            return pathname + window.location.search + window.location.hash;
+        },
+
+        init: function() {
+            this.injectButton();
+            this.maybeSuggest();
+        },
+
+        injectButton: function() {
+            const cur = this.currentLang();
+            const label = cur === 'zh' ? 'EN' : '中';
+            const title = cur === 'zh' ? 'Switch to English' : '切换到中文';
+
+            const btn = document.createElement('a');
+            btn.className = 'lang-switcher';
+            btn.href = this.targetUrl();
+            btn.textContent = label;
+            btn.title = title;
+            btn.setAttribute('aria-label', title);
+            btn.setAttribute('data-lang-target', cur === 'zh' ? 'en' : 'zh');
+            const self = this;
+            btn.addEventListener('click', function() {
+                localStorage.setItem(self.LANG_KEY, cur === 'zh' ? 'en' : 'zh');
+                // 走默认跳转
+            });
+
+            // 优先尝试 .nav-header（NavHeader.init() 已跑）
+            const navHeader = document.querySelector('.nav-header');
+            if (navHeader) {
+                const home = navHeader.querySelector('.nav-back-home');
+                if (home && home.nextSibling) {
+                    navHeader.insertBefore(btn, home.nextSibling);
+                } else {
+                    navHeader.appendChild(btn);
+                }
+                return;
+            }
+
+            // 独立浮动放置（首页 / 没有 nav-header 的页面）
+            btn.classList.add('lang-switcher-floating');
+            document.body.appendChild(btn);
+        },
+
+        // 首次访问在首页给一次跨语言提示
+        maybeSuggest: function() {
+            const path = window.location.pathname;
+            const isHome = /(^|\/)index\.html?$/.test(path) || path === '/' || path === '/en/' || path === '/en';
+            if (!isHome) return;
+
+            if (localStorage.getItem(this.HINT_KEY)) return;
+            if (localStorage.getItem(this.LANG_KEY)) return;
+
+            const cur = this.currentLang();
+            const nav = (navigator.language || 'zh').toLowerCase();
+            const wantEn = nav.indexOf('en') === 0;
+            const wantZh = nav.indexOf('zh') === 0;
+
+            let show = false;
+            let text = '';
+            if (cur === 'zh' && wantEn) {
+                show = true;
+                text = '🌐 Read this in English?';
+            } else if (cur === 'en' && wantZh) {
+                show = true;
+                text = '🌐 切换到中文阅读？';
+            }
+            if (!show) return;
+
+            const banner = document.createElement('div');
+            banner.className = 'lang-suggest-banner';
+            banner.innerHTML = `
+                <a class="lang-suggest-link" href="${this.targetUrl()}">${text}</a>
+                <button class="lang-suggest-close" aria-label="dismiss">✕</button>
+            `;
+            const self = this;
+            banner.querySelector('.lang-suggest-close').addEventListener('click', function() {
+                localStorage.setItem(self.HINT_KEY, '1');
+                banner.remove();
+            });
+            banner.querySelector('.lang-suggest-link').addEventListener('click', function() {
+                localStorage.setItem(self.HINT_KEY, '1');
+                localStorage.setItem(self.LANG_KEY, cur === 'zh' ? 'en' : 'zh');
+            });
+
+            document.body.appendChild(banner);
         }
     };
 
@@ -746,6 +931,7 @@
         injectSideTocCSS();
 
         NavHeader.init();
+        LanguageSwitcher.init();
         ThemeManager.init();
         BackToTop.init();
         ReadingProgress.init();

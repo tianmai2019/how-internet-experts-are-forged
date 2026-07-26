@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q15: Why does a system that runs fine start timing out, erroring, or crashing the moment traffic spikes?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q15.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q15.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q15.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Why does a system that runs fine start timing out, erroring, or crashing the moment traffic spikes?</h1>
+            <p class="subtitle">Stability is your "everyday assumptions" collapsing, one by one, under pressure</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's view: why does this matter?</h2>
+
+            <p>
+                Every year at midnight on Singles' Day, you'll see "Taobao is down" trending. During Chinese New Year ticket rush, 12306 becomes the punching bag of every developer online. During the World Cup, streaming platforms lag together. A celebrity announces a marriage — and Weibo falls over.
+            </p>
+
+            <p>
+                The weird part? These systems all run fine on a normal day. Why does adding more users break them?
+            </p>
+
+            <div class="highlight-box">
+                <strong>Because a system's "normal" is really just a pile of assumptions — assumptions that don't get tested most of the time.</strong><br><br>
+                When traffic surges, all the assumptions collapse together. That's what we call a <strong>cascading failure</strong> (or "avalanche").
+            </div>
+
+            <h2>🧩 Breaking down the big question</h2>
+
+            <ol>
+                <li><strong>What is concurrency?</strong> Why is "a lot of people at once" completely different from "one person 100 times"?</li>
+                <li><strong>Resources are finite:</strong> connections, threads, memory, DB connection pools — every one of them has a ceiling.</li>
+                <li><strong>Slowness spreads:</strong> why does one slow step drag down the whole system?</li>
+                <li><strong>The avalanche effect:</strong> how does a crash spread from "one corner" to "everywhere"?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the outcome</h3>
+
+            <p>
+                Users see: a spinning loader, a white screen, "Network unstable, please try again later," "Server busy," or a raw 502 page.
+            </p>
+
+            <p>
+                What they don't see: a few million people pushing in at the same moment, blowing past a component that was only designed to hold 10,000 connections.
+            </p>
+
+            <h3 class="section-code">The implementation layer: seeing the shape</h3>
+
+            <p>
+                The kind of service we write day to day looks something like this:
+            </p>
+
+            <div class="code-block">// A perfectly ordinary endpoint
+app.get('/order/:id', async (req, res) =&gt; {
+    const order = await db.query(
+        'SELECT * FROM orders WHERE id = ?', [req.params.id]
+    )
+    res.json(order)
+})</div>
+
+            <p>
+                In dev, in testing, it works. Push QPS to 10, 100, even 1,000 — probably still fine. But once QPS climbs to 100,000, problems start popping one after another:
+            </p>
+
+            <ul>
+                <li>The DB connection pool only has 100 slots. Request #101 starts <strong>queuing up</strong>.</li>
+                <li>Each SQL normally takes 10ms — under pressure it becomes 500ms, because disk IO is congested and locks are stacking up.</li>
+                <li>Node's event loop, or Java's thread pool, gets slowly eaten by slow requests that refuse to let go.</li>
+                <li>Callers time out, retry — and just like that, the request volume <strong>doubles</strong>.</li>
+            </ul>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>
+                You can't spot an avalanche from a single point. Step back and look at the whole path:
+            </p>
+
+            <div class="diagram-box">
+[ User traffic ×100 ]
+       ↓
+   Ingress (Nginx / LB)      ← connections spike, FDs may exhaust
+       ↓
+   API gateway / app service ← threads pinned by slow calls
+       ↓
+   Downstream microservices A, B, C  ← any one slowing infects the rest
+       ↓
+   Database / Redis          ← pool saturated, lock waits explode
+       ↓
+   [ Client timeout → retry ] ────→ back into the entry point (positive feedback!)</div>
+
+            <p>
+                Look at that last dashed arrow — <strong>the client is retrying</strong>. This is the most lethal accelerator in a lot of cascading failures. One slow response triggers one retry. Suddenly 100k QPS is 200k, then 400k. The system gets slower, retries multiply, and eventually the whole thing lies down.
+            </p>
+
+            <p>
+                So the formula for an avalanche is roughly:
+            </p>
+
+            <div class="highlight-box">
+                <strong>Cascading failure = slowness + finite resources + unchecked retries + an unbounded call chain</strong><br><br>
+                Any one of these factors alone isn't fatal. Put them together and you get a disaster.
+            </div>
+
+            <h3 class="section-tradeoff">The trade-off layer: why is it designed this way?</h3>
+
+            <p>
+                You might ask: if it's going to crash, why not just design it to "never crash" from day one?
+            </p>
+
+            <p>
+                Because "surviving high concurrency" is expensive:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Option A: provision for peak</h4>
+                    <p>Keep Singles' Day-level capacity online forever. Idle 99% of the time. Cost is brutal.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Option B: provision for average + autoscale</h4>
+                    <p>Cheap, but scaling takes time. A burst can crush you before the new instances come up.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Option C: add rate limiting / queueing / degradation</h4>
+                    <p>Sacrifice some experience (queues, reduced features) in exchange for the whole thing staying up. In practice, this is the most useful lever.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Option D: fully async + message queue</h4>
+                    <p>Swallow every request and digest slowly. Not viable for anything that has to be real-time.</p>
+                </div>
+            </div>
+
+            <p>
+                What every big company actually does is a combo: <strong>pre-scale + rate limiting + queue-based peak shaving + circuit breaking with graceful degradation</strong>. Those are exactly the "six essentials" we'll cover in Q17.
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>Common misconception:</strong> assuming "system crash = not enough hardware." In reality, most crashes happen while CPU usage is still low — what actually maxes out is <strong>connection counts, thread counts, connection pools, locks</strong> — the "resource counters." Adding machines sometimes doesn't help, because the bottleneck was never compute.
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Load-test a tiny service with your own hands</h3>
+                <p>
+                    Run a bare-bones Node/Python service on your machine. Add a line like <code>sleep(500ms)</code> to fake a slow query. Then hit it with a load-testing tool:
+                </p>
+                <div class="code-block">ab -n 10000 -c 500 http://localhost:3000/hello
+# or use hey / wrk / k6</div>
+                <p>
+                    Watch what happens: as concurrency <code>-c</code> climbs from 10 to 500, how do your P99 latency, error rate, and timeout rate move? Open <code>ss -s</code> and see the TCP connections pile up. You'll see it with your own eyes — same code, different load, completely different "result."
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Related questions to explore:</h3>
+                <a href="question.html?q=18">Q18: Why does the database so often end up being the bottleneck?</a>
+                <a href="question.html?q=19">Q19: Why does one slow endpoint drag down an entire request path?</a>
+                <a href="question.html?q=24">Q24: Why do we need rate limiting and circuit breaking?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>Stability is an honesty test — for your assumptions under pressure</h3>
+                <p>
+                    The system that runs fine on any given day is standing on a stack of unspoken assumptions:
+                    <em>"users won't all show up at once," "there are enough DB connections," "downstream won't go down," "the network won't jitter," "nobody will retry like a maniac."</em>
+                </p>
+                <p>
+                    A traffic surge does one thing: it <strong>lays every one of those assumptions out in the sun</strong>. Whichever one doesn't hold — that's where the system splits open. So the "Singles' Day mega-promotion" at big tech companies isn't really about selling more stuff. It's an annual <strong>org-wide audit of assumptions</strong>.
+                </p>
+                <p>
+                    Zoom out and this is the general law of "getting bigger." A small company becoming a big one, a small country becoming a big one — they all hit this moment. Rules that worked perfectly at small scale get stress-tested by scale itself and start showing cracks. Stability engineering, in the end, is about <strong>writing your assumptions down, quantifying them, and putting guardrails around them</strong>.
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So, why does traffic spike lead to a crash?
+            </p>
+
+            <div class="highlight-box">
+                Because "normal" is <strong>an illusion that only holds at low load</strong>.<br><br>
+                Resources are finite. Slowness spreads. Retries amplify. Paths take each other down.<br>
+                When all of it happens at once — that's an avalanche.<br><br>
+                A truly great system isn't one that's never slow. It's one that <strong>doesn't fall over completely when it is</strong>.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=16" class="btn">On to Q16 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q16: Why does a seemingly simple like, comment, or checkout button need so many moving parts behind it?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q16.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q16.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q16.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Why does a seemingly simple like, comment, or checkout button need so many moving parts behind it?</h1>
+            <p class="subtitle">The "simple" the user sees is bought with "complex" on the engineer's side</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's take: why does this matter?</h2>
+
+            <p>
+                You scroll onto a video, you like it, you tap the heart. The icon turns red, the counter ticks up, you keep scrolling.
+            </p>
+
+            <p>
+                Clean, fast — under 100ms. As a user, you'd think: "Isn't this just storing a number +1?"
+            </p>
+
+            <div class="highlight-box">
+                <strong>But in an engineer's eyes, that single like touches at least 10 systems.</strong><br><br>
+                Idempotency, deduplication, anti-abuse, counter consistency, recommendation updates, notifications, audit trail…
+                Every "optional-looking" detail is the residue of countless past incidents.
+            </div>
+
+            <h2>🧩 Peeling it back: break the big problem into small ones</h2>
+
+            <p>
+                Let's take the smallest feature — "like" — and see how much it's hiding:
+            </p>
+
+            <ol>
+                <li>Who is tapping? (identity)</li>
+                <li>What about repeat clicks / network retries? (idempotency)</li>
+                <li>Is this a bot? (risk control)</li>
+                <li>How do we write the counter? (consistency vs. performance)</li>
+                <li>Should the author get a notification?</li>
+                <li>Should the recommender know? (signal feedback)</li>
+                <li>Do we need an audit log?</li>
+                <li>What if a downstream service is down?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">User layer: only the result matters</h3>
+
+            <p>
+                The user's view is one sentence: "<strong>Tap it, and it turns red.</strong>" That's it.
+            </p>
+
+            <p>
+                That "turn red" has to fire in under 100ms — otherwise the user thinks their phone lagged, or thinks the tap didn't register, and taps again. Which creates a whole new problem.
+            </p>
+
+            <h3 class="section-code">Implementation layer: starting to understand structure</h3>
+
+            <p>
+                The most naive implementation looks like this:
+            </p>
+
+            <div class="code-block">// Naive version: just +1
+function like(userId, postId) {
+    db.execute(
+        'UPDATE post SET like_count = like_count + 1 WHERE id = ?',
+        [postId]
+    )
+}</div>
+
+            <p>
+                This code is fine in a tutorial — in production it's an incident waiting to happen. It steps on at least four landmines:
+            </p>
+
+            <ul>
+                <li><strong>No idempotency:</strong> a network retry gives you +2, +3.</li>
+                <li><strong>No relation record:</strong> no way to tell "has this person already liked it?"</li>
+                <li><strong>Row lock under high concurrency:</strong> a hot post with 100k likes/sec has 100k transactions fighting over one row.</li>
+                <li><strong>No decoupling:</strong> recommender, notifications — all done synchronously through this one call, so everything blocks.</li>
+            </ul>
+
+            <h3 class="section-system">System layer: seeing the full request path</h3>
+
+            <p>
+                The real like path looks like this:
+            </p>
+
+            <div class="diagram-box">
+[ User taps ]
+     ↓
+① Authentication (JWT / Session)
+     ↓
+② Idempotency check (idempotency key / unique index user_id+post_id)
+     ↓
+③ Risk control / anti-abuse (rate, device fingerprint, behavior signals)
+     ↓
+④ Write the like relation (user_like: userId, postId, ts)
+     ↓
+⑤ Update the counter (Redis INCR fast → async sync back to DB)
+     ↓
+⑥ Publish an event to the message queue (Kafka: post.liked)
+     ↓
+   ├─→ Notification service (ping the author)
+   ├─→ Recommender service (update the user's interest profile)
+   ├─→ Leaderboard service (heat update)
+   ├─→ Data warehouse (BI analytics)
+   └─→ Audit log (compliance, traceability)</div>
+
+            <p>
+                Almost none of these steps are "extra" — each one is the residue of some past incident:
+            </p>
+
+            <div class="highlight-box">
+                <strong>Why idempotency?</strong> Because client networks jitter and buttons get mis-tapped.<br>
+                <strong>Why risk control?</strong> Because bot farms are out there liking marketing accounts.<br>
+                <strong>Why count in Redis?</strong> Because a hot row in MySQL will get jammed by row locks.<br>
+                <strong>Why a message queue?</strong> Because there are multiple downstream consumers — you can't wait for all of them synchronously.<br>
+                <strong>Why audit?</strong> Because one day there's a lawsuit or a regulator, and you have to say exactly "who liked what, at what time."
+            </div>
+
+            <h3 class="section-tradeoff">Trade-off layer: why design it this way?</h3>
+
+            <p>
+                What's interesting is that the same "like" can be built completely differently in different products:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>WeChat Moments likes</h4>
+                    <p>Strong consistency first: your friends have to see "who liked it" — count is small, so just store the relation in the database.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Douyin (TikTok) likes</h4>
+                    <p>Eventual consistency first: with hundreds of thousands of likes, nobody cares who tapped — what matters is the counter not stalling. Redis counter + async persistence.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>E-commerce checkout</h4>
+                    <p>Money transactions: must be strongly consistent, idempotent, rollback-able, reconcilable. DB transaction + distributed lock + state machine.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Livestream hearts (heart rain)</h4>
+                    <p>Pure frontend fake motion: don't upload every tap — animate on the client, and the server just samples the count.</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>Common mistake:</strong> "Isn't this just a table with one column? Why so many components?" Because in the real world, a feature isn't defined by <strong>requirements</strong> — it's defined by <strong>scale + edge cases</strong>. A "like" for 10 users and a "like" for 100 million users are two completely different systems.
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Do a "complexity dig"</h3>
+                <p>
+                    Pick any app you know well (say, some e-commerce app), and run through a checkout. Use a packet-capture tool (Charles / mitmproxy / Chrome DevTools Network) and watch, from "tap checkout" to "payment page appears," how many requests get fired.
+                </p>
+                <p>
+                    You'll probably count <strong>10~30</strong>: pre-order, inventory check, coupon match, address validation, risk control, order creation, order-number generation, inventory lock, jump to payment…
+                </p>
+                <p>
+                    Then ask yourself: which of these can you cut? What happens if you do?
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=11">Q11: How do frontend and backend actually split the work?</a>
+                <a href="question.html?q=17">Q17: Why do large systems keep talking about cache, queues, and rate limits?</a>
+                <a href="question.html?q=21">Q21: Why do we need message queues?</a>
+                <a href="question.html?q=46">Q46: Why is a "simple product" usually complex engineering underneath?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how this shapes reality</h2>
+
+            <div class="emperor-box">
+                <h3>The "simple" the user sees is bought with "complex" on the engineer's side</h3>
+                <p>
+                    Every truly great product follows one brutal rule: <strong>keep the complexity on your side, hand the simplicity to the user</strong>.
+                </p>
+                <p>
+                    You think liking is simple — because ByteDance's engineers hid the idempotency, risk control, counter consistency, and async fan-out for you;<br>
+                    You think checkout is smooth — because Taobao's middleware team of hundreds is keeping transactions strongly consistent;<br>
+                    You think WeChat replies instantly — because behind it is a push architecture built up over more than a decade, all the way back to the QQ era.
+                </p>
+                <p>
+                    "Simple" is never free. It means an organization is willing to pour massive engineering complexity into holding up your experience. Next time you look at some feature and think "wow, this is rough" — what you're really rating is <strong>how much complexity that company was willing to hide for you</strong>.
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why does a single "like" need so many moving parts?
+            </p>
+
+            <div class="highlight-box">
+                Because at scale, <strong>there are no small features</strong>.<br><br>
+                Every action that looks simple to the user has to trade off idempotency, consistency, performance, security, audit, and extensibility.<br>
+                The red heart +1 you see is dozens of systems performing a concerto in the background.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=17" class="btn">Keep exploring — Q17 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

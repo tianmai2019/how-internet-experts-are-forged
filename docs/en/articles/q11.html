@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q11: Signup, login, comment, like, order — how are these really built?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q11.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q11.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q11.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 Layer 2 · The Beginner Coder's View</div>
+            <h1>Signup, login, comment, like, order... how are these really built?</h1>
+            <p class="subtitle">On the internet, almost every feature is old bricks rearranged</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's take: why does this matter?</h2>
+
+            <p>
+                You place an order on Taobao, like a post on Weibo, comment on Xiaohongshu, log into Zhihu... on the surface, these look like <strong>five completely different features</strong>.
+                But if I told you — they're actually <strong>the same thing underneath</strong> — would you be a little surprised?
+            </p>
+
+            <p>
+                This matters because once you spot those "underlying bricks," you'll see that
+                what people call "a new product feature" is mostly just old bricks <strong>rearranged</strong>.
+                That "seeing through it" ability is the dividing line between someone who uses products and someone who builds them.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Core insight:</strong><br><br>
+                All these features boil down to just four operations:<br>
+                <strong>C</strong>reate, <strong>R</strong>ead, <strong>U</strong>pdate, <strong>D</strong>elete<br>
+                Short: <strong>CRUD</strong> — plus "knowing who you are" (authentication) and "knowing what you can do" (authorization), and you can build almost the entire internet.
+            </div>
+
+            <h2>🧩 Break it down: split the big question into small ones</h2>
+
+            <ol>
+                <li>What's the common abstraction across these features?</li>
+                <li>How does the system remember "who you are"?</li>
+                <li>"Like" and "comment" look different — why do we say they're the same underneath?</li>
+                <li>Why is ordering so much "heavier" than liking? Heavier in what way?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the result matters</h3>
+
+            <p>
+                You see it as:
+            </p>
+
+            <ul>
+                <li><strong>Signup</strong> — type in a phone number, an account gets created</li>
+                <li><strong>Login</strong> — enter a password, you're in</li>
+                <li><strong>Comment</strong> — write some words, hit send</li>
+                <li><strong>Like</strong> — tap once, it turns red</li>
+                <li><strong>Order</strong> — pick an item, pay, wait for shipping</li>
+            </ul>
+
+            <p>Looks like five different things. But in an engineer's eyes...</p>
+
+            <h3 class="section-code">The implementation layer: seeing the structure</h3>
+
+            <p>
+                Translate these five features into CRUD operations, and the magic shows up:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>📝 Signup</h4>
+                    <p><strong>Create</strong> a row in users</p>
+                    <p><code>INSERT INTO users(phone, password_hash) VALUES(?, ?)</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>🔑 Login</h4>
+                    <p><strong>Read</strong> the users table + issue a token</p>
+                    <p><code>SELECT id FROM users WHERE phone=? AND password_hash=?</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>💬 Comment</h4>
+                    <p><strong>Create</strong> a row in comments</p>
+                    <p><code>INSERT INTO comments(user_id, post_id, text) VALUES(?, ?, ?)</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>❤️ Like</h4>
+                    <p><strong>Create</strong> a row in likes (unlike = <strong>Delete</strong>)</p>
+                    <p><code>INSERT INTO likes(user_id, post_id) VALUES(?, ?)</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>🛒 Order</h4>
+                    <p><strong>Create</strong> orders + <strong>Update</strong> inventory + <strong>Create</strong> payment...</p>
+                    <p>More complex — but every step is still CRUD.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>💡 Takeaway</h4>
+                    <p>Most internet features = <strong>combinations of CRUD</strong> + authentication + some business rules</p>
+                </div>
+            </div>
+
+            <p>
+                Surprised? Let's go a little deeper — starting with how "login" actually "remembers you."
+            </p>
+
+            <h3 class="section-code">"Who are you?" — session vs. token</h3>
+
+            <p>
+                HTTP is a <strong>stateless</strong> protocol — every time the server gets your request, it's like it has amnesia; it doesn't know who you are.
+                So the system needs a way to "prove who you are" on every request. Two mainstream approaches today:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🎟️ Session</h4>
+                    <p>After login, the server generates a session id and stores it in <strong>its own database</strong>.</p>
+                    <p>You get a cookie. Every request, the browser sends the cookie, and the server looks it up.</p>
+                    <p>Like a coat-check ticket — you hold the ticket, the store holds the coat.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🪪 Token (JWT)</h4>
+                    <p>After login, the server issues a <strong>signed string</strong> (containing "you're user_123, valid until xxx") and hands it to you.</p>
+                    <p>Every request carries it, and the server just verifies the signature — no database lookup needed.</p>
+                    <p>Like an ID card — you can tell if it's real just by looking.</p>
+                </div>
+            </div>
+
+            <p>
+                On the frontend, after login the code usually looks like this:
+            </p>
+
+            <div class="code-block">// After a successful login, stash the token
+const res = await fetch('/api/login', {
+  method: 'POST',
+  body: JSON.stringify({ phone, password })
+});
+const { token } = await res.json();
+localStorage.setItem('token', token);
+
+// Every request afterwards carries it automatically
+await fetch('/api/comments', {
+  headers: { 'Authorization': `Bearer ${token}` },
+  method: 'POST',
+  body: JSON.stringify({ postId: 42, text: 'Great post!' })
+});</div>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>
+                Let's zoom in on a single "order" — because it best shows how engineers combine CRUD into a "complex feature":
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">① Authenticate · who are you?</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">② Validate · is the item still there?</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">③ Decrement stock · Update inventory</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">④ Create the order · Create orders</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">⑤ Kick off payment · call a third party</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">⑥ Update order status · Update</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">⑦ Notify the merchant to ship</div>
+            </div>
+
+            <p>
+                Here's the key point: the <strong>real difference</strong> between ordering and liking is —
+            </p>
+
+            <div class="highlight-box">
+                <strong>Idempotency · Transactions · Consistency</strong><br><br>
+                Like: tapping twice equals tapping once (just dedupe) → <strong>idempotent</strong><br>
+                Order: if you tap "Pay" repeatedly, you must never be charged twice → must be <strong>strictly idempotent</strong><br>
+                Order: decrementing stock and creating the order must <strong>both succeed or both fail</strong> → <strong>transaction</strong><br>
+                Order: database, inventory, payment, merchant — four systems, and their data must eventually line up → <strong>consistency</strong>
+            </div>
+
+            <p>
+                So one "order" endpoint can be dozens or even hundreds of lines of code, carefully handling every failure mode.
+                But at its core, it's still a few CRUD operations glued together.
+            </p>
+
+            <h3 class="section-tradeoff">The trade-off layer: why design it this way?</h3>
+
+            <p>
+                You might ask: if it's all the same underneath, why is every feature still so much work to build?
+            </p>
+
+            <p>
+                Because the devil's in the details — for each specific feature, engineers have to think about very different things:
+            </p>
+
+            <ul>
+                <li><strong>Like</strong>: think about "high concurrency" — a trending Weibo post gets tens of thousands of likes a second; can the database handle it? Usually you need a <strong>counter cache</strong> and <strong>async writes</strong>.</li>
+                <li><strong>Comment</strong>: think about "content safety" — spam floods, abuse, ads. You need <strong>keyword filtering</strong> and <strong>rate limiting</strong>.</li>
+                <li><strong>Login</strong>: think about "account security" — passwords can't be stored in plain text (hash + salt), you have to defend against brute-force attacks and credential stuffing, and maybe throw in SMS codes or CAPTCHAs.</li>
+                <li><strong>Order</strong>: think about "correctness of money" — overselling stock, double charges, mangled orders are all disasters, and everything needs a rollback plan.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>So a programmer's real skill isn't writing CRUD — anyone can write CRUD.<br>
+                The skill is knowing "what else this specific situation needs you to think about."</strong>
+            </div>
+
+            <p>
+                That's why "a newbie writing an order endpoint" and "a senior engineer writing an order endpoint" can differ by 10x in lines of code — the senior thought through 10x more failure modes.
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Try this: spot the "CRUD pattern" in an app you already use</h3>
+                <p>
+                    Open any app (WeChat, Douyin, Bilibili...), pick a feature you use all the time, and try to answer:
+                </p>
+                <ul style="color: white;">
+                    <li>Which table does it hit? (users? posts? follows?)</li>
+                    <li>Is it Create, Read, Update, or Delete?</li>
+                    <li>Does it need authentication?</li>
+                    <li>Does it need to be idempotent?</li>
+                </ul>
+                <p>
+                    For example:
+                </p>
+                <ul style="color: white;">
+                    <li>Follow someone = <strong>Create</strong> a follows row (user_id, target_id)</li>
+                    <li>Unfollow = <strong>Delete</strong> that same row</li>
+                    <li>Scrolling the recommendation feed = <strong>Read</strong> with complex ranking + pagination</li>
+                    <li>Posting to Moments = <strong>Create</strong> a moments row</li>
+                </ul>
+                <p>
+                    Do this exercise a few times and you'll start to feel like you can "see through" apps.
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Related questions to explore:</h3>
+                <a href="question.html?q=8">Q8: What are the frontend and backend doing?</a>
+                <a href="question.html?q=10">Q10: Where does the data go after you tap a button?</a>
+                <a href="question.html?q=12">Q12: What is a database really storing?</a>
+                <a href="question.html?q=16">Q16: The challenges of distributed systems</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>A product's "new features" are mostly old bricks rearranged</h3>
+                <p>
+                    You hear "app X just launched a new feature," and it sounds cool and innovative — but from an engineer's angle,
+                    most so-called "new features" are just <strong>existing primitives</strong> reassembled:
+                </p>
+                <p>
+                    • Weibo's "retweet" = a special kind of Create<br>
+                    • Douyin's "favorite" = Create + Delete, similar to like<br>
+                    • Taobao's "cart" = a per-user temporary Create, batched into orders on checkout<br>
+                    • WeChat's "Moments" = Create post + complex visibility (authorization) rules<br>
+                    • Pinduoduo's "help me chop the price" = Create + state machine + notifications
+                </p>
+                <p>
+                    <strong>Real innovation isn't in the bricks themselves — it's in how they're combined.</strong>
+                </p>
+                <p>
+                    That's why great product managers and engineers always ask first: "Can we build this out of what we already have?" — because assembly is far cheaper than invention.
+                </p>
+                <p>
+                    Once you can recognize the assembly patterns, you jump from "user" to "designer."
+                    You'll see that behind every popular product is a careful choreography of "CRUD + authentication + business rules."
+                </p>
+                <p>
+                    That's the secret of the internet world: <em>it's much simpler than it looks, and much more clever than it looks.</em>
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — signup, login, comment, like, order... how are they really built?
+            </p>
+
+            <p>
+                <strong>They're almost all combinations of CRUD (Create, Read, Update, Delete) + authentication (who you are) + authorization (what you can do).</strong>
+                It's just that features like ordering — where money and state are involved — need extra guardrails: <strong>idempotency, transactions, consistency</strong>.
+            </p>
+
+            <p>
+                Once you have this "list of bricks," you'll find — no matter how complex a product looks, break it open and it's the same foundational blocks assembled together.
+                That "see through it all" ability is the first ticket into the world of people who build products.
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=12" class="btn">Keep exploring Q12 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

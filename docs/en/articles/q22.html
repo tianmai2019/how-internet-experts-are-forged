@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q22: Why can load balancing let one service handle a flood of requests?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q22.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q22.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q22.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Why can load balancing let one service handle a flood of requests?</h1>
+            <p class="subtitle">The illusion that turns "one service" into "a whole army of services"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's view: why does this matter?</h2>
+
+            <p>
+                Ever stop to think about something weird — a billion people in China are all hitting the same "www.taobao.com", refreshing all day. Why doesn't that one machine drop dead?
+                And even stranger: if it did drop dead, how come no user ever noticed?
+            </p>
+
+            <p>
+                The answer — <strong>you think you're talking to "a Taobao server", but you're actually facing an entire data center, tens of thousands of machines.</strong>
+                The thing quietly dispatching your request to one of them is called a <strong>load balancer (LB)</strong>.
+            </p>
+
+            <div class="highlight-box">
+                <strong>What is load balancing, at its core?</strong><br><br>
+                One line: <strong>it makes "one service" look like a single machine, when in fact it's a crowd of them.</strong><br>
+                From the outside, a single point. Inside, an army.
+            </div>
+
+            <p>
+                Understand load balancing and you understand "horizontal scaling" — the single most important idea in internet architecture. It's why big tech can "just add machines to survive traffic" without rewriting code.
+            </p>
+
+            <h2>🧩 Break it down</h2>
+
+            <ol>
+                <li><strong>How do users "think" they're hitting one machine?</strong></li>
+                <li><strong>How does a request get dispatched?</strong> Who decides "this one goes to whom"?</li>
+                <li><strong>If a machine dies, will users notice?</strong></li>
+                <li><strong>Why do some people say L4 and others say L7?</strong></li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the result matters</h3>
+
+            <p>
+                An ordinary user's awareness of load balancing — <strong>zero</strong>.
+                All they feel is:
+            </p>
+            <ul>
+                <li>How is this site so "solid"? Even on Singles' Day, with all those people, it just works.</li>
+                <li>Occasionally a request feels slow — refresh and it's fine (actually, you got routed to a different machine).</li>
+                <li>They have no clue that in a single second, "Taobao" is really thousands of machines serving different users at once.</li>
+            </ul>
+
+            <p>
+                And that's the greatest thing about load balancing — <strong>it makes complexity disappear from the user's view</strong>.
+            </p>
+
+            <h3 class="section-code">The build layer: starting to see the structure</h3>
+
+            <p>
+                The simplest load balancer is <strong>Round Robin</strong>:
+                a request comes in — the first goes to machine A, the second to B, the third to C, the fourth back to A… and so on.
+            </p>
+
+            <div class="code-block">
+# A minimal "application-level" load balancer (pseudocode)
+servers = ["10.0.0.1", "10.0.0.2", "10.0.0.3"]
+counter = 0
+
+def pick_server():
+    global counter
+    server = servers[counter % len(servers)]
+    counter += 1
+    return server
+
+def handle_request(req):
+    backend = pick_server()
+    return forward(req, backend)   # forward the request over
+            </div>
+
+            <p>
+                The real world is way more complex, of course, but the spirit is identical: <strong>one "dispatcher" out front spreads requests across a pool of "workers" behind it</strong>.
+            </p>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>
+                In real internet systems, load balancing isn't one layer — it's a stack of layers, each nested inside the next.
+            </p>
+
+            <div class="diagram-box">
+                【User】<br>
+                ↓ via domain www.taobao.com<br>
+                <br>
+                【DNS load balancing】(returns different data-center IPs based on proximity)<br>
+                ↓<br>
+                【L4 load balancer】(LVS / F5 — splits by IP + port, ultra fast)<br>
+                ↓<br>
+                【L7 load balancer】(Nginx / Envoy — fine-grained routing by URL / Header)<br>
+                ↓<br>
+                【Backend service cluster】machines A, B, C, D, E…
+            </div>
+
+            <p>
+                All along this path, every layer is "dispatching" — just at different granularities:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>DNS load balancing</h4>
+                    <p>Coarsest granularity: returns different data-center IPs <strong>by geography</strong>.<br>Beijing users get the Beijing data center, Guangzhou users get Guangzhou.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>L4 load balancing (transport layer)</h4>
+                    <p>Splits by <strong>IP + port</strong>, doesn't look at request content.<br>Blazing fast — a single LVS box can handle hundreds of thousands of QPS. But it can't "see the content" for smart routing.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>L7 load balancing (application layer)</h4>
+                    <p>Can see <strong>HTTP URL, Header, Cookie</strong>.<br>Can do things like "route /video to the video cluster, /pay to the payment cluster".</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Service Mesh</h4>
+                    <p>Finer still: <strong>load balances calls between services</strong> inside the system too.<br>Classic examples: Istio, Envoy. A must-have in the microservices era.</p>
+                </div>
+            </div>
+
+            <p>
+                Besides "how to split", load balancing has one more critical weapon: <strong>health checks</strong>.
+                Every few seconds, the LB pings each backend — "you still alive?"
+                Dead machines get <strong>automatically kicked out of the pool</strong>, and new requests stop going there.
+                That's the secret behind "a machine died and no user noticed".
+            </p>
+
+            <h3 class="section-tradeoff">The trade-off layer: why is it designed this way?</h3>
+
+            <p>
+                Load balancing looks simple, but it hides a few brain-bending trade-offs:
+            </p>
+
+            <div class="highlight-box">
+                <strong>The core trade-off:</strong>
+                <strong>even distribution</strong> ↔ <strong>session stickiness</strong><br>
+                Want it truly even → the same user may land on a different machine each time → login state gets lost.<br>
+                Want "same user → same machine" (session sticky) → some machines end up more loaded than others.
+            </div>
+
+            <p>
+                A few classic strategies you'll eventually have to pick from:
+            </p>
+
+            <ul>
+                <li><strong>Round Robin:</strong> most fair — but ignores machine performance.</li>
+                <li><strong>Weighted Round Robin:</strong> stronger machines get a bigger share.</li>
+                <li><strong>Least Connections:</strong> whoever has the fewest open jobs gets the next one. Good for workloads with uneven request times.</li>
+                <li><strong>Consistent Hashing:</strong> the same user / same key always lands on the same machine — great for cache affinity. When you add a machine, only a small fraction of requests need to "move house".</li>
+                <li><strong>IP Hash:</strong> split by client IP — a cheap way to get sticky sessions.</li>
+            </ul>
+
+            <div class="callout callout--warning">
+                <strong>Common misconception:</strong> "with load balancing, nothing ever goes down". <br>
+                The LB itself is a single point! If the LB dies, hundreds of machines behind it become "islands".
+                So real systems run <strong>multiple LBs in active-standby</strong> (Keepalived + VIP, high-availability SLB clusters in the cloud), and even DNS returns several LB addresses.
+                <strong>There's no such thing as truly no single point — only more backups.</strong>
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>See "which machine you're hitting" with your own eyes</h3>
+                <p>
+                    Run this in your terminal:
+                </p>
+                <div class="code-block" style="background:#111827;">
+$ nslookup www.baidu.com<br>
+Server: 8.8.8.8<br>
+Address: 8.8.8.8#53<br>
+Non-authoritative answer:<br>
+Name: www.a.shifen.com<br>
+Address: 110.242.68.66<br>
+Address: 110.242.68.4
+                </div>
+                <p>
+                    See that? It returned <strong>multiple IP addresses</strong>. That's the most direct evidence of DNS load balancing — one domain, a bunch of IPs behind it.
+                    Your browser picks one to connect to; the rest are its "backups".
+                </p>
+                <p>
+                    Try it again with <code>curl</code>:<br>
+                    <code>curl -I https://www.taobao.com</code> — watch the <code>Server</code> or <code>Set-Cookie</code> headers, and you may see different data-center markers.
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=15">Q15: How do frontend and backend actually divide the work?</a>
+                <a href="question.html?q=17">Q17: Why do we talk about caching, queues, and load balancing?</a>
+                <a href="question.html?q=21">Q21: How does a message queue shave peaks and fill troughs?</a>
+                <a href="question.html?q=23">Q23: Why are distributed systems so complex?</a>
+                <a href="question.html?q=20">Q20: Why does caching boost performance?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>Load balancing = syntactic sugar for scalability</h3>
+                <p>
+                    In the era before load balancing, "getting stronger" had exactly one meaning — <strong>replace this machine with a more expensive one</strong>.
+                    That's called "vertical scaling". Expensive, with a clear ceiling, and when it fails you're back to square one overnight.<br><br>
+                    Load balancing opens up a different kind of "getting stronger" — <strong>horizontal scaling</strong>:
+                    machines not enough? Just add more. Add ten, get ten times the capacity.
+                    From that moment on, "performance" is no longer a hardware problem — it's a money and architecture problem.<br><br>
+                    Underneath, there's a grandmaster-level insight:<br>
+                    <strong>"One service" is a story. "A crowd of services" is the truth.</strong><br><br>
+                    This idea reaches far beyond tech — straight into how organizations run:<br>
+                    · Why can a company "expand 100x without collapsing"? Because it broke "one CEO deciding everything" into "many business units deciding independently" (organizational load balancing).<br>
+                    · Why can a nation's administrative system cover hundreds of millions? Because it has the "central → province → city → county → township" layered dispatch (hierarchical load balancing).<br>
+                    · Why does a big university lecture get split across rooms? Because one room can't fit everyone (session stickiness + traffic splitting).<br><br>
+                    <strong>Every system that "stays stable under a flood of requests" — software, organizations, entire societies — is doing the same thing: turning "one entrance" into "an army".</strong>
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why can load balancing let one service handle a flood of requests?
+            </p>
+
+            <p>
+                <strong>Because it decouples the concept of "one service" into "a crowd of machines + one entrance".</strong>
+                The entrance handles routing and keep-alive. The machines do the actual work. More requests? Add machines. A machine dies? Kick it out, swap in a new one.
+                The outside world only ever sees one rock-solid "service".
+            </p>
+
+            <div class="highlight-box">
+                What's really great about load balancing isn't how fast it is — <br>
+                it's that it turns "scaling" into an <strong>addition problem</strong>. <br>
+                You don't need to refactor. You just add machines.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=23" class="btn">Continue to Q23 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

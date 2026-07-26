@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q24: Under high concurrency, why is the hard part not building features but keeping things stable?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q24.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q24.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q24.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Under high concurrency, why is the hard part not building features but keeping things stable?</h1>
+            <p class="subtitle">Features are a visible cost. Stability is an invisible asset.</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 Ordinary user's view: why does this question matter?</h2>
+
+            <p>
+                Ever seen this classic move — some brand-new lottery mini-app, functionally as simple as it gets: tap a button, draw a prize. But the second the clock strikes lottery time, the page goes white, crashes, 502, "server busy"…
+            </p>
+
+            <p>
+                Same "tap a button" — so why can Alibaba's Double 11, Tencent's red packets, or 12306's train-ticket rush hold up?
+                <strong>Not because their features are "more powerful" — but because their investment in stability is thousands of times what a beginner's mini-app has.</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>The core truth:</strong><br><br>
+                Building the feature might take 1 day.<br>
+                Building the feature so 100 million people can use it at once without a crash might take 1 year.<br>
+                <strong>Features add. Stability multiplies — every extra "nine" doubles the cost.</strong>
+            </div>
+
+            <h2>🧩 Breaking it down</h2>
+
+            <ol>
+                <li><strong>How do you measure "availability" anyway?</strong> What does "four nines" mean?</li>
+                <li><strong>Why does everything change once concurrency shows up?</strong> A single request is fine — why do many requests break it?</li>
+                <li><strong>What holds stability up?</strong> Is it just "better code"?</li>
+                <li><strong>Why do big companies keep running "failure drills"?</strong> Deliberately breaking their own stuff?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">User layer: only the outcome counts</h3>
+
+            <p>
+                Users' expectations around stability follow a <strong>brutal curve</strong> —
+            </p>
+
+            <ul>
+                <li>The system works 100 times — no praise.</li>
+                <li>The system breaks once — they curse you and tell 10 friends.</li>
+                <li>It breaks at the critical moment (payment, ticket rush, prize claim) — they remember forever.</li>
+            </ul>
+
+            <p>
+                That's why "invisible stability" always matters more than "visible features."
+                Features are a bonus. Stability is the floor — <strong>invisible when it works, catastrophic when it doesn't</strong>.
+            </p>
+
+            <h3 class="section-code">Implementation layer: starting to see the shape</h3>
+
+            <p>
+                Engineers usually start out thinking — "I wrote the code well, tests pass, isn't that stable?"
+                Then reality gives them a lesson:
+            </p>
+
+            <div class="code-block">
+# Single request: works perfectly
+def buy(item_id, user_id):
+    stock = db.query("SELECT stock FROM items WHERE id=?", item_id)
+    if stock > 0:
+        db.execute("UPDATE items SET stock=stock-1 WHERE id=?", item_id)
+        return "success"
+
+# Ten thousand requests at once: oversold!
+# - all read stock = 5
+# - all execute stock - 1
+# - result: 10000 items sold, only 5 in stock
+            </div>
+
+            <p>
+                This is the classic case of <strong>concurrency</strong> turning a simple problem into a complex one.
+                Same code — right when 1 person uses it, wrong when 10,000 people use it at once.
+                Lesson one of stability — <strong>"correct" comes with conditions</strong>.
+            </p>
+
+            <h3 class="section-system">System layer: seeing the full path</h3>
+
+            <p>
+                Stability has a common industry language — <strong>availability SLA</strong>. It uses "how many nines" to describe how much downtime you get per year:
+            </p>
+
+            <div class="diagram-box">
+                99% (two nines) → 87.6 hours of downtime per year (≈ 3.65 days)<br>
+                99.9% (three nines) → 8.76 hours per year<br>
+                99.99% (four nines) → 52.6 minutes per year <span style="color:#06B6D4">⬅ e-commerce standard</span><br>
+                99.999% (five nines) → 5.26 minutes per year <span style="color:#06B6D4">⬅ finance / telecom</span><br>
+                99.9999% (six nines) → 31.5 seconds per year <span style="color:#06B6D4">⬅ astronomical cost</span>
+            </div>
+
+            <p>
+                Every extra nine can raise cost <strong>exponentially</strong>. You're no longer fighting "code bugs" — you're fighting the speed of light, disk failure, cosmic rays, human error, and every other small-probability event.
+            </p>
+
+            <p>
+                Two other key metrics:
+            </p>
+
+            <ul>
+                <li><strong>MTBF</strong> (Mean Time Between Failures) — how long between incidents.</li>
+                <li><strong>MTTR</strong> (Mean Time To Recovery) — how long to get back up after one.</li>
+            </ul>
+
+            <p>
+                Here's the interesting part — modern internet companies mostly no longer dream of "infinite MTBF" (never fail). They <strong>obsess over shrinking MTTR</strong> (recover within 30 seconds). It's a mature philosophical shift: from "avoid failure" to "recover fast."
+            </p>
+
+            <p>
+                The full "arsenal" of stability looks roughly like this:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Rate limiting + circuit breaking + graceful degradation</h4>
+                    <p><strong>Rate limiting:</strong> at most 1000 requests per second get through.<br><strong>Circuit breaking:</strong> downstream has been timing out for 5 seconds — stop calling it.<br><strong>Graceful degradation:</strong> shut off non-core features first, keep the main path alive.<br>The three-piece kit is the "lifeline" of any high-concurrency system.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Failure-domain isolation</h4>
+                    <p>Slice the system into multiple "failure units" (multi-datacenter, multi-AZ) — if one dies, the others keep running.<br>Don't put all your eggs in one basket.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Capacity planning</h4>
+                    <p>Estimate peak QPS, right down to CPU / memory / bandwidth, then <strong>reserve 3–5× headroom</strong>.<br>Months before Double 11, Alibaba is running "capacity load tests."</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Release strategy</h4>
+                    <p>Don't ship to everyone at once. Use <strong>staged rollout</strong> (1% first, then 10%, then 100%), <strong>canary</strong> (a small group tries it first), and <strong>blue-green deployment</strong> (two environments, flip traffic between them) to shrink the blast radius.</p>
+                </div>
+            </div>
+
+            <h3 class="section-tradeoff">Trade-off layer: why is it designed this way?</h3>
+
+            <p>
+                The most counter-intuitive thing about stability — <strong>you have to deliberately go slower, deliberately reject service, deliberately do less</strong>.
+            </p>
+
+            <div class="highlight-box">
+                <strong>The core trade-off:</strong><br>
+                <strong>Every request succeeds</strong> ↔ <strong>the whole system stays up</strong><br>
+                You can't have both.<br>
+                A truly stable system will actively reject some requests to keep itself from cascading into total collapse.
+            </div>
+
+            <p>
+                Classic example — Weibo trending topic explodes, what do you do? Not "let everyone refresh." Instead:
+            </p>
+
+            <ul>
+                <li>First, <strong>rate limit</strong> — excess requests get an immediate "try again later."</li>
+                <li><strong>Graceful degradation</strong> — the trending list stops updating in real time and serves a cached static version.</li>
+                <li><strong>Circuit breaking</strong> — if the recommendation system times out, skip it, return basic content only.</li>
+                <li><strong>Scale out</strong> — spin up spare machines, expand capacity fast.</li>
+            </ul>
+
+            <p>
+                The philosophy behind all of this is the same — <strong>better to make 10% of people wait a moment than to let 100% of people go down together</strong>.
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>Common trap:</strong> "I wrote clean code and full tests — that's stable."<br>
+                Stability isn't a code-quality problem — it's a <strong>systems problem</strong>. It touches:
+                network, hardware, dependencies, deployment, releases, monitoring, recovery… miss one link and the whole thing goes down.
+                You might never figure out "why does the system twitch at 3 PM on Wednesday" — until someone tells you that's when a downstream service does its batch restart.
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Load-test your own service with wrk</h3>
+                <p>
+                    If you have a web service (even a Flask hello world), try this:<br>
+                    1. Install wrk: <code>brew install wrk</code> (Mac)<br>
+                    2. Run the load test: <code>wrk -t4 -c1000 -d30s http://localhost:8080/</code><br>
+                    (4 threads, 1000 concurrent connections, 30 seconds)<br>
+                    3. Watch the results: QPS, average latency, P99 latency, error rate.<br>
+                    4. Turn up the pressure: <code>-c 2000</code>, <code>-c 5000</code>… until you see the <strong>error rate spike</strong>.
+                </p>
+                <p>
+                    Once you've done this, you know at what concurrency your "simple endpoint" actually breaks.
+                    That's the first awakening of a stability mindset — <strong>stop asking "does it run?" — ask "how much can it hold?"</strong>
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=15">Q15: How do frontend and backend split the work?</a>
+                <a href="question.html?q=23">Q23: Why are distributed systems so complex?</a>
+                <a href="question.html?q=25">Q25: Why do big companies obsess over monitoring, logging, and drills?</a>
+                <a href="question.html?q=31">Q31: Why does stability matter more than showing off?</a>
+                <a href="question.html?q=22">Q22: How does load balancing absorb massive traffic?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>Features are a visible cost. Stability is an invisible asset.</h3>
+                <p>
+                    New engineers have a <strong>strange pride</strong> in features —
+                    "I built in one afternoon what took other people a week!"
+                    Then they discover that thing dies in 1 minute under real traffic.<br><br>
+                    Senior engineers, looking at a "feature," instinctively do extra math:<br>
+                    · Once this ships, how many extra downstream calls?<br>
+                    · How much can it hold at peak?<br>
+                    · How do we recover when it fails?<br>
+                    · Could it trigger a cascade?<br><br>
+                    <strong>"Features" are what the boss can see, what you can brag about — a visible cost.</strong><br>
+                    <strong>"Stability" is what nobody praises, but it's your lifeline — an invisible asset.</strong><br><br>
+                    Push this view out into the real world and it still holds:<br>
+                    · <strong>A restaurant</strong> — great food matters (feature), but "never gives anyone food poisoning" matters more (stability).<br>
+                    · <strong>A marriage</strong> — romantic moments are a bonus, but "we fight without going cold on each other" is the floor (stability).<br>
+                    · <strong>A country</strong> — GDP growth is the visible achievement, but "society doesn't fall apart" is the foundation (stability).<br><br>
+                    Every truly great system isn't about "how dazzling it can be" — it's about "<strong>still being reliable on its worst day</strong>."
+                    Everything you see at big internet companies that looks "over-engineered" — multi-DC, multi-replica, drills, staged rollouts, circuit breakers —
+                    isn't there for showing off. It's the insurance policy written for the worst day.
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So, under high concurrency, why is the hard part not building features but keeping things stable?
+            </p>
+
+            <p>
+                <strong>Because features are a finite-dimensional problem — stability is an infinite-dimensional one.</strong>
+                What you're defending against is no longer "is this line of code wrong?" It's the combinatorial explosion of small-probability events: traffic spikes, dependency outages, machines blowing up, network jitter, botched releases, human error, and on and on.
+                Every extra one you defend against doubles the cost. Every one you miss can take everything down.
+            </p>
+
+            <div class="highlight-box">
+                The watershed of growth is here:<br>
+                A junior engineer asks — "Can this feature be built?"<br>
+                A senior engineer asks — "Can this feature <strong>hold up on the worst day</strong>?"<br>
+                <br>
+                The first builds features. The second builds systems.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=25" class="btn">Continue to Q25 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

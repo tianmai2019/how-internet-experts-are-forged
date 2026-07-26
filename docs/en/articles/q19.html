@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q19: Why can one timing-out endpoint drag down the whole business chain?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q19.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q19.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q19.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Why can one timing-out endpoint drag down the whole business chain?</h1>
+            <p class="subtitle">Errors are never isolated — they spread.</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's view: why does this matter?</h2>
+
+            <p>
+                You've probably heard a tech team say: "One endpoint went down for half an hour, and the whole app was unusable."
+                A non-engineer's first reaction is: it's just one endpoint — can't you route around it?
+            </p>
+
+            <p>
+                But in a real distributed system, one tiny slow endpoint can topple the entire business like a line of dominoes.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Errors are never isolated — they spread down the call chain.</strong><br><br>
+                This is what people call "cascading failure" or "request-path avalanche."
+                One of your downstreams takes 3 seconds longer, so your service stalls. Your caller sees you stalled, so it stalls too. Pretty soon the whole path is flat on its back.
+            </div>
+
+            <h2>🧩 Break it down: big question into small ones</h2>
+
+            <ol>
+                <li>Which is scarier — an endpoint that's "slow" or one that's "wrong"?</li>
+                <li>Why does "slow" eat resources? (threads / connections / memory)</li>
+                <li>How does a call chain spread the slowness?</li>
+                <li>What tools cut the infection? (timeouts, isolation, circuit breaking, async)</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: just the outcome</h3>
+
+            <p>
+                What the user sees might be: the "place order" button spins forever, the pay button won't respond, the app home page won't refresh — or it won't open at all.
+            </p>
+
+            <p>
+                They can hardly imagine — "this is all happening because one coupon-lookup endpoint in the marketing system went from 50ms to 5 seconds due to a slow database query."
+            </p>
+
+            <h3 class="section-code">The implementation layer: starting to see the machinery</h3>
+
+            <p>
+                Many devs write code like this:
+            </p>
+
+            <div class="code-block">// Naive version: no timeout
+async function createOrder(userId, items) {
+    const coupon = await couponService.getCoupon(userId)  // ← suppose this hangs for 5s
+    const price  = calc(items, coupon)
+    const order  = await orderService.save(userId, price)
+    return order
+}</div>
+
+            <p>
+                Looks reasonable. But the moment <code>couponService.getCoupon</code> gets slow:
+            </p>
+
+            <ul>
+                <li>This request just sits there, holding <strong>one thread / one connection / one chunk of memory</strong>.</li>
+                <li>The next second, 1000 requests come in and all stall in the same place → 1000 resources locked up.</li>
+                <li>Your callers (app gateway, upstream services) wait, hit their timeout, and start <strong>retrying</strong> → traffic doubles.</li>
+                <li>Your service is saturated — even endpoints that have nothing to do with coupons (like "get order") stop responding.</li>
+            </ul>
+
+            <p>
+                This is the mechanism behind "one endpoint drags down everything" — it's not "error contagion," it's <strong>all your resources being held by the same batch of slow requests</strong>.</p>
+
+            <h3 class="section-system">The system layer: the full path</h3>
+
+            <p>
+                In real microservices, call graphs are tangled:
+            </p>
+
+            <div class="diagram-box">
+[App] → [Gateway] → [Order Service]
+                        ↓
+                ┌───────┼────────┬──────────┐
+                ↓       ↓        ↓          ↓
+         [Product Svc][Coupon Svc][Inventory Svc][Risk Svc]
+                          ↓
+                     [Database]  ← suppose a slow query hits here
+                          ↓
+              All coupon-service threads get stuck
+                          ↓
+              Order service calls coupon, times out — its threads stuck too
+                          ↓
+              Gateway waits on order service, connection pool blows up
+                          ↓
+              The app can't open anything</div>
+
+            <p>
+                This is a "reverse" failure that infects upward from downstream. The cause is one thing: <strong>if any hop in the call chain has no "stop-loss," a downstream problem becomes a whole-path problem</strong>.
+            </p>
+
+            <p>
+                Famous real-world examples:
+            </p>
+
+            <ul>
+                <li><strong>AWS S3's 2015 hiccup</strong> — because so many services that depended on S3 had no reasonable timeouts, all of us-east-1 got dragged down for hours.</li>
+                <li><strong>Every e-commerce mega-sale day</strong> — some non-core path (like "user tier lookup") goes down, and suddenly you can't place orders either — because the core path forgot to treat that "non-core dependency" as, well, non-core.</li>
+            </ul>
+
+            <h3 class="section-tradeoff">The trade-off layer: why design it this way?</h3>
+
+            <p>
+                Luckily, the industry has built up a whole toolkit for "stopping the bleeding":
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>① Timeout</h4>
+                    <p>Every remote call needs a timeout. <strong>No timeout = you let the other side hold you forever.</strong> This is the cheapest, most important line of defense.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>② Circuit Breaker</h4>
+                    <p>Failure rate over threshold in a short window → fail fast, stop hitting the downstream. Gives it a chance to recover, and saves you.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>③ Bulkhead</h4>
+                    <p>Different downstreams get different thread pools / connection pools. Coupons dying won't eat the product-service threads. Like watertight compartments on a ship.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>④ Fallback</h4>
+                    <p>Can't get the data? Return a backstop — default value, stale cache, empty array — so the business can keep moving.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>⑤ Async</h4>
+                    <p>Non-critical paths get pushed to a message queue. If they break, you catch up later — you don't block the main flow.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>⑥ Retry strategy</h4>
+                    <p>Exponential backoff + jitter. Don't retry instantly on every error — that's pouring gasoline on the fire.</p>
+                </div>
+            </div>
+
+            <p>
+                With those in place, the same code becomes:
+            </p>
+
+            <div class="code-block">async function createOrder(userId, items) {
+    let coupon = null
+    try {
+        coupon = await withTimeout(
+            couponBreaker.fire(userId),   // wrapped in circuit breaker
+            300                            // 300ms timeout
+        )
+    } catch (e) {
+        coupon = defaultCoupon()          // fallback: use default if unreachable
+        log.warn('coupon fallback', e)
+    }
+    const price = calc(items, coupon)
+    return orderService.save(userId, price)
+}</div>
+
+            <p>
+                This version is uglier, wordier — but it <strong>won't get dragged down by its downstream anymore</strong>.
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>Common mistake:</strong> "This is an internal call, I don't need a timeout." Exactly wrong — <strong>internal calls are the most common place people forget timeouts</strong>, precisely because they're fast in normal times and nobody imagines them going slow. Most production incidents aren't external APIs dying — they're internal services "trusting each other too much" with no isolation.
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Simulate a path-wide avalanche</h3>
+                <p>
+                    Spin up three services: A → B → C. Give C a 30% chance of sleeping for 3 seconds.
+                </p>
+                <ol>
+                    <li><strong>Version 1:</strong> No timeouts on A or B. Load-test A and watch response times. You'll see P99 shoot past 3 seconds, A's threads all consumed — even endpoints that don't touch C get slow.</li>
+                    <li><strong>Version 2:</strong> Add 500ms timeout + circuit breaker + fallback on A→B and B→C. Load-test again — A's response time stays capped at 500ms, some requests return "fallback data," but the system doesn't collapse.</li>
+                </ol>
+                <p>
+                    That's the most visceral way to feel "avalanche prevention" — same downstream conditions, two totally different fates.
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=15">Q15: Why does a system crash the moment traffic spikes?</a>
+                <a href="question.html?q=18">Q18: Why is the database so often the bottleneck?</a>
+                <a href="question.html?q=24">Q24: Why do we need rate limiting and circuit breaking?</a>
+                <a href="question.html?q=25">Q25: Why do we need monitoring and distributed tracing?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how this shapes reality</h2>
+
+            <div class="emperor-box">
+                <h3>Errors are never isolated</h3>
+                <p>
+                    One endpoint times out and drags down the entire business chain — this isn't a quirk of distributed systems. It's <strong>a disease of every tightly-coupled system</strong>.
+                </p>
+                <p>
+                    In 2008, a handful of CDOs defaulted and took down all of Wall Street;<br>
+                    In 2021, one ship stuck in the Suez Canal blocked 12% of global shipping;<br>
+                    One country's power grid failure ripples along interconnect lines and blacks out its neighbors.
+                </p>
+                <p>
+                    The principle underneath is the same: <strong>the tighter you're connected, the farther the shock travels</strong>. What engineers do with "timeouts, circuit breakers, isolation" is really about giving the system <strong>decoupling, buffering, and circuit protection</strong> — keeping uncertainty in the place it was born, not letting it grow into a full-blown disaster.
+                </p>
+                <p>
+                    Truly mature systems don't chase "no failures." They chase "failures that don't spread." Truly mature organizations, and mature societies, work the same way.
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why does one timing-out endpoint drag down the whole path?
+            </p>
+
+            <div class="highlight-box">
+                Because in a system with no guardrails, <strong>slow eats resources, resources queue up, queues trigger retries, retries multiply the slowness</strong> — until every node is flat on its back.<br><br>
+                A truly resilient system never assumes its downstream is fast, or even alive.<br>
+                It assumes the worst — and uses timeouts, circuit breakers, isolation, and fallbacks to <strong>lock every failure behind a door</strong>.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=20" class="btn">Continue to Q20 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

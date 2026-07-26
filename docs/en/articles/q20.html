@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q20: Why does caching dramatically boost system performance?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q20.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q20.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q20.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Why does caching dramatically boost system performance?</h1>
+            <p class="subtitle">A gamble on time — trading "freshness" for "faster"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user: why does this matter?</h2>
+
+            <p>
+                Ever notice something weird? The same Taobao product page — first click takes a full second of "loading spinner", second refresh snaps open instantly.
+                The same TikTok video — first swipe buffers for a beat, but come back to it and it never stutters again.
+            </p>
+
+            <p>
+                That's not magic. It's something almost every internet system does — <strong>caching</strong>.
+                It's the secret weapon behind everything that "feels fast."
+            </p>
+
+            <div class="highlight-box">
+                <strong>What is caching, really?</strong><br><br>
+                One sentence: <strong>stash the result you just computed, so next time you don't have to compute it again.</strong><br>
+                Time gets "deposited" — the next request "withdraws" it.
+            </div>
+
+            <p>
+                Understand caching and you understand why "12306 could survive Spring Festival traffic once they added a cache", why "Weibo's trending list loads instantly", and "what a CDN is even for."
+                It's one of the basic lenses an engineer uses to see the world.
+            </p>
+
+            <h2>🧩 Break it down</h2>
+
+            <ol>
+                <li><strong>Why is "computing it again" so slow?</strong> What's actually slow?</li>
+                <li><strong>Where does the cache live?</strong> Is there just one layer in a system?</li>
+                <li><strong>How does the cache know it's stale?</strong> What happens when the data changes?</li>
+                <li><strong>What happens when caching goes wrong?</strong> What are all these scary words — penetration, avalanche?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user's view: only the outcome</h3>
+
+            <p>
+                The only thing an ordinary user notices about caching is: <strong>"this site feels faster."</strong>
+            </p>
+
+            <p>
+                A few subtler sensations:
+            </p>
+            <ul>
+                <li>First open of a page is a bit slow — after that, it's lightning</li>
+                <li>Offline, some content still shows up (browser cache)</li>
+                <li>Some data on a page "isn't the latest" — a refresh updates it</li>
+            </ul>
+
+            <p>
+                At this layer, the user can't see the cache. They just feel the "smoothness" it produces.
+            </p>
+
+            <h3 class="section-code">The implementation view: starting to see structure</h3>
+
+            <p>
+                The most basic implementation of a cache is a "dictionary you can look things up in fast" — usually a <strong>Key-Value</strong> structure.
+                The Key is "what you're asking about". The Value is "the answer we computed last time."
+            </p>
+
+            <div class="code-block">
+# A minimal cache sketch (pseudocode)
+def get_user(user_id):
+    if cache.has(user_id):          # Cache hit: return directly
+        return cache.get(user_id)
+    user = db.query(user_id)         # Cache miss: query the database
+    cache.set(user_id, user, ttl=60) # Stash it, reusable for 60 seconds
+    return user
+            </div>
+
+            <p>
+                This snippet is basically the entire soul of the "caching pattern." Every other bit of complexity spins around these four lines.
+            </p>
+
+            <p>
+                But there's a hidden assumption here: <strong>why is "checking the cache" faster than "checking the database"?</strong>
+                Because they sit at different tiers on the speed hierarchy:
+            </p>
+
+            <div class="diagram-box">
+                CPU register  ≈ 1 ns<br>
+                L1 cache      ≈ 1 ns<br>
+                Memory        ≈ 100 ns<br>
+                SSD disk      ≈ 100,000 ns (100 microseconds)<br>
+                Network round trip ≈ 1,000,000 ns (1 millisecond)<br>
+                Cross-datacenter call ≈ 100,000,000 ns (100 milliseconds)
+            </div>
+
+            <p>
+                Top to bottom, each layer is 100x to 1000x slower. Caching is just "move the data from a slow layer to a fast one."
+                That's the physical reason it seems to speed things up out of thin air.
+            </p>
+
+            <h3 class="section-system">The system view: the full path</h3>
+
+            <p>
+                In a real internet system, there's never just "one layer of cache" — there's a whole cache chain. Data crosses a full row of caches before it ever touches the database at the bottom.
+            </p>
+
+            <div class="diagram-box">
+                Browser cache<br>
+                ↓ (already local? return immediately)<br>
+                CDN (content delivery network — the datacenter is tens of kilometers away from you)<br>
+                ↓<br>
+                Reverse proxy cache (Nginx / Varnish)<br>
+                ↓<br>
+                In-process application cache (local memory)<br>
+                ↓<br>
+                Distributed cache (Redis / Memcached)<br>
+                ↓<br>
+                Database (MySQL / PostgreSQL)
+            </div>
+
+            <p>
+                A request travels top to bottom. Any layer that "hits" turns around and returns immediately — no need to bother the layers below. That's the idea of "multi-layer caching" — <strong>the fastest layer catches the most requests</strong>.
+            </p>
+
+            <p>
+                There's one key metric for judging how good a cache layer is — the <strong>hit rate</strong>:
+                out of 100 requests coming in, how many got stopped here.
+                Higher hit rate, less pressure downstream.
+                Top-tier CDNs routinely hit 95%+ — meaning the backend only has to handle 5% of the raw traffic.
+            </p>
+
+            <h3 class="section-tradeoff">The trade-off view: why designed this way?</h3>
+
+            <p>
+                Caching looks like "free" performance — but there's always a cost. A veteran engineer sees a cache and their first thought is — <strong>what about data consistency?</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>The core trade-off of caching:</strong><br>
+                <strong>speed</strong> ↔ <strong>data freshness</strong><br>
+                Want faster? You have to tolerate data being "a little stale."<br>
+                Want absolute accuracy? You give up most of the cache's benefit.
+            </div>
+
+            <p>
+                Around this trade-off, there are a few "classic disaster words" you'll run into sooner or later:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Cache penetration</h4>
+                    <p>Someone queries a Key that <strong>doesn't exist at all</strong>. The cache never hits, every request slams the database. A favorite trick of attackers trying to knock a system over.<br>Fix: cache the "empty result" too.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Cache breakdown</h4>
+                    <p>A <strong>hot Key</strong> suddenly expires, and a flood of requests hit the database at the same instant.<br>Fix: use a lock to serialize the reload, or extend the TTL for hot data.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Cache avalanche</h4>
+                    <p>A huge batch of Keys <strong>expires at the same moment</strong>, all their requests fall through to the database, which collapses under the load.<br>Fix: add random jitter to TTLs — avoid "everything expires in the same second."</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Dirty reads / consistency</h4>
+                    <p>The database gets updated, but the cache still holds the old value — users read the "previous version."<br>Fix: pick a write policy (Cache-Aside / Write-Through), or use delayed double-delete.</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>A common mistake:</strong> "adding a cache always improves performance."<br>
+                If your hit rate is below 50%, you're carrying all of a cache's complexity without getting the benefit — and deleting it might actually be faster. Caching isn't "you win by adding it." It's "you only win when it hits."
+            </div>
+
+            <p>
+                One layer deeper, there's the <strong>locality principle</strong>.
+                Caching works because real-world access patterns aren't uniform: a small number of hot items get hit over and over, while a huge tail of cold data goes almost untouched (the "80/20 rule").
+                That's why <strong>caching the hot data is more cost-effective than caching all of it</strong>.
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Look at your own browser cache</h3>
+                <p>
+                    1. Open Chrome, hit <code>F12</code> for DevTools, switch to the <strong>Network</strong> tab.<br>
+                    2. Refresh any site (say, zhihu.com).<br>
+                    3. Look at the "Size" column — plenty of requests will read <code>(disk cache)</code> or <code>(memory cache)</code>.<br>
+                    4. Tick <strong>Disable cache</strong> at the top, then refresh again.<br>
+                    5. Compare the two runs' "total time" and "total size" — the gap can be several times over.
+                </p>
+                <p>
+                    That's it — you just "saw" the real impact of caching on performance.
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=14">Q14: Why are some sites fast and others slow?</a>
+                <a href="question.html?q=17">Q17: Why do we always talk about caching, queues, and load balancing?</a>
+                <a href="question.html?q=18">Q18: Why is the database always the bottleneck?</a>
+                <a href="question.html?q=21">Q21: How do message queues shave peaks and fill troughs?</a>
+                <a href="question.html?q=22">Q22: How does load balancing turn "one service" into "a fleet of services"?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>Caching = a gamble on time</h3>
+                <p>
+                    The philosophy of caching is a lot like "experience" in real life:<br>
+                    our brains remember "last time this worked," and next time we just repeat it instead of reasoning it through again — that's caching.<br><br>
+                    The cost: <strong>when the world changes, you don't know.</strong><br>
+                    Habits make people fast — and also make people dull.<br><br>
+                    Zoomed up onto the internet, there's an even bigger side effect — <strong>caching shapes the world you see</strong>.
+                    CDNs decide how quickly the news reaches you. Your ISP's DNS cache decides whether a given site is reachable.
+                    Even the search results you see have been "frozen" once by some layer of cache.<br><br>
+                    <strong>Cache isn't free speed — it's speed you pay for with freshness.</strong>
+                    Every engineering effort around it is a careful management of that gamble:
+                    the bet is that "the world won't change too fast in the short term."
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why does caching dramatically boost system performance?
+            </p>
+
+            <p>
+                <strong>Because it replaces "what we'd have to do next" with "the result we already computed before."</strong>
+                Between a CPU register and a cross-datacenter call, every step down the hierarchy is a 100x jump in latency.
+                All caching does is move data a little closer — and the effect is night-and-day faster.
+            </p>
+
+            <div class="highlight-box">
+                But what actually makes someone an engineer isn't "knowing how to add a cache" —<br>
+                it's <strong>knowing when not to add one</strong> —<br>
+                knowing which data can go stale for a second, and which data can't be wrong for even a moment.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=21" class="btn">Continue to Q21 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

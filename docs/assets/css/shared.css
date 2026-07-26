@@ -654,6 +654,125 @@ footer {
 }
 
 /* ============================================
+   语言切换胶囊
+   ============================================ */
+.lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border: 2px solid var(--accent-primary);
+    color: var(--accent-primary);
+    background: var(--card-bg);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+    cursor: pointer;
+    min-width: 44px;
+    text-align: center;
+}
+
+.lang-switcher:hover {
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+    transform: translateY(-1px);
+}
+
+/* .nav-header 里的胶囊：与 .nav-back-home 等高对齐 */
+.nav-header .lang-switcher {
+    margin-left: auto;   /* 挤到最右 */
+    align-self: center;
+}
+
+/* 首页 / 没有 nav-header 的页面：右上角浮动 */
+.lang-switcher-floating {
+    position: fixed;
+    top: 20px;
+    right: 84px;   /* 让开 theme-toggle（top:20 right:20 宽 50） */
+    z-index: 999;
+    box-shadow: var(--card-shadow-sm);
+}
+
+@media (max-width: 600px) {
+    .lang-switcher {
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        min-width: 38px;
+    }
+    .lang-switcher-floating {
+        top: 10px;
+        right: 62px;   /* theme-toggle 移动端在 right:10 宽 40 */
+    }
+}
+
+/* 首次访问引导 banner */
+.lang-suggest-banner {
+    position: fixed;
+    top: 82px;
+    right: 20px;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px 10px 16px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    font-size: 0.92rem;
+    max-width: calc(100vw - 40px);
+    animation: lang-hint-slide-in 0.3s ease-out;
+}
+
+@keyframes lang-hint-slide-in {
+    from { transform: translateY(-6px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.lang-suggest-link {
+    color: var(--accent-primary);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.lang-suggest-link:hover {
+    text-decoration: underline;
+}
+
+.lang-suggest-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    line-height: 1;
+    transition: all 0.15s;
+}
+
+.lang-suggest-close:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+@media (max-width: 600px) {
+    .lang-suggest-banner {
+        top: 62px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        justify-content: space-between;
+    }
+}
+
+/* ============================================
    响应式
    ============================================ */
 @media (max-width: 600px) {

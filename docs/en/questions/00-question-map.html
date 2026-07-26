@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>50 Anchor Questions: Knowledge Map</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .toc {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .toc h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .toc ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .toc a {
+            color: #764ba2;
+            text-decoration: none;
+            display: block;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .toc a:hover {
+            background: #F9F6FF;
+            color: #667eea;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .section-title-icon {
+            margin-right: 10px;
+        }
+
+        .question-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #F9FAFB;
+            border-radius: 12px;
+            border-left: 4px solid #764ba2;
+            transition: all 0.2s;
+        }
+
+        .question-item:hover {
+            transform: translateX(5px);
+            background: #F9F6FF;
+            border-left-color: #667eea;
+        }
+
+        .question-item a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .question-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #1F2937;
+            display: inline-block;
+        }
+
+        .question-item a:hover .question-text {
+            color: #667eea;
+        }
+
+        .question-hint {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: #6B7280;
+            padding-left: 55px;
+        }
+
+        .question-hint::before {
+            content: "💡 ";
+        }
+
+        .level-1 { border-left-color: #3B82F6; }
+        .level-2 { border-left-color: #10B981; }
+        .level-3 { border-left-color: #06B6D4; }
+        .level-4 { border-left-color: #8B5CF6; }
+        .level-5 { border-left-color: #F59E0B; }
+        .level-6 { border-left-color: #EC4899; }
+        .level-0 { border-left-color: #667eea; }
+
+        @media (max-width: 600px) {
+            .section {
+                padding: 30px 20px;
+            }
+            .toc ul {
+                grid-template-columns: 1fr;
+            }
+            .question-hint {
+                padding-left: 0;
+                margin-top: 15px;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="en" href="/en/questions/00-question-map.html">
+    <link rel="alternate" hreflang="zh-CN" href="/questions/00-question-map.html">
+    <link rel="alternate" hreflang="x-default" href="/questions/00-question-map.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <header>
+            <h1>50 Anchor Questions: Knowledge Map</h1>
+            <p class="subtitle">This is the index of the 50 core questions from <em>How Internet Grandmasters Are Forged</em>. Each question is a doorway into a piece of the mental map.</p>
+            <p style="margin-top: 20px;">
+                <a href="knowledge-graph.html" class="btn" style="display: inline-block;">🗺️ Switch to visual view</a>
+            </p>
+        </header>
+
+        <div class="toc">
+            <h2>🗺️ Quick navigation</h2>
+            <ul>
+                <li><a href="#a">🎯 The User's View</a></li>
+                <li><a href="#b">🔨 The Beginner Coder's View</a></li>
+                <li><a href="#c">🌊 The Engineer's View</a></li>
+                <li><a href="#d">⚖️ The Senior Engineer's View</a></li>
+                <li><a href="#e">👑 The Grandmaster's View</a></li>
+                <li><a href="#f">💬 The AI-Era View</a></li>
+                <li><a href="#g">🌟 Wrap-up questions</a></li>
+            </ul>
+        </div>
+
+        <div class="section" id="a">
+            <h2><span class="section-title-icon">🎯</span>The User's View: the internet as a world that responds to you</h2>
+
+            <div class="question-item level-1">
+                <a href="../articles/question.html?q=1">
+                    <span class="question-number">1</span>
+                    <span class="question-text">Why does a page appear on your screen the moment you type a URL?</span>
+                </a>
+                <div class="question-hint">Good link targets: browser, domain, DNS, HTTP, a walkthrough of the page-load flow</div>
+            </div>
+
+            <div class="question-item level-1">
+                <a href="../articles/question.html?q=2">
+                    <span class="question-number">2</span>
+                    <span class="question-text">Why does a message you send arrive on someone else's phone almost instantly?</span>
+                </a>
+                <div class="question-hint">Good link targets: instant messaging, long-lived connections, push notifications, network transport</div>
+            </div>
+
+            <div class="question-item level-1">
+                <a href="../articles/question.html?q=3">
+                    <span class="question-number">3</span>
+                    <span class="question-text">Why do platforms seem to know you better and better over time?</span>
+                </a>
+                <div class="question-hint">Good link targets: recommendation systems, user profiles, behavior data, content distribution</div>
+            </div>
+
+            <div class="question-item level-1">
+                <a href="../articles/question.html?q=4">
+                    <span class="question-number">4</span>
+                    <span class="question-text">Why does the map app always know where you are?</span>
+                </a>
+                <div class="question-hint">Good link targets: GPS, cell-tower positioning, Wi-Fi positioning, map services</div>
+            </div>
+
+            <div class="question-item level-1">
+                <a href="../articles/question.html?q=5">
+                    <span class="question-number">5</span>
+                    <span class="question-text">Why do things you "deleted" sometimes feel like they never really went away?</span>
+                </a>
+                <div class="question-hint">Good link targets: data storage, caching, trash / recycle bin, backups, data retention, platform data policy</div>
+            </div>
+
+            <div class="question-item level-1">
+                <a href="../articles/question.html?q=6">
+                    <span class="question-number">6</span>
+                    <span class="question-text">Why can AI answer you as if you were talking to a person?</span>
+                </a>
+                <div class="question-hint">Good link targets: large language model basics, generative AI, intro to natural language processing</div>
+            </div>
+        </div>
+
+        <div class="section" id="b">
+            <h2><span class="section-title-icon">🔨</span>The Beginner Coder's View: the internet as something people build</h2>
+
+            <div class="question-item level-2">
+                <a href="../articles/question.html?q=7">
+                    <span class="question-number">7</span>
+                    <span class="question-text">How is a web page actually made?</span>
+                </a>
+                <div class="question-hint">Good link targets: HTML / CSS / JavaScript basics, intro to web development</div>
+            </div>
+
+            <div class="question-item level-2">
+                <a href="../articles/question.html?q=8">
+                    <span class="question-number">8</span>
+                    <span class="question-text">What do frontend and backend actually each do?</span>
+                </a>
+                <div class="question-hint">Good link targets: front/back split of concerns, intro to web architecture</div>
+            </div>
+
+            <div class="question-item level-2">
+                <a href="../articles/question.html?q=9">
+                    <span class="question-number">9</span>
+                    <span class="question-text">How does the browser turn the page you wrote into pixels?</span>
+                </a>
+                <div class="question-hint">Good link targets: browser rendering, DOM, CSSOM, the rendering pipeline</div>
+            </div>
+
+            <div class="question-item level-2">
+                <a href="../articles/question.html?q=10">
+                    <span class="question-number">10</span>
+                    <span class="question-text">When you click a button, where does the data actually go?</span>
+                </a>
+                <div class="question-hint">Good link targets: request/response model, form submission, AJAX, API calls</div>
+            </div>
+
+            <div class="question-item level-2">
+                <a href="../articles/question.html?q=11">
+                    <span class="question-number">11</span>
+                    <span class="question-text">Sign up, log in, comment, like, place an order — how are these features actually built?</span>
+                </a>
+                <div class="question-hint">Good link targets: overview of web feature implementation, authentication, sessions, CRUD, business-system fundamentals</div>
+            </div>
+
+            <div class="question-item level-2">
+                <a href="../articles/question.html?q=12">
+                    <span class="question-number">12</span>
+                    <span class="question-text">What is a database actually storing?</span>
+                </a>
+                <div class="question-hint">Good link targets: database basics, tables, records, intro to relational databases</div>
+            </div>
+        </div>
+
+        <div class="section" id="c">
+            <h2><span class="section-title-icon">🌊</span>The Engineer's View: the internet as a system in motion</h2>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=13">
+                    <span class="question-number">13</span>
+                    <span class="question-text">When you type a URL into a browser, what actually happens behind the scenes?</span>
+                </a>
+                <div class="question-hint">Good link targets: one full request path, browser-to-server end to end</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=14">
+                    <span class="question-number">14</span>
+                    <span class="question-text">Why do some sites load in a blink while others are always slow?</span>
+                </a>
+                <div class="question-hint">Good link targets: performance optimization, frontend loading, CDN, caching, network latency</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=15">
+                    <span class="question-number">15</span>
+                    <span class="question-text">Why does a system that ran fine yesterday start timing out, erroring, and crashing under traffic?</span>
+                </a>
+                <div class="question-hint">Good link targets: high concurrency, capacity planning, performance bottlenecks, system stability</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=16">
+                    <span class="question-number">16</span>
+                    <span class="question-text">Why does a "simple" like, comment, or checkout button need so many moving parts behind it?</span>
+                </a>
+                <div class="question-hint">Good link targets: business request path, layered architecture, transactions, async processing</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=17">
+                    <span class="question-number">17</span>
+                    <span class="question-text">Why do big systems keep talking about caches, queues, load balancing, rate limiting, graceful degradation, and circuit breaking?</span>
+                </a>
+                <div class="question-hint">Good link targets: large-system design overview, middleware and service-governance topics</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=18">
+                    <span class="question-number">18</span>
+                    <span class="question-text">Why is the database so often the bottleneck?</span>
+                </a>
+                <div class="question-hint">Good link targets: database bottlenecks, indexes, locks, IO, read/write pressure, sharding</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=19">
+                    <span class="question-number">19</span>
+                    <span class="question-text">Why can one slow API drag the entire business path down with it?</span>
+                </a>
+                <div class="question-hint">Good link targets: dependency calls, timeout propagation, cascading failure, path-level stability</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=20">
+                    <span class="question-number">20</span>
+                    <span class="question-text">Why does caching make systems dramatically faster?</span>
+                </a>
+                <div class="question-hint">Good link targets: caching fundamentals, Redis, cache design, cache consistency</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=21">
+                    <span class="question-number">21</span>
+                    <span class="question-text">Why do message queues help with shaving peaks and filling troughs?</span>
+                </a>
+                <div class="question-hint">Good link targets: message queues, async processing, decoupling, load smoothing</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=22">
+                    <span class="question-number">22</span>
+                    <span class="question-text">Why can load balancing let one service absorb huge amounts of traffic?</span>
+                </a>
+                <div class="question-hint">Good link targets: load balancing, reverse proxy, traffic distribution</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=23">
+                    <span class="question-number">23</span>
+                    <span class="question-text">Why are distributed systems so much harder than single-machine ones?</span>
+                </a>
+                <div class="question-hint">Good link targets: intro to distributed systems, network partitions, consistency, coordination problems</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=24">
+                    <span class="question-number">24</span>
+                    <span class="question-text">Why is the hardest part of a high-concurrency system not the features but keeping it stable?</span>
+                </a>
+                <div class="question-hint">Good link targets: high-concurrency design, building for stability</div>
+            </div>
+
+            <div class="question-item level-3">
+                <a href="../articles/question.html?q=25">
+                    <span class="question-number">25</span>
+                    <span class="question-text">Why do large sites keep investing in monitoring, logging, tracing, and failure drills?</span>
+                </a>
+                <div class="question-hint">Good link targets: observability, monitoring, logging, tracing, chaos drills</div>
+            </div>
+        </div>
+
+        <div class="section" id="d">
+            <h2><span class="section-title-icon">⚖️</span>The Senior Engineer's View: the internet as a system of trade-offs</h2>
+
+            <div class="question-item level-4">
+                <a href="../articles/question.html?q=26">
+                    <span class="question-number">26</span>
+                    <span class="question-text">Why is there no silver bullet in system design?</span>
+                </a>
+                <div class="question-hint">Good link targets: architecture-design thinking, engineering trade-offs, no universally best answer</div>
+            </div>
+
+            <div class="question-item level-4">
+                <a href="../articles/question.html?q=27">
+                    <span class="question-number">27</span>
+                    <span class="question-text">Why doesn't the most "advanced" architecture always fit the business you're actually in?</span>
+                </a>
+                <div class="question-hint">Good link targets: technology selection, matching architecture to business stage</div>
+            </div>
+
+            <div class="question-item level-4">
+                <a href="../articles/question.html?q=28">
+                    <span class="question-number">28</span>
+                    <span class="question-text">Why isn't a monolith automatically outdated, and why aren't microservices automatically better?</span>
+                </a>
+                <div class="question-hint">Good link targets: monolith vs. microservices, how systems evolve</div>
+            </div>
+
+            <div class="question-item level-4">
+                <a href="../articles/question.html?q=29">
+                    <span class="question-number">29</span>
+                    <span class="question-text">Why do consistency, performance, availability, cost, and complexity always end up trading off against each other?</span>
+                </a>
+                <div class="question-hint">Good link targets: CAP, BASE, engineering trade-offs, performance vs. consistency</div>
+            </div>
+
+            <div class="question-item level-4">
+                <a href="../articles/question.html?q=30">
+                    <span class="question-number">30</span>
+                    <span class="question-text">Why do plans that look great on the whiteboard often stop being worth it in production?</span>
+                </a>
+                <div class="question-hint">Good link targets: shipping the architecture, engineering reality, maintenance cost, org cost</div>
+            </div>
+
+            <div class="question-item level-4">
+                <a href="../articles/question.html?q=31">
+                    <span class="question-number">31</span>
+                    <span class="question-text">Why does stability tend to matter more than "clever" design?</span>
+                </a>
+                <div class="question-hint">Good link targets: stability practice, SRE mindset, real-world engineering</div>
+            </div>
+
+            <div class="question-item level-4">
+                <a href="../articles/question.html?q=32">
+                    <span class="question-number">32</span>
+                    <span class="question-text">Why is tech debt never just a code problem — it's time, organization, and business piling on top of each other?</span>
+                </a>
+                <div class="question-hint">Good link targets: technical debt, cross-team dynamics, business pressure and architectural drift</div>
+            </div>
+        </div>
+
+        <div class="section" id="e">
+            <h2><span class="section-title-icon">👑</span>The Grandmaster's View: the internet as a system that shapes reality</h2>
+
+            <div class="question-item level-5">
+                <a href="../articles/question.html?q=33">
+                    <span class="question-number">33</span>
+                    <span class="question-text">Why isn't a recommendation system just delivering content — why is it also shaping your attention?</span>
+                </a>
+                <div class="question-hint">Good link targets: recommendation systems, attention economy, how platforms exert influence</div>
+            </div>
+
+            <div class="question-item level-5">
+                <a href="../articles/question.html?q=34">
+                    <span class="question-number">34</span>
+                    <span class="question-text">Why aren't platforms just offering services — why are they also writing the rules?</span>
+                </a>
+                <div class="question-hint">Good link targets: platform governance, content moderation, traffic allocation, platform rules</div>
+            </div>
+
+            <div class="question-item level-5">
+                <a href="../articles/question.html?q=35">
+                    <span class="question-number">35</span>
+                    <span class="question-text">Why does a button's position, a recommendation strategy, or an interaction mechanic change how people behave?</span>
+                </a>
+                <div class="question-hint">Good link targets: product design, behavior design, user psychology, interaction mechanics</div>
+            </div>
+
+            <div class="question-item level-5">
+                <a href="../articles/question.html?q=36">
+                    <span class="question-number">36</span>
+                    <span class="question-text">Why does internet product design end up shaping people's emotions, expression, and judgment?</span>
+                </a>
+                <div class="question-hint">Good link targets: product psychology, the information environment, social diffusion</div>
+            </div>
+
+            <div class="question-item level-5">
+                <a href="../articles/question.html?q=37">
+                    <span class="question-number">37</span>
+                    <span class="question-text">Why does an org chart end up shaping the system's architecture?</span>
+                </a>
+                <div class="question-hint">Good link targets: Conway's law, organizations and architecture, team collaboration</div>
+            </div>
+
+            <div class="question-item level-5">
+                <a href="../articles/question.html?q=38">
+                    <span class="question-number">38</span>
+                    <span class="question-text">Why do business goals so often decide the tech direction, and not the other way around?</span>
+                </a>
+                <div class="question-hint">Good link targets: how tech relates to business, business-driven architecture</div>
+            </div>
+
+            <div class="question-item level-5">
+                <a href="../articles/question.html?q=39">
+                    <span class="question-number">39</span>
+                    <span class="question-text">Why do internet systems ultimately change not just how information moves, but how people relate to the world?</span>
+                </a>
+                <div class="question-hint">Good link targets: internet sociology, digital identity, platform society</div>
+            </div>
+        </div>
+
+        <div class="section" id="f">
+            <h2><span class="section-title-icon">💬</span>The AI-Era View: the internet as a system you can talk to</h2>
+
+            <div class="question-item level-6">
+                <a href="../articles/question.html?q=40">
+                    <span class="question-number">40</span>
+                    <span class="question-text">Why does AI seem to understand you when it doesn't actually understand you?</span>
+                </a>
+                <div class="question-hint">Good link targets: LLM basics, the gap between language generation and real "understanding"</div>
+            </div>
+
+            <div class="question-item level-6">
+                <a href="../articles/question.html?q=41">
+                    <span class="question-number">41</span>
+                    <span class="question-text">Why can AI sound fluent and still be wrong?</span>
+                </a>
+                <div class="question-hint">Good link targets: hallucination, probabilistic generation, factuality</div>
+            </div>
+
+            <div class="question-item level-6">
+                <a href="../articles/question.html?q=42">
+                    <span class="question-number">42</span>
+                    <span class="question-text">Why is generative AI fundamentally different from traditional software systems?</span>
+                </a>
+                <div class="question-hint">Good link targets: traditional systems vs. AI systems, determinism vs. probability</div>
+            </div>
+
+            <div class="question-item level-6">
+                <a href="../articles/question.html?q=43">
+                    <span class="question-number">43</span>
+                    <span class="question-text">Why are AI outputs probabilistic instead of deterministic like traditional systems?</span>
+                </a>
+                <div class="question-hint">Good link targets: token prediction, sampling, probability-model basics</div>
+            </div>
+
+            <div class="question-item level-6">
+                <a href="../articles/question.html?q=44">
+                    <span class="question-number">44</span>
+                    <span class="question-text">Why does AI feeling more human make it easier for people to misjudge what it can actually do?</span>
+                </a>
+                <div class="question-hint">Good link targets: anthropomorphism, human-AI interaction, cognitive biases about AI</div>
+            </div>
+
+            <div class="question-item level-6">
+                <a href="../articles/question.html?q=45">
+                    <span class="question-number">45</span>
+                    <span class="question-text">Why hasn't AI made the internet simpler — why has it just buried the complexity deeper?</span>
+                </a>
+                <div class="question-hint">Good link targets: AI-system engineering, RAG, model-application architecture, product boundaries for AI</div>
+            </div>
+        </div>
+
+        <div class="section" id="g">
+            <h2><span class="section-title-icon">🌟</span>Wrap-up questions: doorways into the whole map</h2>
+            <p style="margin-bottom: 30px; color: #666;">These are the questions that work best as "table of contents" pages or topical entry points.</p>
+
+            <div class="question-item level-0">
+                <a href="../articles/question.html?q=46">
+                    <span class="question-number">46</span>
+                    <span class="question-text">Why is there a whole system path hidden behind a single button?</span>
+                </a>
+            </div>
+
+            <div class="question-item level-0">
+                <a href="../articles/question.html?q=47">
+                    <span class="question-number">47</span>
+                    <span class="question-text">Why does a system, as it grows, stop looking like a code problem and start looking like a complexity problem?</span>
+                </a>
+            </div>
+
+            <div class="question-item level-0">
+                <a href="../articles/question.html?q=48">
+                    <span class="question-number">48</span>
+                    <span class="question-text">Why does going deeper into technology eventually lead you toward understanding people, organizations, and society?</span>
+                </a>
+            </div>
+
+            <div class="question-item level-0">
+                <a href="../articles/question.html?q=49">
+                    <span class="question-number">49</span>
+                    <span class="question-text">Why is the real "mental map of the internet" not scattered facts, but the structure that connects them?</span>
+                </a>
+            </div>
+
+            <div class="question-item level-0">
+                <a href="../articles/question.html?q=50">
+                    <span class="question-number">50</span>
+                    <span class="question-text">Why does it work this way?</span>
+                </a>
+                <div class="question-hint">This one question could be the title of the entire knowledge-map home page.</div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

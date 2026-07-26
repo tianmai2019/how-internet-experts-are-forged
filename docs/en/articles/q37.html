@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q37: Why does org structure end up shaping system architecture?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q37.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q37.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q37.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to Home</a>
+
+        <div class="article-header article-header--level-5">
+            <div class="level-badge">👑 Layer 5 · The Grandmaster's View</div>
+            <h1>Why does org structure end up shaping system architecture?</h1>
+            <p class="subtitle">Conway's Law: the architecture diagram you draw ends up looking like your org chart</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The Ordinary User's View: why does this matter?</h2>
+
+            <p>
+                You've probably noticed something odd — a lot of big-company products feel like features stitched together.
+                Why do Taobao and Alipay look so similar but stay separate? Why do different tabs inside the same app have wildly different design styles?
+            </p>
+
+            <p>
+                You might blame "the designers weren't consistent" or "the PM had no taste." But there's an iron rule behind it:
+            </p>
+
+            <div class="highlight-box">
+                <strong>Conway's Law (1968):</strong><br><br>
+                "Any organization that designs a system will inevitably produce a design whose structure mirrors the organization's communication structure."<br><br>
+                → 3 teams building a browser produce a browser made of 3 stitched-together modules.<br>
+                → 1 team building it produces a monolith.
+            </div>
+
+            <p>
+                In plain English: <strong>your code looks like your org.</strong>
+                This is the most invisible — and most unstoppable — force in software engineering.
+            </p>
+
+            <h2>🧩 Breaking it down</h2>
+
+            <ol>
+                <li><strong>What exactly does Conway's Law say?</strong></li>
+                <li><strong>Why does org structure end up dictating system structure?</strong></li>
+                <li><strong>Can you flip it around — change the org to change the architecture?</strong> (the Inverse Conway Maneuver)</li>
+                <li><strong>What have Amazon, Netflix, and ByteDance done with this law?</strong></li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The User's View: they only see the result</h3>
+
+            <p>
+                A user says: <strong>"Some parts of this app are great, other parts feel really disjointed."</strong>
+                "Logging in takes three screens." "The search results and the shopping cart look like they were built by totally different teams."
+            </p>
+
+            <p>
+                Those "disjointed" feelings are almost always <strong>the projection of an org wall</strong>.
+            </p>
+
+            <h3 class="section-code">The Beginner Coder's View: starting to see the shape</h3>
+
+            <p>
+                Say 3 teams are collaborating on one app:
+            </p>
+
+            <div class="code-block">// Each team's boundary
+
+Team A: user module      → one UserService
+Team B: product module   → one ProductService
+Team C: payment module   → one PaymentService
+
+// Result: the architecture naturally splits three ways
+// Because cross-team communication has a cost, API boundaries always land on team boundaries
+
+// What if Team A and Team B don't get along?
+// —— A "translation layer" shows up to decouple them
+// —— That translation layer is the interpersonal relationship, made real in code</div>
+
+            <p>
+                This isn't theory — it happens every day. <strong>Three people on your team stop talking, and one extra middle layer appears in the code.</strong>
+            </p>
+
+            <h3 class="section-system">The Engineer's View: the full path</h3>
+
+            <p>
+                Amazon is the company that used this law in reverse most successfully. Look at the path:
+            </p>
+
+            <div class="diagram-box">
+                <strong>Jeff Bezos's "two-pizza team" rule (2002)</strong>
+                <span class="arrow">↓</span>
+                Every team small enough to be fed by two pizzas (6–10 people)
+                <span class="arrow">↓</span>
+                Every team independent, with its own KPIs and API boundaries
+                <span class="arrow">↓</span>
+                Teams must talk through APIs — no "bypassing the API" allowed
+                <span class="arrow">↓</span>
+                <strong>The org took the shape of microservices</strong>
+                <span class="arrow">↓</span>
+                <strong>The system architecture naturally became a microservices architecture</strong>
+                <span class="arrow">↓</span>
+                Those internal APIs eventually became AWS
+            </div>
+
+            <p>
+                This is the <strong>Inverse Conway Maneuver</strong>:
+                if you want a certain system architecture, first reshape the org into that shape.
+            </p>
+
+            <h3 class="section-tradeoff">The Senior Engineer's View: why design it this way?</h3>
+
+            <p>
+                Are microservices good? Are big monoliths bad? Not necessarily — each choice matches a different organizational reality:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Monolith</h4>
+                    <p>Good for small teams (&lt; 30 people). Everyone shares one codebase — low communication cost, fast iteration.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Microservices</h4>
+                    <p>Good for big organizations. Each team is autonomous, and APIs isolate communication complexity — but you pay for it in ops and consistency.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Modular Monolith</h4>
+                    <p>The in-between. Code lives together physically, but layered logically. Fits teams that "want microservices but the org isn't there yet."</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Distributed Monolith</h4>
+                    <p>The worst of the bunch. Looks like microservices, but the coupling is still there. Usually the result of "changing the architecture before changing the org."</p>
+                </div>
+            </div>
+
+            <p>
+                <strong>The first question in any architecture choice is never "which is technically better" — it's "what does my org look like?"</strong>
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>🔍 Observation exercise: draw "org chart vs system architecture"</h3>
+                <p>
+                    Pick a product you know well (Taobao, WeChat, Douyin, whatever) and try to answer:
+                </p>
+                <ol>
+                    <li>Draw its main modules (recommendations, search, chat, payment, live streaming…);</li>
+                    <li>Guess how many teams sit behind each module;</li>
+                    <li>Notice which modules "flow smoothly together" (probably one BU)?</li>
+                    <li>Notice which modules "feel awkwardly bolted on" (probably different BUs stitched together)?</li>
+                </ol>
+                <p>
+                    If you've worked at a company, look back at your product — you'll find <strong>every awkward seam matches an org wall</strong>.
+                </p>
+            </div>
+
+            <h2>🔗 Going deeper</h2>
+
+            <div class="related-questions">
+                <h3>Related questions:</h3>
+                <a href="question.html?q=32">Q32: Why must internet systems be "sustainable"?</a>
+                <a href="question.html?q=38">Q38: Why does business direction dictate technical direction?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how this shapes reality</h2>
+
+            <div class="emperor-box">
+                <h3>System architecture = the org chart, projected into code</h3>
+                <p>
+                    The deeper meaning of Conway's Law: <strong>software isn't "designed" — it's "grown."</strong>
+                    It grows along the shape of the organization, along human communication paths, along power relationships.
+                </p>
+                <p>
+                    This explains a lot of "tech mysteries":
+                </p>
+                <ul>
+                    <li>Why do Google's products keep launching and getting killed? — because the org keeps reorganizing;</li>
+                    <li>Why does the tech stack of a big company always fracture? — because different BUs pick tech independently;</li>
+                    <li>Why do open-source projects often evolve into "a federation of small modules"? — because contributors are distributed;</li>
+                    <li>Why do startup apps feel more "coherent"? — small team, dense communication, few boundaries.</li>
+                </ul>
+                <p>
+                    What the grandmaster sees one layer deeper: <strong>technical architecture and social structure are two sides of the same thing</strong>.
+                    How you organize people is how you organize information — and how you organize information decides what shape the system can grow into.
+                </p>
+                <p>
+                    That's why the truly great CTOs are also great organization designers.<br>
+                    The person fixing code is really fixing the relationships between people.
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why does org structure end up shaping system architecture?
+            </p>
+
+            <p>
+                <strong>The answer:</strong> because software is written by people, and <strong>the communication structure of those people decides the coupling structure of the code</strong>.
+                You can't draw a beautiful architecture diagram and expect it to magically "come true" inside a messy org —
+                it will end up looking like the org actually is.
+            </p>
+
+            <div class="highlight-box">
+                <strong>The grandmaster's awakening:</strong><br><br>
+                Next time you see an "ugly system," don't blame the engineers first.<br>
+                Ask instead: <strong>what does the org building this system look like?</strong><br>
+                The answer is usually right there.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=38" class="btn">Continue to Q38 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

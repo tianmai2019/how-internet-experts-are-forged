@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q47: Why does a bigger system stop feeling like a code problem and start feeling like a complexity problem?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #667eea;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .highlight-box {
+            background: #F9F6FF;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #764ba2;
+        }
+
+        .growth-stages {
+            display: grid;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stage-card {
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid;
+        }
+
+        .stage-1 { background: #EFF6FF; border-color: #3B82F6; }
+        .stage-2 { background: #ECFDF5; border-color: #10B981; }
+        .stage-3 { background: #FEF3C7; border-color: #F59E0B; }
+        .stage-4 { background: #FEE2E2; border-color: #EF4444; }
+
+        .stage-card h4 {
+            margin: 0 0 10px 0;
+            color: #374151;
+        }
+
+        .stage-scale {
+            font-size: 0.9rem;
+            color: #6B7280;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .quote-box {
+            background: #1F2937;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            font-size: 1.2rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="en" href="/en/articles/q47.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q47.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q47.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header">
+            <div class="level-badge">🌟 Summary Question</div>
+            <h1>Why does a bigger system stop feeling like a code problem and start feeling like a complexity problem?</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">Scale changes everything</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🌱 Start from a single seed</h2>
+
+            <p>
+                Imagine you start writing a small tool — just a few hundred lines of code.
+            </p>
+
+            <p>
+                Everything is clear: you know what each piece does, and when something breaks, it's easy to find.
+            </p>
+
+            <p>
+                But — what if this "small tool" slowly grows up?
+            </p>
+
+            <h2>📈 The growth stages of a system</h2>
+
+            <div class="growth-stages">
+                <div class="stage-card stage-1">
+                    <div class="stage-scale">🌱 Stage 1: Small project</div>
+                    <h4>A few hundred lines of code, 1 developer</h4>
+                    <p>Every problem is a code problem: syntax wrong here, logic off there. Fix it and move on.</p>
+                </div>
+                <div class="stage-card stage-2">
+                    <div class="stage-scale">🌿 Stage 2: Mid-sized project</div>
+                    <h4>Tens of thousands of lines, 3–5 developers</h4>
+                    <p>Collaboration problems start showing up: who changed this code? Why did they change it that way? And: how do the modules affect each other?</p>
+                </div>
+                <div class="stage-card stage-3">
+                    <div class="stage-scale">🌳 Stage 3: Large project</div>
+                    <h4>Hundreds of thousands of lines, dozens of developers</h4>
+                    <p>It's not really about "which line of code is wrong" anymore — it's:<br>- Which team owns this bug?<br>- What else does this change touch?<br>- Who can even read this code?</p>
+                </div>
+                <div class="stage-card stage-4">
+                    <div class="stage-scale">🌲 Stage 4: Massive system</div>
+                    <h4>Millions of lines, hundreds or thousands of people</h4>
+                    <p>The problems aren't really "technical" anymore:<br>- How do teams communicate with each other?<br>- Who owns this decision?<br>- Who dares to touch the legacy code?<br>- Where are the landmines left by the last engineer?</p>
+                </div>
+            </div>
+
+            <h2>🤔 Why does this happen?</h2>
+
+            <p>
+                It's not because the code is "badly written" — even if every piece of code is excellent,
+                once the scale is big enough, <strong>complexity emerges from the system as a whole.</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>Key insight: complexity isn't addition — it's multiplication.</strong><br><br>
+                10 modules → 10 relationships<br>
+                100 modules → 4,950 possible relationships<br>
+                1,000 modules → nearly 500,000 possible relationships<br><br>
+                Scale up 10×, and complexity goes up 100×.
+            </div>
+
+            <h2>💡 When a "code problem" becomes a "complexity problem"</h2>
+
+            <p>
+                In a large system, you'll notice:
+            </p>
+
+            <div class="highlight-box">
+                <strong>Bugs often don't live inside "some piece of code" — they live "between pieces of code."</strong><br><br>
+                Module A tests fine on its own.<br>
+                Module B tests fine on its own.<br>
+                But run A and B together — and something breaks.<br>
+                That's a "whole" problem, not a "parts" problem.
+            </div>
+
+            <p>
+                This is the signature of a complexity problem:
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>It's emergent</strong> — not in any single component, only between them</li>
+                <li><strong>It's nonlinear</strong> — change one small thing, trigger a huge problem</li>
+                <li><strong>It's unpredictable</strong> — you can understand every part and still not understand the whole</li>
+                <li><strong>It needs new tools</strong> — compilers and debuggers aren't enough anymore</li>
+            </ul>
+
+            <h2>🧠 The wisdom of handling complexity</h2>
+
+            <p>
+                Once you realize the core problem is complexity, the way you respond changes too:
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>You stop chasing "perfect code"</strong> — you start "managing complexity"</li>
+                <li><strong>You stop trying to "remember every detail"</strong> — you start "building structure"</li>
+                <li><strong>You stop expecting "no bugs"</strong> — you focus on "detecting and recovering fast"</li>
+                <li><strong>You stop optimizing "locally"</strong> — you watch for "overall health"</li>
+            </ul>
+
+            <div class="quote-box">
+                "Simple code isn't hard to write.<br>
+                What's hard is making a complex system look simple."
+            </div>
+
+            <h2>👑 The Grandmaster's View: complexity is the fate of every large system</h2>
+
+            <div class="emperor-box">
+                <h3>It's not just software — every big system is like this</h3>
+                <p>
+                    This insight isn't limited to software:
+                </p>
+                <ul style="text-align:left;">
+                    <li><strong>Big companies</strong> — it's not a "bad people" problem, it's an "organizational complexity" problem</li>
+                    <li><strong>Big cities</strong> — it's not a "bad planning" problem, it's about "the complex interaction of people and space"</li>
+                    <li><strong>Big countries</strong> — it's not a "bad policy" problem, it's about "the complex game of competing interests"</li>
+                </ul>
+                <p>
+                    Once you understand that "complexity" is the shared challenge of every large system,
+                    you stop asking the naive question:<br>
+                    <strong>"Why can't they just do it better?"</strong>
+                </p>
+                <p>
+                    And you start asking:<br>
+                    <strong>"How are they managing the complexity?"</strong>
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Keep exploring:</h3>
+                <a href="question.html?q=23">Q23: Why are distributed systems so complex?</a>
+                <a href="question.html?q=26">Q26: Why is there no silver bullet in system design?</a>
+                <a href="q46.html">Q46: The full request path behind a single button</a>
+                <a href="question.html?q=48">Q48: Deep tech leads to understanding people and society</a>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why does a bigger system stop feeling like a code problem and start feeling like a complexity problem?
+            </p>
+
+            <p>
+                <strong>Because scale changes what the problem actually is.</strong>
+            </p>
+
+            <p>
+                At small scale, you're solving "this piece of code."<br>
+                At large scale, you're solving "this system."<br>
+                And "system" is much more complex than "code" — it involves people, organizations, time, dependencies...
+            </p>
+
+            <div class="highlight-box">
+                <strong>The real grandmaster isn't the person who writes the best code —<br>
+                it's the person who best understands how to manage complexity.</strong>
+            </div>
+
+            <div class="nav-footer">
+                <a href="q46.html" class="btn btn-outline">← Q46</a>
+                <a href="../questions/00-question-map.html" class="btn btn-outline">🗺️ Knowledge Map</a>
+                <a href="q48.html" class="btn">Next: Q48 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

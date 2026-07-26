@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading question...</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <script src="../../assets/data/questions.js"></script>
+    <style>
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .level-1 { background: #DBEAFE; color: #1E40AF; }
+        .level-2 { background: #D1FAE5; color: #065F46; }
+        .level-3 { background: #CFFAFE; color: #164E63; }
+        .level-4 { background: #EDE9FE; color: #5B21B6; }
+        .level-5 { background: #FEF3C7; color: #92400E; }
+        .level-6 { background: #FCE7F3; color: #9D174D; }
+        .level-0 { background: #F3F4F6; color: #374151; }
+
+        .question-title {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: #1F2937;
+        }
+
+        .progress-hint {
+            background: #F9FAFB;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .related-links {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .related-links a {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 16px;
+            background: #F3F4F6;
+            border-radius: 20px;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .related-links a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .checking-box {
+            background: #EFF6FF;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #93C5FD;
+            border-top-color: #3B82F6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .available-box {
+            background: #D1FAE5;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #10B981;
+        }
+
+        .available-box h3 {
+            color: #065F46;
+            margin-top: 0;
+        }
+    </style>
+    <link rel="alternate" hreflang="en" href="/en/articles/question.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/question.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/question.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <header id="page-header">
+            <h1>⏳ Loading...</h1>
+            <p class="subtitle" id="level-name">Checking article status...</p>
+        </header>
+
+        <div class="card">
+            <div class="coming-soon">
+                <div class="checking-box" id="checking-box">
+                    <div class="spinner"></div>
+                    <span>Checking whether this article has been published...</span>
+                </div>
+
+                <div class="icon" id="page-icon">📝</div>
+                <div class="level-badge" id="level-badge"></div>
+                <h2 class="question-title" id="question-text">Loading...</h2>
+                <p id="status-text">This article is still being written...</p>
+                <p id="contrib-text">If you'd like to help write it, contributions are very welcome!</p>
+
+                <div class="progress-hint" id="progress-hint">
+                    <strong>💡 Writing hints</strong>
+                    <p>You could approach this article from these angles:</p>
+                    <ul id="hint-list" style="text-align: left; margin-top: 15px; color: #666;"></ul>
+                </div>
+
+                <div class="related-links">
+                    <strong>Explore more:</strong><br>
+                    <a href="../questions/00-question-map.html">🗺️ Knowledge map</a>
+                    <a href="01-how-internet-experts-are-forged.html">📖 Main article</a>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+
+    <script>
+        // List of published articles — update this to mark an article as live!
+        // All 50 articles are published.
+        const PUBLISHED = {
+            1: true, 2: true, 3: true, 4: true, 5: true, 6: true,
+            7: true, 8: true, 9: true, 10: true, 11: true, 12: true,
+            13: true, 14: true, 15: true, 16: true, 17: true, 18: true, 19: true,
+            20: true, 21: true, 22: true, 23: true, 24: true, 25: true,
+            26: true, 27: true, 28: true, 29: true, 30: true, 31: true, 32: true,
+            33: true, 34: true, 35: true, 36: true, 37: true, 38: true, 39: true,
+            40: true, 41: true, 42: true, 43: true, 44: true, 45: true,
+            46: true, 47: true, 48: true, 49: true, 50: true
+        };
+
+        // Read the question id from the URL
+        function getQuestionId() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('q');
+            return id ? parseInt(id) : null;
+        }
+
+        // Check whether an article is published
+        function checkPublished(id) {
+            if (PUBLISHED[id]) {
+                // Jump to the real article — using replace instead of href,
+                // so this dispatcher page doesn't stay in browser history.
+                // That way, "Back" from a question page returns to the main article.
+                const filename = `q${String(id).padStart(2, '0')}.html`;
+                window.location.replace(filename);
+                return true;
+            }
+            return false;
+        }
+
+        // Writing hints per layer
+        function getHintsForLevel(level) {
+            const hints = {
+                1: [
+                    "Start from an ordinary user's angle, with everyday examples",
+                    "Explain why this phenomenon matters",
+                    "No need to go deep into technical details",
+                    "Leave a hook that points to the next layer"
+                ],
+                2: [
+                    "Explain from a beginner coder's angle",
+                    "Include some simple code examples",
+                    "Explain how frontend and backend split the work",
+                    "Make the reader feel they could build this too"
+                ],
+                3: [
+                    "Analyze from a system and request-path angle",
+                    "Add a flow chart or architecture diagram (hand-drawn is fine)",
+                    "Explain performance, concurrency, and stability",
+                    "Link to other related questions"
+                ],
+                4: [
+                    "Unfold from a trade-off and choice angle",
+                    "Discuss the pros and cons of the technical options",
+                    "Include real-world cases of the trade-offs",
+                    "Show engineering thinking"
+                ],
+                5: [
+                    "Look at the question from a higher altitude",
+                    "Discuss how the technology affects people, organizations, and society",
+                    "Bring in product thinking and business thinking",
+                    "Land at the worldview level"
+                ],
+                6: [
+                    "Contrast traditional systems with AI systems",
+                    "Discuss the difference between probabilistic and deterministic",
+                    "Explore the new challenges of the AI era",
+                    "Tie back to real-world AI applications"
+                ],
+                0: [
+                    "As a summary question, take a whole-picture view",
+                    "Thread together the content from earlier layers",
+                    "Land at the worldview level",
+                    "Leave the reader with a lasting impression"
+                ]
+            };
+            return hints[level] || hints[0];
+        }
+
+        // Render the page
+        function renderPage() {
+            const id = getQuestionId();
+
+            if (!id || !QUESTIONS[id]) {
+                document.getElementById('question-text').textContent = "Question not found";
+                document.getElementById('level-name').textContent = "Head back home to see all questions";
+                document.getElementById('checking-box').style.display = 'none';
+                return;
+            }
+
+            // Check whether it's published (short delay so the user can see the check animation)
+            setTimeout(() => {
+                if (checkPublished(id)) {
+                    return;  // About to redirect — stop rendering
+                }
+
+                // Not published — keep showing the placeholder
+                document.getElementById('checking-box').style.display = 'none';
+
+                const question = QUESTIONS[id];
+                const levelName = LEVEL_NAMES[question.level];
+                const icon = LEVEL_ICONS[question.level];
+
+                // Set the title
+                document.title = `Q${id}: ${question.text}`;
+                document.getElementById('question-text').textContent = question.text;
+                document.getElementById('level-name').textContent = levelName;
+                document.getElementById('page-icon').textContent = icon;
+
+                // Set the level badge
+                const badge = document.getElementById('level-badge');
+                badge.textContent = levelName;
+                badge.className = `level-badge level-${question.level}`;
+
+                // Set the writing hints
+                const hintList = document.getElementById('hint-list');
+                const hints = getHintsForLevel(question.level);
+                hintList.innerHTML = hints.map(h => `<li>${h}</li>`).join('');
+
+                // Update the header to show the Q number
+                document.getElementById('page-header').innerHTML = `
+                    <h1>⏳ Q${id}: Coming soon</h1>
+                    <p class="subtitle">${levelName}</p>
+                `;
+            }, 800);
+        }
+
+        // Render as soon as the page loads
+        renderPage();
+    </script>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q9: Why can the browser display the page you wrote?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q09.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q09.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q09.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 Layer 2 · The Beginner Coder's View</div>
+            <h1>Why can the browser display the page you wrote?</h1>
+            <p class="subtitle">A "universal runtime" tamed by specifications</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's view: why does this question matter?</h2>
+
+            <p>
+                You type a bunch of things that look like a foreign language into Notepad — angle brackets, curly braces, semicolons — save, double-click.
+                And a miracle happens: a <strong>web page</strong> with a title, colors, buttons that change when you click them, shows up on your screen.
+            </p>
+
+            <p>
+                What actually happened in between? Why does <strong>the same code</strong> look about the same on Chrome, Safari, Firefox, and your mom's old phone?
+            </p>
+
+            <div class="highlight-box">
+                <strong>The core insight:</strong><br><br>
+                The browser isn't just "software that opens files" — it's a <strong>virtual machine</strong>,
+                a machine built specifically to run "web pages" as applications.<br><br>
+                All browsers strictly follow the same specifications. That's why a single piece of code you wrote can run with nearly identical results on billions of devices.
+            </div>
+
+            <p>
+                This question matters because once you understand how the browser works, you start to understand — why some pages feel laggy, why DevTools can "pause time," why changing one line of CSS can trigger a full reflow of the whole page.
+            </p>
+
+            <h2>🧩 Peel it back: break the big question into small ones</h2>
+
+            <ol>
+                <li>What does the browser actually receive? (HTML/CSS/JS are all just <strong>text</strong>.)</li>
+                <li>How does it read this text?</li>
+                <li>How does it turn a "text description" into a "pixel image"?</li>
+                <li>When the page starts moving (scrolling, clicking, animation), what's it busy doing?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: just looking at the result</h3>
+
+            <p>
+                You hit enter, and a few hundred milliseconds later the page appears. Fast enough that you think, "What's there to study here?"
+            </p>
+
+            <p>
+                But if you open a web page on a plane, on a connection as slow as an old dial-up — suddenly you see the page appear <em>in segments</em>: first the text, then images fade in one by one, then the buttons become clickable.
+                That's the browser's <strong>real working rhythm</strong>, played back in slow motion.
+            </p>
+
+            <h3 class="section-code">The implementation layer: starting to see the structure</h3>
+
+            <p>
+                Let's look at what the browser actually receives. Say you wrote this little page:
+            </p>
+
+            <div class="code-block">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;style&gt;
+    h1 { color: #10B981; font-size: 32px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Hello!&lt;/h1&gt;
+  &lt;script&gt;
+    document.querySelector('h1').addEventListener('click', () =&gt; alert('hi'));
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</div>
+
+            <p>
+                To the browser, this is just <strong>a string of characters</strong>. It has to turn that pile of characters into something that displays, that reacts — a living thing.
+                The process has several steps — each with a specific name:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">📄 HTML text</div>
+                <div class="arrow">↓ parse</div>
+                <div class="step-box">🌲 DOM tree</div>
+                <div class="arrow">+</div>
+                <div class="step-box">🎨 CSSOM tree</div>
+                <div class="arrow">↓ merge</div>
+                <div class="step-box">🌿 Render Tree</div>
+                <div class="arrow">↓ Layout</div>
+                <div class="step-box">📐 position and size of every element</div>
+                <div class="arrow">↓ Paint</div>
+                <div class="step-box">🖌️ layers of images</div>
+                <div class="arrow">↓ Composite</div>
+                <div class="step-box">🖥️ screen pixels</div>
+            </div>
+
+            <p>
+                Let's go step by step:
+            </p>
+
+            <ul>
+                <li><strong>DOM tree</strong>: once HTML is parsed, it becomes an <em>object tree</em> — <code>&lt;html&gt;</code> is the root, <code>&lt;body&gt;</code> is its child, <code>&lt;h1&gt;</code> is a child of body. This tree is the "page structure" you'll later manipulate with JS.</li>
+                <li><strong>CSSOM tree</strong>: CSS is also parsed into a tree, recording "who should look like what."</li>
+                <li><strong>Render Tree</strong>: the two trees get merged — every visible node picks up its styles; invisible ones (like <code>&lt;head&gt;</code> or anything with <code>display:none</code>) get filtered out.</li>
+                <li><strong>Layout (reflow)</strong>: compute the <em>exact position and size</em> of each element. This step is heavy.</li>
+                <li><strong>Paint</strong>: draw each element as a layer of images — text, borders, backgrounds, shadows…</li>
+                <li><strong>Composite</strong>: stack those layers like Photoshop layers and hand them off to the GPU.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>The four pieces of a browser:</strong><br><br>
+                • <strong>Rendering engine</strong> (Blink/WebKit/Gecko): handles all the drawing steps above<br>
+                • <strong>JavaScript engine</strong> (V8/JavaScriptCore/SpiderMonkey): runs the JS you wrote<br>
+                • <strong>Networking module</strong>: sends requests, fetches resources<br>
+                • <strong>Storage module</strong>: Cookie / LocalStorage / IndexedDB
+            </div>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>
+                Once the page is drawn, the browser doesn't clock out. It enters an <strong>eternal event loop</strong>:
+                waiting for your click, your scroll, timers firing, network responses coming back… every one of these events might trigger a <strong>reflow</strong> or a <strong>repaint</strong>.
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🔁 Reflow</h4>
+                    <p>An element's <strong>position or size</strong> changed — a new element added, width changed, font grew.</p>
+                    <p>The browser has to recompute the layout of every neighboring element. <strong>Expensive!</strong></p>
+                </div>
+                <div class="compare-card">
+                    <h4>🎨 Repaint</h4>
+                    <p>Only the <strong>color or background</strong> changed, position stayed the same. Like a hover highlight or a text-color change.</p>
+                    <p>No layout recomputation, just a redraw. <strong>Cheaper.</strong></p>
+                </div>
+            </div>
+
+            <p>
+                Going further — things like <code>transform</code> and <code>opacity</code> don't even need a repaint. They work directly at the composite stage, which is the <strong>smoothest</strong> way to animate.
+                That's why high-quality frontend code always prefers <code>transform</code> for animation over <code>top</code>/<code>left</code>.
+            </p>
+
+            <p>
+                Meanwhile, the <strong>JavaScript engine</strong> is standing by. The <code>addEventListener</code> you wrote gets registered into the event system.
+                Any time an event fires, V8 (Chrome's JS engine) will:
+            </p>
+
+            <ol>
+                <li><strong>Just-in-time compile</strong> your JS code into machine code (JIT)</li>
+                <li>Execute it — possibly modifying the DOM or CSSOM</li>
+                <li>Trigger a partial or full reflow / repaint</li>
+                <li>Next frame, the screen updates</li>
+            </ol>
+
+            <h3 class="section-tradeoff">The trade-off layer: why designed this way?</h3>
+
+            <p>
+                Why is the browser so complicated? Why can't it just "display" a page the way it displays an image?
+            </p>
+
+            <p>
+                Because the browser is trying to do something almost impossible:
+            </p>
+
+            <div class="highlight-box">
+                <strong>Things the browser has to satisfy at the same time — and they contradict each other:</strong><br><br>
+                • Pages must be <strong>responsive</strong> — the window resizes, the layout must follow<br>
+                • Must support <strong>animation and interaction</strong> — 60 redraws a second without jank<br>
+                • Must be <strong>secure</strong> — a page can't read your hard drive, can't steal another site's data<br>
+                • Must be <strong>cross-platform</strong> — phones, laptops, tablets should look the same<br>
+                • Must be <strong>backwards compatible for 30 years</strong> — a web page from the 90s still has to render
+            </div>
+
+            <p>
+                To satisfy all of that at once, the browser had no choice:
+                <strong>use a complex, layered pipeline (parse → layout → paint → composite), trading complexity for enough flexibility and performance.</strong>
+            </p>
+
+            <p>
+                So it's like an application with "a whole operating system built inside" — its own scheduler, its own graphics stack, its own sandbox, its own compiler.
+                Every web page you use is actually running inside this "virtual machine."
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Try it: watch the browser "paint" with your own eyes</h3>
+                <p>
+                    1. Open any web page, press <code>F12</code> to open DevTools<br>
+                    2. Find the <strong>Performance</strong> tab, hit record<br>
+                    3. Scroll around for a few seconds, click some buttons, then stop the recording<br>
+                    4. You'll see a colorful "flame chart":<br>
+                    &nbsp;&nbsp;&nbsp;• <span style="color:#8B5CF6;">Purple</span> = Layout (reflow)<br>
+                    &nbsp;&nbsp;&nbsp;• <span style="color:#10B981;">Green</span> = Paint (repaint)<br>
+                    &nbsp;&nbsp;&nbsp;• <span style="color:#F59E0B;">Yellow</span> = JavaScript
+                </p>
+                <p>
+                    That's what the browser is doing every 16 milliseconds (60 frames per second), now visible to you.
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=7">Q7: How is a web page actually made?</a>
+                <a href="question.html?q=14">Q14: Why are some websites fast?</a>
+                <a href="question.html?q=20">Q20: What is caching, really?</a>
+                <a href="question.html?q=8">Q8: What are the frontend and backend doing?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>The browser is the most important "universal runtime" of our time</h3>
+                <p>
+                    Today, when you open Notion, Figma, Google Docs, Feishu, Tencent Meeting — they all run inside a browser.
+                    The browser isn't "a tool for looking at web pages" anymore. It's <strong>an operating system that sits on top of an operating system, capable of running any application</strong>.
+                </p>
+                <p>
+                    Behind it is a system of specifications that took 30 years to reach: HTML, CSS, ECMAScript, DOM, WebRTC, WebGL…
+                    Each spec is a <strong>public agreement</strong> hammered out by dozens of companies, hundreds of engineers, thousands of meetings full of arguments.
+                </p>
+                <p>
+                    Because everyone follows the same spec, a piece of code you wrote in Beijing can run on any phone in New York, Lagos, or São Paulo.
+                </p>
+                <p>
+                    <strong>The browser is one of the most successful "standardization victories" in human history.</strong>
+                    It's more egalitarian than any app store — no review, no payment, no download. A single URL reaches the whole world.
+                </p>
+                <p>
+                    Once you understand the browser as "a universal runtime tamed by specifications," you understand why "the Web" still hasn't lost to "the App."
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why can the browser display the page you wrote?
+            </p>
+
+            <p>
+                <strong>Because it's a "page-running machine" that works strictly by Web specifications</strong>:
+                it parses the pile of text you wrote into a DOM tree and a CSSOM tree, merges them into a render tree, figures out where each element goes and how big it is,
+                then paints layer by layer, and finally hands it off to the GPU. The whole thing might take 100 milliseconds — but it contains decades of accumulated engineering.
+            </p>
+
+            <p>
+                Next time you look at a web page, try to picture the assembly line behind it, rumbling away —
+                that feeling will turn you from "someone who looks at web pages" into "someone who sees through them."
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=10" class="btn">Continue to Q10 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

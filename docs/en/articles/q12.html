@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q12: What is a database actually storing?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q12.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q12.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q12.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 Layer 2 · The Beginner Coder's View</div>
+            <h1>What is a database actually storing?</h1>
+            <p class="subtitle">The world has to be modeled as tables before a system can "see" it</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's angle: why does this matter?</h2>
+
+            <p>
+                Your Alipay balance, your WeChat friends, every item you've ever bought on Taobao, that Moment you posted on March 12 last year — they all live <strong>somewhere</strong>.
+                That somewhere is called a "database."
+            </p>
+
+            <p>
+                But what does a database actually look like? Is it a giant file? A pile of Excel spreadsheets?
+                More importantly: <strong>what can be stored in one, and what can't</strong>?
+            </p>
+
+            <div class="highlight-box">
+                <strong>Core insight:</strong><br><br>
+                A database doesn't store "reality" — it stores <strong>reality that has been modeled</strong>.<br>
+                You have to decide first: what attributes does this thing have, how does it relate to other things?<br>
+                Only then can you fit it into a database.<br><br>
+                <strong>Whatever hasn't been modeled — the system can't see.</strong>
+            </div>
+
+            <p>
+                This question matters not because you need to learn SQL — but because once you understand "how a database sees the world," you understand why product managers argue every day about "should we add this field?" and "are these two things really the same category?"
+            </p>
+
+            <h2>🧩 Breaking it down: big question into small ones</h2>
+
+            <ol>
+                <li>What does a database look like?</li>
+                <li>Why does the "table" form work for storing reality?</li>
+                <li>What do terms like index, transaction, schema actually mean?</li>
+                <li>Why are there two camps — relational and non-relational?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the result matters</h3>
+
+            <p>
+                You open Meituan and see the order you placed last month — "Empress Milk-Cap Matcha, add taro balls, no sugar."
+                You feel like Meituan <strong>"remembers"</strong> what you bought.
+            </p>
+
+            <p>
+                But how does Meituan "remember"? It doesn't have memory like a human — it has a table called orders, and there's a row in it that looks roughly like this:
+            </p>
+
+            <div class="code-block">order_id | user_id | shop_id | items                          | price | status  | created_at
+---------+---------+---------+--------------------------------+-------+---------+---------------------
+9382174  | 8827    | 501     | Empress Milk-Cap Matcha (taro, no sugar) | 22.5  | done    | 2024-05-13 14:22:41</div>
+
+            <p>
+                That row is how your bubble tea gets "remembered" by the database. <strong>It's not a copy of your memory — it's a formatted fact.</strong>
+            </p>
+
+            <h3 class="section-code">The implementation layer: starting to see the structure</h3>
+
+            <p>
+                The most common kind of database is called a <strong>relational database</strong> (MySQL, PostgreSQL, SQL Server…).
+                It describes the world as a bunch of "tables," and each table has <strong>rows</strong> and <strong>columns</strong>:
+            </p>
+
+            <div class="highlight-box">
+                <strong>What tables does the simplest blog system need?</strong>
+            </div>
+
+            <div class="code-block">-- users table: one row per user
+CREATE TABLE users (
+    id           BIGINT PRIMARY KEY,
+    phone        VARCHAR(20) UNIQUE,
+    nickname     VARCHAR(50),
+    created_at   TIMESTAMP
+);
+
+-- posts table: one row per post
+CREATE TABLE posts (
+    id           BIGINT PRIMARY KEY,
+    author_id    BIGINT REFERENCES users(id),   -- who wrote it
+    title        VARCHAR(200),
+    content      TEXT,
+    created_at   TIMESTAMP
+);
+
+-- comments table: one row per comment
+CREATE TABLE comments (
+    id           BIGINT PRIMARY KEY,
+    post_id      BIGINT REFERENCES posts(id),   -- on which post
+    user_id      BIGINT REFERENCES users(id),   -- who commented
+    text         TEXT,
+    created_at   TIMESTAMP
+);</code></div>
+
+            <p>
+                Notice those <code>REFERENCES</code> — that's the heart of "relational."
+                Every row in the comments table points, via <code>post_id</code> and <code>user_id</code>, to a specific row in two other tables.
+                That's why it's called "relational" — tables have relationships with each other.
+            </p>
+
+            <p>
+                Once you have tables, you can "ask questions":
+            </p>
+
+            <div class="code-block">-- Find every post user 8827 wrote yesterday
+SELECT id, title, created_at
+FROM posts
+WHERE author_id = 8827
+  AND created_at &gt;= '2024-05-12'
+  AND created_at &lt;  '2024-05-13';
+
+-- Find every comment on this post, including the commenter's nickname
+SELECT c.text, u.nickname, c.created_at
+FROM comments c
+JOIN users u ON u.id = c.user_id
+WHERE c.post_id = 42
+ORDER BY c.created_at DESC;</div>
+
+            <p>
+                SQL is "the language you use to talk to the database." It reads like English, and it's written as "what I want," not "how you find it."
+            </p>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>
+                If a database were just "storing tables," decades of research wouldn't have much to chew on.
+                The hard part is <strong>balancing "fast, correct, reliable"</strong>. For that, it introduces a few key concepts:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>📇 Index</h4>
+                    <p>Like the index in a book. Without one, finding a word means flipping through every page. With one, you jump straight to it.</p>
+                    <p>The cost: the index takes space, and every write has to update the index too.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🔒 Transaction</h4>
+                    <p>A group of operations that must <strong>all succeed, or all fail</strong>.</p>
+                    <p>In a money transfer, "subtract 100 from my account" and "add 100 to the other account" must live or die together — otherwise money vanishes or appears from nowhere.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📐 Schema</h4>
+                    <p>The database's "design blueprint" — how many tables, what fields each has, what types those fields are.</p>
+                    <p>When a product iterates, adding fields or changing types is called a "schema change" — get it wrong and things go down.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>♻️ ACID of transactions</h4>
+                    <p><strong>A</strong>tomicity, <strong>C</strong>onsistency, <strong>I</strong>solation, <strong>D</strong>urability — the safety guarantees a database provides for "money" and "accounts."</p>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>One database read/write — what happens behind the scenes?</strong>
+            </div>
+
+            <div class="diagram-box">
+                <div class="step-box">① SQL arrives</div>
+                <div class="arrow">↓ parse + optimize</div>
+                <div class="step-box">② generate execution plan</div>
+                <div class="arrow">↓ decide which index to use</div>
+                <div class="step-box">③ read disk / memory pages</div>
+                <div class="arrow">↓ assemble result</div>
+                <div class="step-box">④ return to the app</div>
+            </div>
+
+            <p>
+                A database doesn't "walk through every byte on disk" — it maintains a carefully designed set of <strong>B+ trees, hash tables, log files</strong>,
+                so that "looking up one row" usually takes just a few disk I/Os and completes in milliseconds.
+            </p>
+
+            <h3 class="section-tradeoff">The trade-off layer: relational vs NoSQL — why the split?</h3>
+
+            <p>
+                For decades relational databases ruled the world, but around 2010 a wave of "rebels" showed up — MongoDB, Redis, Cassandra, Elasticsearch…
+                Collectively they're called <strong>NoSQL</strong> (Not Only SQL).
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🏛️ Relational (MySQL, PostgreSQL)</h4>
+                    <p>Rigorous structure, supports complex queries and transactions.</p>
+                    <p>Fits: money, accounts, orders, user relationships — anything you "can't get wrong."</p>
+                    <p>Weakness: hard to scale horizontally for massive data.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🚀 NoSQL (MongoDB, Redis, Cassandra)</h4>
+                    <p>Flexible shape, trades some consistency for huge gains in performance and scale.</p>
+                    <p>Fits: caches, logs, social feeds, search — anything "big, fast, changing fast."</p>
+                    <p>Weakness: complex transactions and cross-table queries are weaker.</p>
+                </div>
+            </div>
+
+            <p>
+                Real-world large systems usually <strong>use both</strong>:
+            </p>
+
+            <ul>
+                <li>Your account balance, your orders — go in MySQL/PostgreSQL (must be "correct")</li>
+                <li>Your activity feed, your recommendations — go in Redis/MongoDB (must be "fast")</li>
+                <li>Your search terms, your logs — go in Elasticsearch (must be "full-text searchable")</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>This tells us something too:</strong><br><br>
+                "Database" isn't one thing — it's <strong>a whole category of tools</strong>.<br>
+                An engineer's job is to pick the right combination from many databases to match the business's needs.
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Try this: 5 minutes — write out the "data model" for a product you know</h3>
+                <p>
+                    Grab a piece of paper (or any notes app), and think of a product you know well — say WeChat or TikTok.<br>
+                    Then answer: if you were its engineer, what tables would you need?
+                </p>
+                <p>
+                    Take WeChat. You might write down:
+                </p>
+                <ul style="color: white;">
+                    <li><strong>users</strong>: id, phone, nickname, avatar_url</li>
+                    <li><strong>friends</strong>: user_id, friend_id, added_at (who's friends with whom)</li>
+                    <li><strong>chats</strong>: id, type (1-on-1 / group), created_at</li>
+                    <li><strong>messages</strong>: id, chat_id, sender_id, content, sent_at</li>
+                    <li><strong>moments</strong>: id, user_id, text, images, posted_at</li>
+                </ul>
+                <p>
+                    Do the exercise and you'll notice a strange feeling:<br>
+                    <strong>an app, really, is just a collection of tables.</strong>
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Related paths to explore:</h3>
+                <a href="question.html?q=11">Q11: Registration, login, comments… what are they really?</a>
+                <a href="question.html?q=18">Q18: How is data consistency guaranteed?</a>
+                <a href="question.html?q=5">Q5: Where is my data, really?</a>
+                <a href="question.html?q=10">Q10: Where does the data go when you click a button?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>Only a world that can be expressed in a database gets "seen" by the system</h3>
+                <p>
+                    Here's a truth that's easy to miss:
+                </p>
+                <p>
+                    <strong>If something can't be modeled as "tables and fields," an internet system can't process it.</strong>
+                </p>
+                <p>
+                    Your gender is "male / female"? — because the first table had a <code>gender</code> field with exactly two enum values.
+                    Today many platforms add "other," "prefer not to say," "non-binary" — that's not because society suddenly progressed, it's because <strong>the database schema got extended</strong>.
+                </p>
+                <p>
+                    Your ID number can only be 18 digits? Your name can't be more than 20 characters? Your family relationships have to be "father / mother / son / daughter"?
+                    All these seemingly natural "rules" are, at bottom, <strong>decisions some engineer made while defining a table structure</strong>.
+                </p>
+                <p>
+                    <strong>The database is a filter for reality.</strong> It decides what the system sees, what the system ignores, what the system forces into a category.
+                </p>
+                <p>
+                    Every time you fill in a form in an app, you're translating "the living you" into fields a machine can understand.
+                    Your complexity gets compressed, your many sides get single-selected, your fuzziness gets enumerated — that's the cost of "digital existence."
+                </p>
+                <p>
+                    That's also why every schema change, every "new field added," can be a quiet social conversation.
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So, what is a database actually storing?
+            </p>
+
+            <p>
+                <strong>It's not storing "the world" — it's storing "the world after engineers modeled it": rows and rows of strictly structured tables,
+                where rows are records, columns are attributes, and relationships between tables are expressed through references.</strong>
+            </p>
+
+            <p>
+                Behind that sits an intricate machine: indexes make lookups fast, transactions guarantee consistency, schemas constrain the shape of data.
+                Relational and NoSQL are two camps with different priorities — modern systems usually use both.
+            </p>
+
+            <div class="highlight-box">
+                <strong>The deeper truth:</strong><br><br>
+                Next time you open any app, try asking yourself:<br>
+                "If I were its engineer, how would I design its tables?"<br><br>
+                The more tables you can imagine — the more of that product you understand.
+            </div>
+
+            <p>
+                And here you are — you've finished the first stretch of "The Beginner Coder's View." Congrats — you went from someone who sees the world, to <strong>someone who can see through its structure</strong>.
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=13" class="btn">Continue to Q13 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q1: Why does a page appear when you type in a URL?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #1D4ED8;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .diagram-box {
+            background: #F9FAFB;
+            border: 2px dashed #D1D5DB;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        /* SVG diagram: interactive, responsive, dark-mode friendly */
+        .diagram-svg-wrap {
+            font-family: inherit;
+            padding: 30px 20px 20px;
+        }
+
+        .flow-svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+        }
+
+        /* Stage boxes: slight lift on hover, hinting at interactivity */
+        .flow-stage rect {
+            filter: drop-shadow(0 4px 8px rgba(37, 99, 235, 0.18));
+            transition: transform 0.2s ease, filter 0.2s ease;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .flow-stage:hover rect {
+            transform: translateY(-3px) scale(1.02);
+            filter: drop-shadow(0 8px 16px rgba(37, 99, 235, 0.32));
+        }
+
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-family: inherit;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* Dark mode: bump the SVG primary color a bit for contrast */
+        [data-theme="dark"] .diagram-svg-wrap {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* Mobile: SVG gets cramped — switch to a vertical card list */
+        .flow-mobile {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .flow-svg {
+                display: none;
+            }
+            .flow-mobile {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+                font-family: system-ui, -apple-system, "PingFang SC", sans-serif;
+            }
+            .flow-mobile li {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 14px 16px;
+                margin-bottom: 10px;
+                background: linear-gradient(135deg, #60A5FA 0%, #2563EB 100%);
+                color: #fff;
+                border-radius: 12px;
+                box-shadow: 0 4px 10px rgba(37, 99, 235, 0.18);
+                position: relative;
+            }
+            /* ↓ connector between cards */
+            .flow-mobile li:not(:last-child)::after {
+                content: "↓";
+                position: absolute;
+                left: 50%;
+                bottom: -18px;
+                transform: translateX(-50%);
+                color: var(--text-muted, #9CA3AF);
+                font-size: 1rem;
+                z-index: 1;
+            }
+            .flow-mobile-icon {
+                font-size: 1.8rem;
+                flex-shrink: 0;
+            }
+            .flow-mobile li strong {
+                display: block;
+                font-size: 0.98rem;
+                margin-bottom: 2px;
+            }
+            .flow-mobile-sub {
+                display: block;
+                font-size: 0.78rem;
+                color: rgba(255, 255, 255, 0.85);
+            }
+            .flow-mobile-time {
+                display: inline-block;
+                margin-top: 4px;
+                padding: 2px 8px;
+                font-size: 0.72rem;
+                background: rgba(255, 255, 255, 0.22);
+                border-radius: 10px;
+                color: #fff;
+            }
+            /* Tighten outer padding on mobile */
+            .diagram-svg-wrap {
+                padding: 20px 14px 14px;
+            }
+        }
+
+        .step-box {
+            display: inline-block;
+            background: #3B82F6;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin: 10px;
+            font-weight: 600;
+        }
+
+        .arrow {
+            display: block;
+            font-size: 1.5rem;
+            color: #9CA3AF;
+            margin: 10px 0;
+        }
+
+        .highlight-box {
+            background: #EFF6FF;
+            border-left: 4px solid #3B82F6;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #1D4ED8;
+        }
+
+        .code-block {
+            background: #1F2937;
+            color: #E5E7EB;
+            padding: 25px;
+            border-radius: 12px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box {
+            background: #10B981;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .try-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box a {
+            color: #ECFDF5;
+            text-decoration: underline;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="en" href="/en/articles/q01.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q01.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q01.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header">
+            <div class="level-badge">🎯 Layer 1 · The User's View</div>
+            <h1>Why does a page appear when you type in a URL?</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">A story about how the "miracle" actually happens</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's view: why does this question matter?</h2>
+
+            <p>
+                We type in URLs every day — but have you ever stopped and wondered:
+                <strong>how does this actually happen?</strong>
+            </p>
+
+            <p>
+                You type <code>google.com</code>, hit enter, and in less than a second, the page shows up.
+                It looks like magic.
+            </p>
+
+            <p>
+                But behind the "magic" — dozens of systems, thousands of kilometers of fiber, hundreds of millions of computations, all working together.
+                Understanding this process is the first step to cracking open the internet's black box.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Why is this question the starting point for Layer 1?</strong><br>
+                Because it's the curiosity every single person on the internet has.
+                Start here, and we can peel the whole internet back, layer by layer.
+            </div>
+
+            <h2>🧩 Break it down: turn one big question into small ones</h2>
+
+            <p>To answer "how does a URL become a page," we first need to answer a few smaller questions:</p>
+
+            <ol style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>What is a URL?</strong> What does <code>google.com</code> actually mean?</li>
+                <li><strong>How does the computer find that website?</strong> Where is the server?</li>
+                <li><strong>How does the request go out?</strong> How does data travel thousands of kilometers?</li>
+                <li><strong>How does the page come back?</strong> How does HTML turn into what you see on screen?</li>
+            </ol>
+
+            <h2>🎯 Look at it layer by layer</h2>
+
+            <h3>The user's layer: just the result</h3>
+
+            <p>
+                In an ordinary user's eyes, it looks like this:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">Type the URL</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">Hit enter</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">🎉 Page appears!</div>
+            </div>
+
+            <p>
+                <strong>That's it.</strong><br>
+                You don't need to know what happens in between — as long as it works.
+                That's where most of us live, every day.
+            </p>
+
+            <h3>🔨 The build layer: starting to see the structure</h3>
+
+            <p>
+                The moment you start learning to code, the black box starts to become transparent.
+                You realize — behind the scenes, it actually looks like this:
+            </p>
+
+            <div class="diagram-box diagram-svg-wrap">
+                <svg viewBox="0 0 900 240" class="flow-svg" role="img"
+                     aria-label="From typing a URL to the page appearing: the five stages — URL parsing, DNS lookup, HTTP request, response, and browser rendering">
+                    <defs>
+                        <!-- Gradient for stage boxes (matches --color-level-1) -->
+                        <linearGradient id="flow-stage-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%"  stop-color="#60A5FA"/>
+                            <stop offset="100%" stop-color="#2563EB"/>
+                        </linearGradient>
+                        <!-- Arrowhead -->
+                        <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5"
+                                markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+                        </marker>
+                        <!-- Main line: hand-drawn feel with slight curves -->
+                        <path id="flow-line" d="M 90 120 C 200 90, 260 150, 340 120
+                                                 S 490 90, 590 120
+                                                 S 740 150, 830 120"
+                              fill="none" stroke="currentColor" stroke-width="2.5"
+                              stroke-linecap="round" stroke-dasharray="4 6"/>
+                    </defs>
+
+                    <!-- Hand-drawn curve (dashed, hinting at "in progress") -->
+                    <use href="#flow-line" style="color: var(--border-color, #D1D5DB);"/>
+
+                    <!-- 5 stage boxes -->
+                    <!-- Stage 1: URL parsing -->
+                    <g class="flow-stage" transform="translate(20 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📝</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">URL parsing</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">protocol / domain / path</text>
+                    </g>
+
+                    <!-- Stage 2: DNS -->
+                    <g class="flow-stage" transform="translate(180 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📖</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">DNS lookup</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">domain → IP address</text>
+                    </g>
+
+                    <!-- Stage 3: HTTP request -->
+                    <g class="flow-stage" transform="translate(340 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📤</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">HTTP request</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">ask the server for stuff</text>
+                    </g>
+
+                    <!-- Stage 4: Response returns -->
+                    <g class="flow-stage" transform="translate(500 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📥</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">Response comes back</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">HTML / CSS / JS</text>
+                    </g>
+
+                    <!-- Stage 5: Browser rendering -->
+                    <g class="flow-stage" transform="translate(720 60)">
+                        <rect width="160" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="80" y="42" text-anchor="middle" font-size="28" fill="#fff">🎨</text>
+                        <text x="80" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">Browser rendering</text>
+                        <text x="80" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">paint it to the screen</text>
+                    </g>
+
+                    <!-- Arrows (short horizontal, hinting at handoff) -->
+                    <g style="color: var(--color-level-1, #3B82F6);">
+                        <line x1="162" y1="110" x2="176" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                        <line x1="322" y1="110" x2="336" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                        <line x1="482" y1="110" x2="496" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                        <line x1="642" y1="110" x2="716" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                    </g>
+
+                    <!-- Timeline labels at the bottom -->
+                    <text x="90"  y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~a few ms</text>
+                    <text x="250" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~tens of ms</text>
+                    <text x="410" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~hundreds of ms</text>
+                    <text x="570" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">depends on network</text>
+                    <text x="800" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~tens of ms</text>
+                </svg>
+
+                <!-- Mobile fallback: vertical card list, visually consistent with the SVG -->
+                <ol class="flow-mobile" aria-hidden="true">
+                    <li>
+                        <span class="flow-mobile-icon">📝</span>
+                        <div>
+                            <strong>URL parsing</strong>
+                            <span class="flow-mobile-sub">protocol / domain / path</span>
+                            <span class="flow-mobile-time">~a few ms</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">📖</span>
+                        <div>
+                            <strong>DNS lookup</strong>
+                            <span class="flow-mobile-sub">domain → IP address</span>
+                            <span class="flow-mobile-time">~tens of ms</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">📤</span>
+                        <div>
+                            <strong>HTTP request</strong>
+                            <span class="flow-mobile-sub">ask the server for stuff</span>
+                            <span class="flow-mobile-time">~hundreds of ms</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">📥</span>
+                        <div>
+                            <strong>Response comes back</strong>
+                            <span class="flow-mobile-sub">HTML / CSS / JS</span>
+                            <span class="flow-mobile-time">depends on network</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">🎨</span>
+                        <div>
+                            <strong>Browser rendering</strong>
+                            <span class="flow-mobile-sub">paint it to the screen</span>
+                            <span class="flow-mobile-time">~tens of ms</span>
+                        </div>
+                    </li>
+                </ol>
+
+                <p class="diagram-caption">Figure 1: the 5 core stages of a page load — the bottom labels are rough orders of magnitude</p>
+            </div>
+
+            <p>
+                Let's walk through them one at a time:
+            </p>
+
+            <div class="highlight-box">
+                <strong>1. URL parsing: what is a URL, really?</strong><br><br>
+                <code>https://www.google.com/search?q=hello</code><br><br>
+                <ul style="text-align: left; margin-top: 15px;">
+                    <li><code>https://</code> — the protocol (how we're going to talk)</li>
+                    <li><code>www.google.com</code> — the domain (who we're talking to)</li>
+                    <li><code>/search</code> — the path (what to look up)</li>
+                    <li><code>?q=hello</code> — the parameters (what we're saying)</li>
+                </ul>
+            </div>
+
+            <p>
+                <strong>2. DNS lookup: how does a domain become an IP address?</strong><br>
+                It's like flipping through a phone book — you remember the name, but you need the number.
+            </p>
+
+            <div class="code-block">
+google.com → DNS lookup → 142.250.71.14<br>
+(name)      (phone book)   (phone number)
+            </div>
+
+            <p>
+                <strong>3. Sending the HTTP request: making the call</strong><br>
+                The browser has the IP address — it's like dialing the number. Then the conversation starts:
+            </p>
+
+            <div class="code-block">
+Browser: "Hi, I'd like the homepage!"<br>
+Server: "Got it — sending it now!"<br>
+Browser: "Thanks!"
+            </div>
+
+            <p>
+                <strong>4. Receiving the HTML: getting the page content</strong><br>
+                The server doesn't send back an image — it sends a chunk of HTML code, which looks roughly like this:
+            </p>
+
+            <div class="code-block">
+&lt;html&gt;<br>
+  &lt;head&gt;<br>
+    &lt;title&gt;Google&lt;/title&gt;<br>
+  &lt;/head&gt;<br>
+  &lt;body&gt;<br>
+    &lt;h1&gt;Hello!&lt;/h1&gt;<br>
+  &lt;/body&gt;<br>
+&lt;/html&gt;
+            </div>
+
+            <p>
+                <strong>5. Rendering: turning code into a picture</strong><br>
+                The browser is a painter. It takes the HTML description and paints it, stroke by stroke, onto the canvas:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">📄 Parse the HTML</div>
+                <div class="step-box">🎨 Apply the CSS</div>
+                <div class="step-box">⚡ Run the JavaScript</div>
+                <div class="step-box">🖥️ Show it on screen</div>
+            </div>
+
+            <h3>🌊 The system layer: seeing the full path</h3>
+
+            <p>
+                Once you get to the engineer's view, you realize this isn't just "browser talks to server."
+                Behind the scenes, a huge distributed system is at work.
+            </p>
+
+            <div class="highlight-box">
+                <strong>The request's journey might pass through:</strong><br><br>
+                1. Your phone → WiFi router → ISP network<br>
+                2. CDN (content delivery network — may respond from a nearby location)<br>
+                3. Load balancer (decides which server handles it)<br>
+                4. Web server (handles HTTP)<br>
+                5. Application server (runs the business logic)<br>
+                6. Database / cache (reads the data)<br>
+                7. Then all the way back the other direction!
+            </div>
+
+            <p>
+                All of this — usually done in <strong>a few hundred milliseconds</strong>.
+                And you, sitting in front of the screen, just see the result.
+            </p>
+
+            <h3>⚖️ The trade-off layer: why is it designed this way?</h3>
+
+            <p>
+                At the senior engineer's view, you start asking: <strong>why is the system designed like this?</strong>
+            </p>
+
+            <p>
+                Every choice is a trade-off:
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>Why use domain names instead of IPs directly?</strong> → Easy to remember vs. one extra lookup</li>
+                <li><strong>Why use a CDN?</strong> → Faster vs. more expensive</li>
+                <li><strong>Why so many layers?</strong> → Flexible and scalable vs. more complex</li>
+            </ul>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Try this: see the process with your own eyes!</h3>
+                <p>
+                    In Chrome, press <strong>F12</strong> to open Developer Tools,
+                    switch to the <strong>Network</strong> tab, and reload the page.
+                </p>
+                <p>
+                    You'll see every request the browser makes — and how long each one took!
+                </p>
+            </div>
+
+            <p>
+                Or try this:
+            </p>
+
+            <div class="code-block">
+Windows: open cmd, type ping google.com<br>
+Mac: open Terminal, type ping google.com
+            </div>
+
+            <p>
+                You'll see your computer literally talking to Google's servers!
+            </p>
+
+            <h2>🔗 Follow-up questions</h2>
+
+            <p>
+                Once you understand this process, you'll naturally start asking more:
+            </p>
+
+            <div class="related-questions">
+                <h3>Related questions to explore:</h3>
+                <a href="question.html?q=2">Q2: Why do messages arrive instantly?</a>
+                <a href="question.html?q=7">Q7: How are web pages actually made?</a>
+                <a href="question.html?q=9">Q9: How does the browser display a page?</a>
+                <a href="question.html?q=13">Q13: What happens after you type in a URL?</a>
+                <a href="question.html?q=14">Q14: Why are some websites fast and others slow?</a>
+                <a href="question.html?q=20">Q20: Why does caching make things faster?</a>
+            </div>
+
+            <h2>👑 The grandmaster's view: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>From technology to the world</h3>
+                <p>
+                    Once you truly understand this process, the way you see the world changes.
+                </p>
+                <p>
+                    You realize: <strong>the internet isn't "natural" — it's built by people.</strong><br>
+                    Behind every design choice — business, political, and social considerations.
+                </p>
+            </div>
+
+            <p>
+                Think about it:
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>Why is a URL formatted this way?</strong> Who decided?</li>
+                <li><strong>Why is <code>.com</code> so expensive?</strong> Who's making money?</li>
+                <li><strong>Why can't some websites be reached from some places?</strong> Who's calling the shots?</li>
+                <li><strong>Why do you get this result and not that one?</strong> Who's filtering?</li>
+            </ul>
+
+            <p>
+                That's the shift from "user" to "grandmaster":
+                <strong>you stop just looking at the result — and start asking, "who decides this result?"</strong>
+            </p>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why does a page appear when you type in a URL?
+            </p>
+
+            <p>
+                <strong>The answer:</strong><br>
+                Because countless engineers built an unbelievable system,
+                hid the complexity behind a simple interface,
+                and let everyone enjoy the "miracle."
+            </p>
+
+            <div class="highlight-box">
+                <strong>And now — you're starting to see the truth behind the "miracle."</strong><br><br>
+                🎉 Congratulations! You've just taken the first step from user to thinker!
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the question map</a>
+                <a href="question.html?q=2" class="btn">Keep exploring — Q2 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

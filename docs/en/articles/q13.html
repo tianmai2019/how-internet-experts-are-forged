@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q13: What actually happens when you type a URL?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #0891B2;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+            margin: 30px 0;
+            border-left: 2px solid #06B6D4;
+            padding-left: 24px;
+        }
+
+        .timeline-item {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .timeline-marker {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .timeline-content {
+            background: #F9FAFB;
+            padding: 20px 25px;
+            border-radius: 12px;
+        }
+
+        .timeline-content h4 {
+            margin: 0 0 10px 0;
+            color: #0891B2;
+            font-size: 1.1rem;
+        }
+
+        .highlight-box {
+            background: #ECFEFF;
+            border-left: 4px solid #06B6D4;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #0891B2;
+        }
+
+        .code-block {
+            background: #1F2937;
+            color: #E5E7EB;
+            padding: 25px;
+            border-radius: 12px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        .request-flow {
+            display: grid;
+            gap: 10px;
+            margin: 30px 0;
+            justify-items: center;
+        }
+
+        .flow-step {
+            background: #F9FAFB;
+            padding: 15px 24px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .flow-arrow {
+            color: #0891B2;
+            font-size: 1.2rem;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box {
+            background: #06B6D4;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .try-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .tech-item {
+            background: #ECFEFF;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #A5F3FC;
+        }
+
+        .tech-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        /* ============================================
+           SVG topology (Q13 — inside the server)
+           Reuses the Q1 template, with a multi-color
+           palette to distinguish component types
+           ============================================ */
+        .diagram-box {
+            background: var(--bg-secondary, #F9FAFB);
+            border: 2px dashed var(--border-color, #D1D5DB);
+            border-radius: 12px;
+            padding: 30px 20px 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .topology-svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+        }
+
+        .topo-node rect {
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
+            transition: transform 0.2s ease, filter 0.2s ease;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .topo-node:hover rect {
+            transform: translateY(-3px) scale(1.03);
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.22));
+        }
+
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            font-style: italic;
+        }
+
+        [data-theme="dark"] .diagram-box {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* Mobile: switch to a vertical card list */
+        .topo-mobile {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .topology-svg {
+                display: none;
+            }
+            .topo-mobile {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+            }
+            .topo-mobile li {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 14px;
+                margin-bottom: 8px;
+                border-radius: 12px;
+                color: #fff;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+                position: relative;
+            }
+            .topo-mobile li[data-color="blue"]   { background: linear-gradient(135deg, #60A5FA 0%, #2563EB 100%); }
+            .topo-mobile li[data-color="cyan"]   { background: linear-gradient(135deg, #22D3EE 0%, #0891B2 100%); }
+            .topo-mobile li[data-color="violet"] { background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%); }
+            .topo-mobile li[data-color="amber"]  { background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%); }
+            .topo-mobile li[data-color="pink"]   { background: linear-gradient(135deg, #F472B6 0%, #DB2777 100%); }
+
+            .topo-mobile li:not(:last-child):not(.topo-branch)::after {
+                content: "↓";
+                position: absolute;
+                left: 50%;
+                bottom: -14px;
+                transform: translateX(-50%);
+                color: var(--text-muted, #9CA3AF);
+                font-size: 0.95rem;
+                z-index: 1;
+            }
+            /* Branch node: a different connector hints at "hit / miss" */
+            .topo-mobile li.topo-branch::before {
+                content: "├─ check first";
+                position: absolute;
+                left: 8px;
+                top: -12px;
+                font-size: 0.7rem;
+                color: var(--text-muted, #6B7280);
+                background: var(--bg-secondary, #F9FAFB);
+                padding: 0 6px;
+            }
+            .topo-mobile li.topo-branch + li::before {
+                content: "└─ on miss";
+                position: absolute;
+                left: 8px;
+                top: -12px;
+                font-size: 0.7rem;
+                color: var(--text-muted, #6B7280);
+                background: var(--bg-secondary, #F9FAFB);
+                padding: 0 6px;
+            }
+            .topo-mobile-icon {
+                font-size: 1.6rem;
+                flex-shrink: 0;
+            }
+            .topo-mobile li strong {
+                display: block;
+                font-size: 0.96rem;
+                margin-bottom: 2px;
+            }
+            .topo-mobile li span:not(.topo-mobile-icon) {
+                display: block;
+                font-size: 0.78rem;
+                color: rgba(255, 255, 255, 0.88);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .timeline {
+                padding-left: 18px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="en" href="/en/articles/q13.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q13.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q13.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>What actually happens when you type a URL?</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">From one button to a full request path</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's angle: why does this question matter?</h2>
+
+            <p>
+                You've probably heard the classic interview question: <strong>"What happens after you type google.com into a browser?"</strong>
+            </p>
+
+            <p>
+                Why does this question matter so much? Because it's not testing recall — it's testing this:
+            </p>
+
+            <div class="highlight-box">
+                <strong>Can you see the world as something that flows?</strong><br><br>
+                What an ordinary user sees:<br>
+                Click → page appears<br><br>
+                What an engineer sees:<br>
+                Data moving, requests being passed, systems working together
+            </div>
+
+            <p>
+                That's the heart of Layer 3 — going from "seeing things" to "seeing flow."
+            </p>
+
+            <h2>🧩 Break it down: turn the big question into small ones</h2>
+
+            <p>
+                The whole thing splits into a few steps:
+            </p>
+
+            <ol style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>Find:</strong> Where is this site? (DNS)</li>
+                <li><strong>Connect:</strong> How do we reach it? (TCP/TLS)</li>
+                <li><strong>Request:</strong> What do I want? (HTTP)</li>
+                <li><strong>Process:</strong> How does the server work? (backend)</li>
+                <li><strong>Return:</strong> How does the content come back? (response)</li>
+                <li><strong>Display:</strong> How does the browser paint it? (rendering)</li>
+            </ol>
+
+            <h2>🌊 Peel it back, layer by layer</h2>
+
+            <h3>The user layer: only the result</h3>
+
+            <p>
+                To an ordinary user, this all happens in an instant:
+            </p>
+
+            <div class="request-flow">
+                <div class="flow-step">
+                    <span class="tech-icon">🔤</span>
+                    <span>Type the URL</span>
+                </div>
+                <div class="flow-arrow">↓</div>
+                <div class="flow-step">
+                    <span class="tech-icon">⚡</span>
+                    <span>Hit Enter!</span>
+                </div>
+                <div class="flow-arrow">↓</div>
+                <div class="flow-step">
+                    <span class="tech-icon">🎉</span>
+                    <span>Page appears!</span>
+                </div>
+            </div>
+
+            <p>
+                Simple. Nice. But that's not the truth.
+            </p>
+
+            <h3>The implementation layer: you start seeing the process</h3>
+
+            <p>
+                To a beginner coder, it turns into "request-response":
+            </p>
+
+            <div class="highlight-box">
+                <strong>Browser asks:</strong> "Hi, give me the homepage!"<br><br>
+                <strong>Server answers:</strong> "Sure, here's the HTML!"
+            </div>
+
+            <p>
+                But that's still just the tip of the iceberg. The real world is a lot messier.
+            </p>
+
+            <h3>The system layer: the full 8-step journey!</h3>
+
+            <p>
+                Now let's step into the engineer's view and look at what happens millisecond by millisecond:
+            </p>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">1</span> 📍 DNS lookup: find where the server is</h4>
+                        <p>
+                            The browser first asks: "What's the IP address of google.com?"
+                            It's like checking a contact list — using a name to find a phone number.
+                        </p>
+                        <p>
+                            And it's not one question — it might ask the local cache, the router, the ISP,
+                            all the way up to the root DNS servers — one hop at a time.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">2</span> 🔌 TCP handshake: open the connection</h4>
+                        <p>
+                            Once it has the IP, the browser starts the "three-way handshake" with the server:
+                        </p>
+                        <p>
+                            "SYN!" → "SYN-ACK!" → "ACK!"<br>
+                            Like a phone call: "Hello?" "Yeah?" "OK let's talk"
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">3</span> 🔐 TLS handshake: encrypt the channel</h4>
+                        <p>
+                            If it's HTTPS, this is where the two sides negotiate the encryption and exchange keys.
+                            That's where the little padlock icon comes from!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">4</span> 📤 HTTP request: state the ask</h4>
+                        <p>
+                            The browser finally gets to the point:
+                        </p>
+                        <div class="code-block">
+GET / HTTP/1.1<br>
+Host: google.com<br>
+User-Agent: Chrome/120.0<br>
+Accept: text/html
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">5</span> 🏭 Server processing: the journey inside</h4>
+                        <p>
+                            Once the request lands on the server, the real story begins. It travels through an entire infrastructure chain:
+                        </p>
+
+                        <div class="diagram-box diagram-svg-wrap">
+                            <svg viewBox="0 0 960 320" class="topology-svg" role="img"
+                                 aria-label="Topology of a request once it enters the server: user → CDN → load balancer → web cluster → cache / database">
+                                <defs>
+                                    <linearGradient id="node-blue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#60A5FA"/>
+                                        <stop offset="100%" stop-color="#2563EB"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-cyan" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#22D3EE"/>
+                                        <stop offset="100%" stop-color="#0891B2"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-violet" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#A78BFA"/>
+                                        <stop offset="100%" stop-color="#7C3AED"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-amber" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#FBBF24"/>
+                                        <stop offset="100%" stop-color="#D97706"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-pink" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#F472B6"/>
+                                        <stop offset="100%" stop-color="#DB2777"/>
+                                    </linearGradient>
+                                    <marker id="topo-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                                            markerWidth="7" markerHeight="7" orient="auto">
+                                        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+                                    </marker>
+                                </defs>
+
+                                <!-- Main path: user -> CDN -> LB -> Web -> App -->
+                                <g style="color: var(--color-level-3, #06B6D4);">
+                                    <line x1="90"  y1="160" x2="146" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                    <line x1="266" y1="160" x2="322" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                    <line x1="442" y1="160" x2="498" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                    <line x1="618" y1="160" x2="674" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                </g>
+                                <!-- Branch from app service -> cache / DB -->
+                                <g style="color: var(--color-level-5, #F59E0B);">
+                                    <path d="M 795 145 Q 830 100, 866 90"
+                                          fill="none" stroke="currentColor" stroke-width="2.5"
+                                          stroke-dasharray="6 5" marker-end="url(#topo-arrow)"/>
+                                </g>
+                                <g style="color: var(--color-level-6, #EC4899);">
+                                    <path d="M 795 180 Q 830 225, 866 240"
+                                          fill="none" stroke="currentColor" stroke-width="2.5"
+                                          marker-end="url(#topo-arrow)"/>
+                                </g>
+
+                                <!-- Node: user -->
+                                <g class="topo-node" transform="translate(20 120)">
+                                    <rect width="70" height="80" rx="12" fill="url(#node-blue)"/>
+                                    <text x="35" y="36" text-anchor="middle" font-size="24" fill="#fff">👤</text>
+                                    <text x="35" y="60" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">User</text>
+                                    <text x="35" y="75" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">Browser</text>
+                                </g>
+
+                                <!-- CDN -->
+                                <g class="topo-node" transform="translate(146 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-cyan)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">🚀</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">CDN cache</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">Serves static assets nearby</text>
+                                </g>
+
+                                <!-- Load balancer -->
+                                <g class="topo-node" transform="translate(322 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-violet)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">⚖️</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">Load balancer</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">Routes to a server</text>
+                                </g>
+
+                                <!-- Web cluster -->
+                                <g class="topo-node" transform="translate(498 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-blue)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">🖥️</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">Web cluster</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">Nginx / reverse proxy</text>
+                                </g>
+
+                                <!-- App service -->
+                                <g class="topo-node" transform="translate(674 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-violet)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">🧩</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">App service</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">Runs business logic</text>
+                                </g>
+
+                                <!-- Cache Redis -->
+                                <g class="topo-node" transform="translate(866 50)">
+                                    <rect width="80" height="80" rx="12" fill="url(#node-amber)"/>
+                                    <text x="40" y="34" text-anchor="middle" font-size="22" fill="#fff">⚡</text>
+                                    <text x="40" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">Cache</text>
+                                    <text x="40" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">Redis</text>
+                                </g>
+
+                                <!-- Database -->
+                                <g class="topo-node" transform="translate(866 220)">
+                                    <rect width="80" height="80" rx="12" fill="url(#node-pink)"/>
+                                    <text x="40" y="34" text-anchor="middle" font-size="22" fill="#fff">🗄️</text>
+                                    <text x="40" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">Database</text>
+                                    <text x="40" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">MySQL / PG</text>
+                                </g>
+
+                                <!-- Branch labels -->
+                                <text x="820" y="90" text-anchor="start" font-size="10"
+                                      fill="var(--text-muted, #6B7280)">Check cache first</text>
+                                <text x="820" y="235" text-anchor="start" font-size="10"
+                                      fill="var(--text-muted, #6B7280)">Fall back on miss</text>
+                            </svg>
+
+                            <!-- Mobile fallback -->
+                            <ol class="topo-mobile" aria-hidden="true">
+                                <li data-color="blue">
+                                    <span class="topo-mobile-icon">👤</span>
+                                    <div><strong>User</strong><span>The browser fires the request</span></div>
+                                </li>
+                                <li data-color="cyan">
+                                    <span class="topo-mobile-icon">🚀</span>
+                                    <div><strong>CDN cache</strong><span>On hit, static assets return directly</span></div>
+                                </li>
+                                <li data-color="violet">
+                                    <span class="topo-mobile-icon">⚖️</span>
+                                    <div><strong>Load balancer</strong><span>Routes to the least-busy machine</span></div>
+                                </li>
+                                <li data-color="blue">
+                                    <span class="topo-mobile-icon">🖥️</span>
+                                    <div><strong>Web cluster</strong><span>Nginx / reverse proxy</span></div>
+                                </li>
+                                <li data-color="violet">
+                                    <span class="topo-mobile-icon">🧩</span>
+                                    <div><strong>App service</strong><span>Runs business logic</span></div>
+                                </li>
+                                <li data-color="amber" class="topo-branch">
+                                    <span class="topo-mobile-icon">⚡</span>
+                                    <div><strong>Cache (checked first)</strong><span>Redis · millisecond-level</span></div>
+                                </li>
+                                <li data-color="pink">
+                                    <span class="topo-mobile-icon">🗄️</span>
+                                    <div><strong>Database (fallback on miss)</strong><span>MySQL / PostgreSQL</span></div>
+                                </li>
+                            </ol>
+
+                            <p class="diagram-caption">A typical topology of one request crossing the infrastructure — cache hit returns immediately, only a miss falls through to the database</p>
+                        </div>
+
+                        <p>
+                            The request might pass through several services, hit several databases,
+                            and only then does the data get assembled.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">6</span> 📥 HTTP response: the content comes back</h4>
+                        <p>
+                            The server sends the HTML, CSS, and JS back:
+                        </p>
+                        <div class="code-block">
+HTTP/1.1 200 OK<br>
+Content-Type: text/html<br>
+Content-Length: 1234<br>
+<br>
+&lt;!DOCTYPE html&gt;...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">7</span> 🔄 More requests: fetch the assets</h4>
+                        <p>
+                            The HTML is only the start! The browser sees it also needs CSS, JS, images...
+                            so it fires off more requests, loading in parallel.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">8</span> 🎨 Render: the page appears!</h4>
+                        <p>
+                            The browser parses the HTML, applies CSS, runs JS, and paints the pixels.
+                            And finally — you see the page!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                And all of this usually happens in <strong>a few hundred milliseconds</strong>!
+            </p>
+
+            <div class="highlight-box">
+                <strong>This is Layer 3 waking up:</strong><br><br>
+                The internet isn't a "teleporter" — it's a precise system,<br>
+                built out of countless tiny steps, and every single one matters!
+            </div>
+
+            <h3>The trade-off layer: why is it designed this way?</h3>
+
+            <p>
+                You might ask: why so many steps? Can't we just simplify it?
+            </p>
+
+            <p>
+                That's the engineer's mindset — every choice has a cost:
+            </p>
+
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <div class="tech-icon">🔀</div>
+                    <div>DNS resolution</div>
+                    <p style="font-size:0.85rem; color:#6B7280">Memorable but slow</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🔒</div>
+                    <div>TLS encryption</div>
+                    <p style="font-size:0.85rem; color:#6B7280">Secure but slow</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">⚡</div>
+                    <div>CDN cache</div>
+                    <p style="font-size:0.85rem; color:#6B7280">Fast but costs money</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">📊</div>
+                    <div>Load balancing</div>
+                    <p style="font-size:0.85rem; color:#6B7280">Stable but complex</p>
+                </div>
+            </div>
+
+            <p>
+                Add all of these up, and you get the modern web: a system full of trade-offs.
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Watch the request journey with your own eyes!</h3>
+                <p>
+                    In Chrome:
+                </p>
+                <ol style="text-align:left;">
+                    <li>Press <code>F12</code> to open DevTools</li>
+                    <li>Pick the <strong>Network</strong> tab</li>
+                    <li>Refresh the page</li>
+                    <li>You'll see every single request!</li>
+                </ol>
+                <p>
+                    Click any request and you get the detailed timeline:
+                    how long DNS took, how long the connection took, how long the download took...
+                </p>
+            </div>
+
+            <p>
+                Want to go a little deeper? Try this command:
+            </p>
+
+            <div class="code-block">
+traceroute google.com
+            </div>
+
+            <p>
+                You'll see where your packets go, and how long each hop takes!
+            </p>
+
+            <h2>🔗 Follow-up questions</h2>
+
+            <p>
+                This article just opened Pandora's box — you'll probably want to ask more now:
+            </p>
+
+            <div class="related-questions">
+                <h3>Go deeper:</h3>
+                <a href="question.html?q=14">Q14: Why are some sites fast and others slow?</a>
+                <a href="question.html?q=17">Q17: Why do we talk about caches, queues, and load balancers?</a>
+                <a href="question.html?q=18">Q18: Why is the database the bottleneck?</a>
+                <a href="question.html?q=20">Q20: Why does caching make things faster?</a>
+                <a href="question.html?q=25">Q25: Why do we need monitoring and distributed tracing?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>From flows of data to flows of power</h3>
+                <p>
+                    Once you understand the path data takes, you start to see:
+                </p>
+                <p>
+                    <strong>Whoever controls the path controls the information.</strong>
+                </p>
+            </div>
+
+            <p>
+                Think about these:
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>Why can't some sites be reached from certain places?</strong> Because a segment of the path is cut off.</li>
+                <li><strong>Why does the CDN matter so much?</strong> Because it puts content closer to you — and also controls how content is delivered.</li>
+                <li><strong>Why do big companies build their own data centers?</strong> Because whoever owns the infrastructure owns their destiny.</li>
+                <li><strong>Why is privacy so hard?</strong> Because your request passes through too many hands, and every one of them can log it.</li>
+            </ul>
+
+            <p>
+                That's the Grandmaster's View:
+                <strong>seeing the tech, and also the power, economics, and politics behind the tech.</strong>
+            </p>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — what actually happens when you type a URL?
+            </p>
+
+            <p>
+                <strong>The answer is:</strong><br>
+                A precise system springs into action — from DNS to TCP, from load balancer to database,
+                and finally back to the browser to render.
+            </p>
+
+            <div class="highlight-box">
+                <strong>But the deeper answer is:</strong><br><br>
+                What you see is no longer "the page appeared."<br>
+                What you see is — <strong>"data is flowing"!</strong>
+            </div>
+
+            <p>
+                Congratulations. You're starting to look at the world with an engineer's eyes.
+            </p>
+
+            <div class="nav-footer">
+                <a href="q07.html" class="btn btn-outline">← Previous: Q7</a>
+                <a href="../questions/00-question-map.html" class="btn btn-outline">🗺️ Knowledge map</a>
+                <a href="question.html?q=14" class="btn">Next: Q14 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

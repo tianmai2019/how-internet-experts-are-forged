@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q7: How is a webpage actually made?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #059669;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .diagram-box {
+            background: #F9FAFB;
+            border: 2px dashed #D1D5DB;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .step-box {
+            display: inline-block;
+            background: #10B981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin: 10px;
+            font-weight: 600;
+        }
+
+        .arrow {
+            display: block;
+            font-size: 1.5rem;
+            color: #9CA3AF;
+            margin: 10px 0;
+        }
+
+        .highlight-box {
+            background: #ECFDF5;
+            border-left: 4px solid #10B981;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #059669;
+        }
+
+        .code-block {
+            background: #1F2937;
+            color: #E5E7EB;
+            padding: 25px;
+            border-radius: 12px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        .code-comment {
+            color: #6B7280;
+        }
+
+        .code-tag {
+            color: #60A5FA;
+        }
+
+        .code-attr {
+            color: #FBBF24;
+        }
+
+        .code-string {
+            color: #34D399;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box {
+            background: #10B981;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .try-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box a {
+            color: #ECFDF5;
+            text-decoration: underline;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .three-pillars {
+            margin: 30px 0;
+        }
+
+        /* SVG three-layer stacked diagram */
+        .diagram-svg-wrap {
+            background: var(--bg-secondary, #F9FAFB);
+            border: 2px dashed var(--border-color, #D1D5DB);
+            border-radius: 12px;
+            padding: 24px 20px 20px;
+            text-align: center;
+        }
+        .stack-svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+        }
+        .stack-layer {
+            transition: transform 0.25s ease;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .stack-layer:hover {
+            transform: translate(-6px, -6px);
+        }
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            font-style: italic;
+        }
+        [data-theme="dark"] .diagram-svg-wrap {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* Keep the old .pillar class in case other pages reuse it */
+        .pillar {
+            background: #F9FAFB;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            border-top: 4px solid;
+        }
+
+        .pillar-html { border-color: #E34C26; }
+        .pillar-css { border-color: #264DE4; }
+        .pillar-js { border-color: #F7DF1E; }
+
+        .pillar-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        /* Mobile: switch to 4 vertical cards */
+        .stack-mobile { display: none; }
+        @media (max-width: 640px) {
+            .stack-svg { display: none; }
+            .stack-mobile {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+            }
+            .stack-mobile li {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 14px 16px;
+                margin-bottom: 10px;
+                border-radius: 12px;
+                color: #fff;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+                position: relative;
+            }
+            .stack-mobile li[data-color="html"]   { background: linear-gradient(135deg, #F97316 0%, #E34C26 100%); }
+            .stack-mobile li[data-color="css"]    { background: linear-gradient(135deg, #3B82F6 0%, #264DE4 100%); }
+            .stack-mobile li[data-color="js"]     { background: linear-gradient(135deg, #FCD34D 0%, #F7DF1E 100%); color: #1F2937; }
+            .stack-mobile li[data-color="js"] span:not(.stack-mobile-icon) { color: rgba(31,41,55,0.85); }
+            .stack-mobile li[data-color="result"] { background: linear-gradient(135deg, #10B981 0%, #059669 100%); }
+            .stack-mobile li:not(:last-child)::after {
+                content: "+";
+                position: absolute;
+                left: 50%;
+                bottom: -14px;
+                transform: translateX(-50%);
+                color: var(--text-muted, #9CA3AF);
+                font-size: 1rem;
+                z-index: 1;
+                font-weight: 700;
+            }
+            .stack-mobile li:nth-last-child(2)::after {
+                content: "=";
+            }
+            .stack-mobile-icon {
+                font-size: 1.6rem;
+                flex-shrink: 0;
+            }
+            .stack-mobile li strong {
+                display: block;
+                font-size: 0.98rem;
+                margin-bottom: 2px;
+            }
+            .stack-mobile li span:not(.stack-mobile-icon) {
+                display: block;
+                font-size: 0.78rem;
+                color: rgba(255, 255, 255, 0.9);
+            }
+        }
+
+        .live-demo {
+            border: 2px dashed #10B981;
+            background: #ECFDF5;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .live-demo-box {
+            background: white;
+            border: 1px solid #A7F3D0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="en" href="/en/articles/q07.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q07.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q07.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header">
+            <div class="level-badge">🔨 Layer 2 · The Beginner Coder's View</div>
+            <h1>How is a webpage actually made?</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">Congrats — you're about to become a creator</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's view: why does this matter?</h2>
+
+            <p>
+                You look at webpages every day. But have you ever stopped to ask: <strong>how are these pages actually created?</strong>
+            </p>
+
+            <p>
+                This question matters because it marks a shift:
+                <strong>from "user" to "creator."</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>The awakening of Layer 2:</strong><br><br>
+                Webpages don't just "grow" on the internet —<br>
+                someone writes them, line by line!<br><br>
+                And if someone else can write one, so can I.
+            </div>
+
+            <p>
+                Once you get that, the whole internet looks different.
+                What you see stops being "stuff that already exists" — it becomes "stuff I could build too."
+            </p>
+
+            <h2>🧩 Breaking it down: big problem into small ones</h2>
+
+            <p>To build a webpage, you really only need to understand three things:</p>
+
+            <ol style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>Structure:</strong> what's on the page? (headings, images, buttons...)</li>
+                <li><strong>Style:</strong> what does it look like? (color, size, position...)</li>
+                <li><strong>Behavior:</strong> what does it do? (respond to clicks, change data...)</li>
+            </ol>
+
+            <p>
+                And, conveniently, these three things map onto three technologies.
+            </p>
+
+            <h2>🔨 Peel it back, layer by layer</h2>
+
+            <h3>The user layer: only the result</h3>
+
+            <p>
+                In an ordinary user's eyes, a webpage is just a webpage.
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">🌐 Open a browser</div>
+                <div class="arrow">→</div>
+                <div class="step-box">📄 See the page</div>
+                <div class="arrow">→</div>
+                <div class="step-box">👆 Click, interact</div>
+            </div>
+
+            <p>
+                What's behind it? Users don't care. And they don't need to.
+            </p>
+
+            <h3>The implementation layer: the three musketeers unite!</h3>
+
+            <p>
+                Welcome to the coder's world. There are three good friends here:
+            </p>
+
+            <div class="three-pillars diagram-svg-wrap">
+                <svg viewBox="0 0 720 360" class="stack-svg" role="img"
+                     aria-label="HTML / CSS / JS three-layer stack: HTML skeleton, CSS style, JS behavior — stacked together, they make a full webpage">
+                    <defs>
+                        <linearGradient id="html-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#F97316"/>
+                            <stop offset="100%" stop-color="#E34C26"/>
+                        </linearGradient>
+                        <linearGradient id="css-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#3B82F6"/>
+                            <stop offset="100%" stop-color="#264DE4"/>
+                        </linearGradient>
+                        <linearGradient id="js-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#FCD34D"/>
+                            <stop offset="100%" stop-color="#F7DF1E"/>
+                        </linearGradient>
+                        <filter id="stack-shadow" x="-10%" y="-10%" width="120%" height="130%">
+                            <feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity="0.25"/>
+                        </filter>
+                    </defs>
+
+                    <!-- Three film layers: bottom HTML, middle CSS, top JS. Skewed for isometric feel -->
+                    <!-- HTML bottom layer: structure -->
+                    <g class="stack-layer" filter="url(#stack-shadow)">
+                        <path d="M 40 200 L 300 200 L 260 300 L 0 300 Z"
+                              fill="url(#html-grad)" opacity="0.92"/>
+                        <text x="150" y="240" text-anchor="middle" font-size="34" fill="#fff">📄</text>
+                        <text x="150" y="272" text-anchor="middle" font-size="18"
+                              font-weight="700" fill="#fff">HTML</text>
+                        <text x="150" y="292" text-anchor="middle" font-size="12"
+                              fill="rgba(255,255,255,0.9)">Structure · what's there</text>
+                    </g>
+
+                    <!-- CSS middle layer: style -->
+                    <g class="stack-layer" filter="url(#stack-shadow)">
+                        <path d="M 80 120 L 340 120 L 300 220 L 40 220 Z"
+                              fill="url(#css-grad)" opacity="0.92"/>
+                        <text x="190" y="160" text-anchor="middle" font-size="34" fill="#fff">🎨</text>
+                        <text x="190" y="192" text-anchor="middle" font-size="18"
+                              font-weight="700" fill="#fff">CSS</text>
+                        <text x="190" y="212" text-anchor="middle" font-size="12"
+                              fill="rgba(255,255,255,0.9)">Style · how it looks</text>
+                    </g>
+
+                    <!-- JS top layer: behavior -->
+                    <g class="stack-layer" filter="url(#stack-shadow)">
+                        <path d="M 120 40 L 380 40 L 340 140 L 80 140 Z"
+                              fill="url(#js-grad)" opacity="0.95"/>
+                        <text x="230" y="80" text-anchor="middle" font-size="34" fill="#1F2937">⚡</text>
+                        <text x="230" y="112" text-anchor="middle" font-size="18"
+                              font-weight="700" fill="#1F2937">JavaScript</text>
+                        <text x="230" y="132" text-anchor="middle" font-size="12"
+                              fill="rgba(31,41,55,0.85)">Behavior · what it does</text>
+                    </g>
+
+                    <!-- Composition arrow -->
+                    <text x="425" y="180" text-anchor="middle" font-size="42"
+                          fill="var(--text-muted, #9CA3AF)" font-weight="300">＝</text>
+
+                    <!-- Composed result: a mini webpage preview -->
+                    <g transform="translate(490 60)" filter="url(#stack-shadow)">
+                        <rect width="200" height="240" rx="12" fill="#fff" stroke="#E5E7EB" stroke-width="1.5"/>
+                        <!-- Top browser tab -->
+                        <rect width="200" height="26" rx="12" fill="#F3F4F6"/>
+                        <rect y="14" width="200" height="12" fill="#F3F4F6"/>
+                        <circle cx="12" cy="13" r="3.5" fill="#EF4444"/>
+                        <circle cx="24" cy="13" r="3.5" fill="#F59E0B"/>
+                        <circle cx="36" cy="13" r="3.5" fill="#10B981"/>
+                        <!-- Page content: heading + paragraph + button -->
+                        <rect x="16" y="46" width="120" height="14" rx="3" fill="#E34C26"/>
+                        <rect x="16" y="70" width="168" height="6" rx="2" fill="#CBD5E1"/>
+                        <rect x="16" y="82" width="150" height="6" rx="2" fill="#CBD5E1"/>
+                        <rect x="16" y="94" width="140" height="6" rx="2" fill="#CBD5E1"/>
+                        <rect x="16" y="120" width="70" height="18" rx="4" fill="#264DE4"/>
+                        <text x="51" y="133" text-anchor="middle" font-size="9"
+                              fill="#fff" font-weight="600">Click me</text>
+                        <rect x="16" y="152" width="168" height="6" rx="2" fill="#CBD5E1"/>
+                        <rect x="16" y="164" width="130" height="6" rx="2" fill="#CBD5E1"/>
+                        <!-- JS spark mark: a little lightning bolt, hinting at interaction -->
+                        <text x="176" y="140" font-size="14" fill="#F7DF1E">⚡</text>
+                        <!-- Bottom icon: CSS decoration -->
+                        <rect x="16" y="184" width="168" height="40" rx="6" fill="#EFF6FF"/>
+                        <text x="100" y="208" text-anchor="middle" font-size="11"
+                              fill="#264DE4">🌐 A complete webpage</text>
+                    </g>
+                </svg>
+
+                <!-- Mobile fallback -->
+                <ol class="stack-mobile" aria-hidden="true">
+                    <li data-color="html">
+                        <span class="stack-mobile-icon">📄</span>
+                        <div><strong>HTML</strong><span>Structure · what's there</span></div>
+                    </li>
+                    <li data-color="css">
+                        <span class="stack-mobile-icon">🎨</span>
+                        <div><strong>CSS</strong><span>Style · how it looks</span></div>
+                    </li>
+                    <li data-color="js">
+                        <span class="stack-mobile-icon">⚡</span>
+                        <div><strong>JavaScript</strong><span>Behavior · what it does</span></div>
+                    </li>
+                    <li data-color="result">
+                        <span class="stack-mobile-icon">🌐</span>
+                        <div><strong>= A complete webpage</strong><span>What you see once the three layers stack</span></div>
+                    </li>
+                </ol>
+
+                <p class="diagram-caption">Diagram: HTML / CSS / JS — three layers stacked, and that's the webpage you see</p>
+            </div>
+
+            <p>
+                Let's look at them one by one.
+            </p>
+
+            <div class="highlight-box">
+                <strong>📄 HTML: the content skeleton</strong><br><br>
+                HTML is like the outline of an article — it says "this is a heading, that's a paragraph, there's an image over here."
+            </div>
+
+            <p>
+                The simplest HTML looks like this:
+            </p>
+
+            <div class="code-block">
+<span class="code-comment">&lt;!-- This is a comment --&gt;</span><br>
+<span class="code-tag">&lt;html</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;head</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">&lt;title</span><span class="code-tag">&gt;</span>My first webpage<span class="code-tag">&lt;/title</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;/head</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;body</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">&lt;h1</span><span class="code-tag">&gt;</span>Hello World!<span class="code-tag">&lt;/h1</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">&lt;p</span><span class="code-tag">&gt;</span>This is a paragraph.<span class="code-tag">&lt;/p</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;/body</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/html</span><span class="code-tag">&gt;</span>
+            </div>
+
+            <p>
+                See? HTML uses "tags" to define content.
+                Just like how you use "heading" and "paragraph" to organize a piece of writing.
+            </p>
+
+            <div class="highlight-box">
+                <strong>🎨 CSS: style and good looks</strong><br><br>
+                Content alone isn't enough — we want it to look nice. That's CSS's job.
+            </div>
+
+            <p>
+                Say we have a heading. CSS gets to decide:
+            </p>
+
+            <div class="code-block">
+<span class="code-tag">h1</span> {<br>
+  <span class="code-attr">color</span>: <span class="code-string">#10B981</span>;      <span class="code-comment">/* green */</span><br>
+  <span class="code-attr">font-size</span>: <span class="code-string">32px</span>;  <span class="code-comment">/* font size */</span><br>
+  <span class="code-attr">text-align</span>: <span class="code-string">center</span>; <span class="code-comment">/* centered */</span><br>
+}
+            </div>
+
+            <p>
+                CSS's power is that it's <strong>declarative</strong>.
+                You just say "I want it like this" — and the browser handles the rest.
+            </p>
+
+            <div class="highlight-box">
+                <strong>⚡ JavaScript: bring the page to life</strong><br><br>
+                Last piece — interaction. Users click, we react. Users type, we respond. That's JavaScript's job.
+            </div>
+
+            <div class="code-block">
+<span class="code-comment">// When the button is clicked...</span><br>
+button.addEventListener(<span class="code-string">'click'</span>, function() {<br>
+  alert(<span class="code-string">'Hello!'</span>);  <span class="code-comment">// pop up a message</span><br>
+});
+            </div>
+
+            <p>
+                Alright — now let's unite the three musketeers and build a real webpage.
+            </p>
+
+            <div class="live-demo">
+                <h3>✋ Live demo: your first webpage!</h3>
+                <p>Let's put HTML, CSS, and JavaScript together:</p>
+                <div class="code-block">
+<span class="code-tag">&lt;!DOCTYPE html&gt;</span><br>
+<span class="code-tag">&lt;html</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;head</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;style</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">body</span> { background: #F9FAFB; text-align: center; padding: 50px; }<br>
+    <span class="code-tag">button</span> { background: #10B981; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }<br>
+  <span class="code-tag">&lt;/style</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/head</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;body</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;h1</span><span class="code-tag">&gt;</span>🎉 My first webpage!<span class="code-tag">&lt;/h1</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;p</span><span class="code-tag">&gt;</span>Try clicking the button below~<span class="code-tag">&lt;/p</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;button</span> id=<span class="code-string">"magic-btn"</span><span class="code-tag">&gt;</span>✨ Click me ✨<span class="code-tag">&lt;/button</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;p</span> id=<span class="code-string">"result"</span><span class="code-tag">&gt;</span><span class="code-tag">&lt;/p</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;script</span><span class="code-tag">&gt;</span><br>
+    let count = 0;<br>
+    document.getElementById('magic-btn').addEventListener('click', function() {<br>
+      count++;<br>
+      document.getElementById('result').innerText = `You've clicked ${count} times!`;<br>
+    });<br>
+  <span class="code-tag">&lt;/script</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/body</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/html</span><span class="code-tag">&gt;</span>
+                </div>
+            </div>
+
+            <p>
+                Congratulations — what you just saw is the entire source of a complete modern webpage.
+            </p>
+
+            <h3>🌊 The system layer: from code to screen</h3>
+
+            <p>
+                Once you've written those three files, how does the browser turn them into pixels on your screen?
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">1️⃣ Parse HTML</div>
+                <div class="arrow">→</div>
+                <div class="step-box">2️⃣ Build DOM tree</div>
+                <div class="arrow">→</div>
+                <div class="step-box">3️⃣ Parse CSS</div>
+                <div class="arrow">→</div>
+                <div class="step-box">4️⃣ Layout calculation</div>
+                <div class="arrow">→</div>
+                <div class="step-box">5️⃣ Paint the frame!</div>
+            </div>
+
+            <p>
+                This happens every time you open a page — and even every time you scroll.
+                The browser is a tireless painter.
+            </p>
+
+            <h3>⚖️ The trade-off layer: why design it this way?</h3>
+
+            <p>
+                By now you might be asking: why split it into three languages?
+                Why not just merge them into one?
+            </p>
+
+            <div class="highlight-box">
+                <strong>Separation of concerns!</strong><br><br>
+                <ul style="text-align: left;">
+                    <li>HTML: what is this thing?</li>
+                    <li>CSS: what does this thing look like?</li>
+                    <li>JS: what does this thing do?</li>
+                </ul><br>
+                Once they're separated, changing one doesn't break the other two.
+            </div>
+
+            <p>
+                That's the wisdom of software design: <strong>keep different concerns in different places.</strong>
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Go — make a webpage right now!</h3>
+                <p>
+                    1. Create a new file on your computer, call it <code>index.html</code><br>
+                    2. Open it with Notepad (or any editor)<br>
+                    3. Paste the code from above<br>
+                    4. Save, then double-click to open!
+                </p>
+                <p>
+                    You'll see your first webpage running in the browser.
+                </p>
+            </div>
+
+            <p>
+                Want to have more fun? Tweak the code.
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li>Change the heading text to your name</li>
+                <li>Swap the button color to one you like (try #667eea)</li>
+                <li>Change the message that shows up after clicking</li>
+            </ul>
+
+            <p>
+                Refresh after each edit — look! You're changing the webpage yourself.
+            </p>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Related questions to explore:</h3>
+                <a href="question.html?q=1">Q1: How does a URL become a page?</a>
+                <a href="question.html?q=8">Q8: What are frontend and backend doing?</a>
+                <a href="question.html?q=9">Q9: How does a browser display a page?</a>
+                <a href="question.html?q=10">Q10: Where does your data go after you click a button?</a>
+                <a href="question.html?q=11">Q11: How do sign-up and login actually work?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>From code to power</h3>
+                <p>
+                    Once you get that "webpages are written," you start to realize something:
+                </p>
+                <p>
+                    <strong>Everything you see online is something someone decided to show you.</strong><br>
+                    And behind those decisions — there are values, business, politics, biases.
+                </p>
+            </div>
+
+            <p>
+                Think about these:
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>Why is this button so big?</strong> Is it to make you click it more easily?</li>
+                <li><strong>Why is this option buried so deep?</strong> Do they not want you to find it?</li>
+                <li><strong>Why does this color make me feel urgent?</strong> Is that on purpose?</li>
+                <li><strong>Why can't I put this app down?</strong> What psychological tricks are in play?</li>
+            </ul>
+
+            <p>
+                That's the shift from "just using" to "seeing through."
+                What you see stops being "the way things are" — it becomes "someone designed this."
+            </p>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — how is a webpage actually made?
+            </p>
+
+            <p>
+                <strong>The answer:</strong><br>
+                Define structure with HTML, style with CSS, behavior with JavaScript —
+                and let the browser turn all three into pixels on your screen.
+            </p>
+
+            <div class="highlight-box">
+                <strong>But that's not the whole truth.</strong><br><br>
+                The deeper truth is:<br><br>
+                <strong>You can make webpages too.</strong><br>
+                You can be one of the creators of this world.
+            </div>
+
+            <p>
+                Congrats — starting today, the way you see the internet is different.
+            </p>
+
+            <div class="nav-footer">
+                <a href="q01.html" class="btn btn-outline">← Previous: Q1</a>
+                <a href="../questions/00-question-map.html" class="btn btn-outline">🗺️ Knowledge map</a>
+                <a href="question.html?q=8" class="btn">Next: Q8 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

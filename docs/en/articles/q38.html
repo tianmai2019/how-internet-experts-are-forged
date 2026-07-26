@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q38: Why do business goals so often decide the technology roadmap — and not the other way around?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q38.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q38.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q38.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-5">
+            <div class="level-badge">👑 Layer 5 · The Grandmaster's View</div>
+            <h1>Why do business goals so often decide the technology roadmap — and not the other way around?</h1>
+            <p class="subtitle">Technology isn't a tree that grows on its own — it's the child of a business</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's view: why does this question matter?</h2>
+
+            <p>
+                Look at social products —
+            </p>
+
+            <ul>
+                <li>Facebook spent 10 years rebuilding itself around "mobile-first" — because ad money moved to phones;</li>
+                <li>WeChat has always been "restrained" — because its business is messaging plus ecosystem, not raw traffic;</li>
+                <li>TikTok pours money into its recommendation algorithm — because its business is "attention for ads";</li>
+                <li>Slack pours money into stability — because it sells B2B subscriptions, and downtime means refunds.</li>
+            </ul>
+
+            <p>
+                Have you ever wondered: <strong>why are their technical choices so different?</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>Because technology isn't the "optimal solution" — technology is "the child of the business model."</strong><br><br>
+                How you get paid decides which metric you must serve;<br>
+                The metric you must serve decides which technology you must optimize;<br>
+                The technology you must optimize decides your architecture, your language, your algorithms, your org chart.
+            </div>
+
+            <h2>🧩 Peel it back: breaking the big question into small ones</h2>
+
+            <ol>
+                <li><strong>What kind of technical focus does each business model demand?</strong></li>
+                <li><strong>Facebook's move from desktop to mobile — what actually happened, technically?</strong></li>
+                <li><strong>Why are "ad-driven" and "subscription-driven" tech roadmaps completely different?</strong></li>
+                <li><strong>"Tech stack choice" looks like an engineer's decision — but is it really the CFO's?</strong></li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">🎯 The User's View: only sees the result</h3>
+
+            <p>
+                The user experiences: <strong>"This app has so many ads." "This app is free but the recommendations are eerily accurate." "This app charges a monthly fee but it's rock-solid."</strong>
+                None of this is coincidence — it's <strong>the business model projected directly onto user experience</strong>.
+            </p>
+
+            <h3 class="section-code">🔨 The Beginner Coder's View: starting to see the wiring</h3>
+
+            <p>
+                The mapping from business goal → key metric → technical investment:
+            </p>
+
+            <div class="code-block">// Ad-driven products (Facebook / TikTok / Weibo)
+Key Metric: DAU × Time Spent × Ad Impressions × CPM
+Tech Focus:
+  - Recommendation algorithms (maximize attention)
+  - Video codecs (cut bandwidth cost)
+  - Ad-serving systems (millisecond bidding)
+  - A/B test infrastructure (hundreds of experiments a day)
+
+// Subscription-driven products (Netflix / Slack / Notion)
+Key Metric: Paying Users × ARPU × Retention
+Tech Focus:
+  - Stability (downtime = refunds)
+  - Content quality (Netflix even builds its own CDN)
+  - Enterprise-grade security (SOC2, SSO, audit logs)
+  - Customer success systems (not "growth hacking")
+
+// Transaction-driven products (Taobao / Pinduoduo / Meituan)
+Key Metric: GMV × Take Rate
+Tech Focus:
+  - Search/recommendation (match products to people)
+  - Inventory/logistics/payment (highly consistent distributed systems)
+  - Anti-fraud/risk control (protect every cent)
+  - Peak-day capacity (Double 11 needs 100× normal capacity)</div>
+
+            <p>
+                See it? <strong>They're all called "backend engineers" — but the actual work in these three kinds of companies is completely different.</strong>
+                Their technical skills are ultimately shaped by how the company makes money.
+            </p>
+
+            <h3 class="section-system">🌊 The Engineer's View: seeing the full path</h3>
+
+            <p>
+                Facebook's 2012 "mobile rebuild" is a textbook case:
+            </p>
+
+            <div class="diagram-box">
+                2011: 70% of ad revenue comes from desktop web
+                <span class="arrow">↓</span>
+                But 60%+ of user time is on phones
+                <span class="arrow">↓</span>
+                <strong>Business pressure: if we don't go mobile, ad revenue falls off a cliff</strong>
+                <span class="arrow">↓</span>
+                Facebook spends over a year killing the HTML5 hybrid approach
+                <span class="arrow">↓</span>
+                Rewrites iOS/Android as native apps
+                <span class="arrow">↓</span>
+                Rebuilds the ad-serving system for a mobile feed
+                <span class="arrow">↓</span>
+                <strong>2014: mobile ad revenue overtakes desktop</strong>
+                <span class="arrow">↓</span>
+                Zuckerberg later said: "This was the most important technical decision in the company's history."
+            </div>
+
+            <p>
+                That decision wasn't driven by "the tech is more advanced" — it was driven by <strong>the survival of the business model</strong>.
+            </p>
+
+            <h3 class="section-tradeoff">⚖️ The Senior Engineer's View: why design it this way?</h3>
+
+            <p>
+                The correspondence between business model and technology roadmap can be read as a "trade-off matrix":
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Free + ad model</h4>
+                    <p>Tech must serve "attention maximization" — recommendations, algorithms, A/B testing. User experience gets held hostage by "time spent."</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Paid subscription model</h4>
+                    <p>Tech must serve "long-term user value" — stability, privacy, experience. User experience is the product.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Transaction / commission model</h4>
+                    <p>Tech must serve "every transaction succeeds" — consistency, risk control, fulfillment. The tech has to count every penny.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Open-source / developer model</h4>
+                    <p>Tech must serve "a thriving ecosystem" — docs, stable APIs, community. The tech itself is the product.</p>
+                </div>
+            </div>
+
+            <p>
+                <strong>"Tech stack choice" looks like an engineering call — it's really a business call.</strong>
+                That's why real technical leaders sit next to the CEO — not tucked away in a server room.
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>🔍 Observation experiment: how does this app make money?</h3>
+                <p>
+                    Pick any app you use every day, and ask yourself:
+                </p>
+                <ol>
+                    <li>How does it make money? Ads? Subscription? Transactions? Data?</li>
+                    <li>Given that revenue model, which technical metrics must it care about?</li>
+                    <li>And flipping it — what must it "ignore"? (For example: ad-driven products almost never invest in "helping you spend less time on the app.")</li>
+                    <li>Apply this lens to the project you're building — whose business goal are you writing code for?</li>
+                </ol>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=32">Q32: Why must internet systems be "sustainable"?</a>
+                <a href="question.html?q=37">Q37: Why does organizational structure influence system architecture?</a>
+                <a href="question.html?q=39">Q39: How has the internet changed the relationship between people and the world?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>The technology roadmap is the child of the business model</h3>
+                <p>
+                    There's a myth in tech circles: "I just do tech, I don't ask about the business."
+                    But what the grandmaster's view reveals is this: <strong>which technology you pick, which metric you optimize, how late you stay at the office — the business model is making all of those decisions for you</strong>.
+                </p>
+                <p>
+                    It explains a lot of "the fate of the tech industry":
+                </p>
+                <ul>
+                    <li>Why do algorithm engineers get paid the most? Because they sit directly on the "recommendation → click → ad" money path;</li>
+                    <li>Why does ops have such low status at many internet companies? Because their value is "fewer crashes" — and crashes are rare;</li>
+                    <li>Why is a company like Cloudflare willing to pay a fortune for a security team? Because what they sell is "never going down";</li>
+                    <li>Why did GitHub change so much once it went from "personal tool" to "enterprise SaaS"? — Because the person paying the bill changed.</li>
+                </ul>
+                <p>
+                    Push it further: <strong>the technical direction of the entire big-tech industry is, at bottom, defined by capital markets and revenue mix</strong>.
+                    Ad-revenue companies will always build recommendations. Subscription-revenue companies will always build stability. Transaction-revenue companies will always build risk control.
+                    If you want tech to "take a different path," first change where its money comes from.
+                </p>
+                <p>
+                    So "technical autonomy" is a beautiful but fragile slogan. <strong>Real technical autonomy is knowing whose money you're writing code for — and having the power to choose.</strong>
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why do business goals so often decide the technology roadmap?
+            </p>
+
+            <p>
+                <strong>The answer:</strong> because technology needs resources, resources need funding, and funding needs a business model to sustain it.
+                This chain doesn't start from "what technology can do" — it starts from "what users are willing to pay for."
+                Technology isn't a tree growing "top-down" — it's a plant growing "up from the money." <strong>Your business model is its soil.</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>The grandmaster's awakening:</strong><br><br>
+                Next time you hear "this is a technical decision," take one more step —<br>
+                <strong>whose money is driving this decision? What do they want?</strong><br>
+                Once you see that layer, you're actually starting to understand what an internet company is.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=39" class="btn">Continue to Q39 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

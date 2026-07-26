@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q18: Why does the database so often become the system's bottleneck?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q18.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q18.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q18.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Why does the database so often become the system's bottleneck?</h1>
+            <p class="subtitle">The database is the "last one telling the truth" in your system</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's view: why does this matter?</h2>
+
+            <p>
+                Anyone who's done backend work has heard this line: <strong>"80% of performance problems come from the database."</strong>
+            </p>
+
+            <p>
+                You might think — CPUs aren't expensive, SSDs aren't slow, so why is the database always the one dragging the system down? Can't we just get a better one? Can't we just add more machines?
+            </p>
+
+            <div class="highlight-box">
+                <strong>The database is slow by nature, limited by nature, prone to conflict by nature — and yet it's the only one telling the truth.</strong><br><br>
+                All persistence, all transactions, all consistency, all queryability — in the end, everything lands on the database. That's what makes it the most precious and the most fragile link in the whole system.
+            </div>
+
+            <h2>🧩 Break it down</h2>
+
+            <ol>
+                <li>Where exactly is the database slow? (disk, locks, transactions, connections)</li>
+                <li>Why can't you scale it by adding machines the way you do with a web service?</li>
+                <li>What do bottlenecks actually look like in the wild? (slow queries, lock waits, connection pools maxed out)</li>
+                <li>What tricks do engineers use to route around the bottleneck? (caching, read/write splitting, sharding)</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the symptoms</h3>
+
+            <p>
+                Users don't say "the database is slow." They say "this app is laggy," "my order is gone," "the payment went through but the page didn't update."
+            </p>
+
+            <p>
+                Behind those symptoms, chances are — some SQL took 3 seconds, some table got locked, or some connection pool maxed out.
+            </p>
+
+            <h3 class="section-code">The implementation layer: how it's built</h3>
+
+            <p>
+                An ordinary SQL query:
+            </p>
+
+            <div class="code-block">SELECT * FROM orders
+WHERE user_id = 12345
+  AND status = 'PAID'
+ORDER BY created_at DESC
+LIMIT 20;</div>
+
+            <p>
+                What actually happens inside the database?
+            </p>
+
+            <ol>
+                <li>Parse + optimize: the database decides "which index to use" and "how to sort."</li>
+                <li>Walk the B+ tree index to find rows where <code>user_id = 12345</code>.</li>
+                <li>Go back to the table to read the actual row data (unless it's a covering index).</li>
+                <li>Filter by status, sort, take the top 20.</li>
+                <li>If another transaction is writing to those rows right now — <strong>wait for the lock.</strong></li>
+            </ol>
+
+            <p>
+                Every step can go wrong. Miss one index, and step 2 becomes a full-table scan over a million rows. If status isn't selective enough, step 4's sort gets slow. Hot-row updates? Step 5's lock waits can stretch into seconds.
+            </p>
+
+            <h3 class="section-system">The system layer: the full path</h3>
+
+            <p>
+                The resource ceiling on a single-node database is way lower than you'd think:
+            </p>
+
+            <div class="diagram-box">
+        The ceiling on a single-node MySQL (rough numbers)
+    ┌──────────────────────────────────────┐
+    │  Disk IOPS       ~10K–100K/s (SSD)   │
+    │  Max connections  a few hundred to a few thousand │
+    │  Row locks       one writer per row at a time     │
+    │  Single txn size  bounded by undo/redo            │
+    │  Network         a few Gbps, tops                 │
+    └──────────────────────────────────────┘
+
+Meanwhile the application layer can do:
+   Web tier: add machines, scale horizontally to tens of thousands
+   Cache tier: a single Redis node starts at 100K QPS</div>
+
+            <p>
+                Here's the catch: <strong>scaling the web tier horizontally is cheap; scaling the database horizontally is expensive.</strong> Because the database has to guarantee ACID, and syncing data between machines is a hard problem in itself. So in a real system under real traffic, the database is always the first thing to buckle.
+            </p>
+
+            <p>
+                Classic "database bottleneck" scenes:
+            </p>
+
+            <ul>
+                <li><strong>N+1 queries:</strong> a list page that queries the detail for every item, one at a time. 10 rows, 11 SQLs. 1000 rows, 1001 SQLs.</li>
+                <li><strong>Slow queries:</strong> wrong index, or <code>LIKE '%xxx%'</code>, or an <code>ORDER BY</code> with no index behind it — one query, 3 seconds.</li>
+                <li><strong>Lock waits:</strong> a flash sale on one item, 10,000 transactions all fighting for the same <code>UPDATE stock</code> row.</li>
+                <li><strong>Connection pool blow-up:</strong> one slow query holds a connection forever, and every request behind it just piles up in a queue.</li>
+                <li><strong>Giant transactions:</strong> a single transaction stuffed with 10,000 updates — huge lock footprint, painful rollback.</li>
+            </ul>
+
+            <h3 class="section-tradeoff">The trade-off layer: why designed this way?</h3>
+
+            <p>
+                If the database is the bottleneck, what do engineers do about it? The answer is <strong>a whole toolbox of ways to route around it</strong>:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Add indexes / tune SQL</h4>
+                    <p>Cheapest fix, fastest payoff. 80% of slow queries get saved right here.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Add a cache (Redis)</h4>
+                    <p>Push reads to memory — the database only handles 20% of read traffic. Cost: consistency gets harder.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Read/write splitting (primary + replicas)</h4>
+                    <p>Write to primary, read from replicas. Cost: there's replication lag — the business has to tolerate "reading slightly stale data."</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Sharding (ShardingSphere / Vitess)</h4>
+                    <p>Cut the data into N pieces across N databases. Cost: cross-shard joins and cross-shard transactions basically don't work anymore.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Switch to NoSQL (MongoDB / HBase)</h4>
+                    <p>Give up SQL's strong guarantees in exchange for horizontal scalability. Cost: no transactions, complex queries hurt.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Switch to NewSQL (TiDB / CockroachDB)</h4>
+                    <p>Horizontal scale + SQL semantics, both at once. Cost: slightly higher latency, harder ops.</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>Common mistake:</strong> "The database is slow, so let's switch to a beefier database." 90% of the time, the real problem is <strong>bad SQL + missing indexes + oversized transactions</strong> — no database swap will save you. Run <code>EXPLAIN</code> on your execution plan, use the slow log to catch the top offenders. That's worth way more than switching engines.
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>See the cost of a full-table scan with your own eyes</h3>
+                <p>
+                    On your local MySQL, build a table with a million rows, insert some data. Then run:
+                </p>
+                <div class="code-block">-- No index, full-table scan
+EXPLAIN SELECT * FROM users WHERE name = 'Alice';
+
+-- Add the index, run it again
+CREATE INDEX idx_name ON users(name);
+EXPLAIN SELECT * FROM users WHERE name = 'Alice';</div>
+                <p>
+                    Compare the <code>rows</code> and <code>type</code> columns across the two runs. One is <code>ALL / rows≈1000000</code>, the other is <code>ref / rows≈1</code>. Response time drops from seconds to milliseconds. This is <strong>one index saving one business line</strong>.
+                </p>
+            </div>
+
+            <h2>🔗 Going further</h2>
+
+            <div class="related-questions">
+                <h3>Related questions:</h3>
+                <a href="question.html?q=12">Q12: How does data actually get stored?</a>
+                <a href="question.html?q=15">Q15: Why does a system crash the moment traffic spikes?</a>
+                <a href="question.html?q=19">Q19: Why can one slow endpoint drag down the entire request path?</a>
+                <a href="question.html?q=20">Q20: Why does caching boost performance so much?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>The database is the "last one telling the truth" in your system</h3>
+                <p>
+                    Across the entire application stack, only the database makes this promise: <strong>if I said it's saved, it's really saved</strong> — even through power loss, crashes, restarts, nothing inside a committed transaction is lost.
+                </p>
+                <p>
+                    Precisely because it carries the "anchor of trust," every complexity in the system eventually piles up on it: consistency, persistence, transactions, locks, recovery, backups, audits. These are the costs of being real.
+                </p>
+                <p>
+                    That's why, inside big companies, you see a strange pattern: <strong>business logic can be outsourced, the DBA team never can be</strong>. Once the data is wrong, everything else falls with it. The database is the conscience of the system — and the most expensive conscience you'll ever pay for.
+                </p>
+                <p>
+                    Pull the camera back further, and "why is the database a bottleneck?" reveals a universal law — <em>any mechanism that tries to preserve the truth is doomed to be slow, scarce, and fought over</em>. Finance, law, archives, blockchain… underneath, they're all solving the same problem.
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why does the database so often become the bottleneck?
+            </p>
+
+            <div class="highlight-box">
+                Because it carries the heaviest responsibility in the system: <strong>telling the truth.</strong><br><br>
+                And truth-telling is slow, expensive, and hard to scale horizontally by nature.<br>
+                Half of an engineer's time goes into "how do I keep the database's truth intact while keeping the app fast" — that's exactly why the six-piece toolkit in Q17 exists.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=19" class="btn">Continue to Q19 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

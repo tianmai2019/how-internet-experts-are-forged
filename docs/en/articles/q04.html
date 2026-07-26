@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q4: How does the map know where you are right now?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q04.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q04.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q04.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-1">
+            <div class="level-badge">🎯 Layer 1 · The User's View</div>
+            <h1>How does the map know where you are right now?</h1>
+            <p class="subtitle">You never told it where you were — yet it knows down to the floor</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's view: why does this question matter?</h2>
+
+            <p>
+                You open Gaode (or Google Maps), and that little blue dot is <em>already</em> parked right where you are.
+                You take two steps — it takes two steps with you. Even in an underground mall, it can pin you at the Starbucks on B1.
+            </p>
+
+            <p>
+                We're so used to this that it feels obvious — but think about it, it's weird. How does your phone know where it is?
+                It has no windows to look out of. It doesn't even know what "Beijing" or "Shanghai" is.
+            </p>
+
+            <p>
+                Stranger still: put your phone in an elevator, and sometimes it can even guess which floor you're on;
+                walk into a mall from outside, and it knows which shop you're standing in front of.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Why does this question matter?</strong><br>
+                Location is the bedrock of almost every O2O service — food delivery, ride-hailing, shared bikes, dating apps, fitness.
+                Understand it, and you don't just learn where the blue dot comes from — you also see how <em>your location</em>, as a kind of "data commodity," gets produced and traded.
+            </div>
+
+            <h2>🧩 Breaking it down: from one big question into smaller ones</h2>
+
+            <ol>
+                <li><strong>What does the phone actually use to "see" where it is?</strong> Satellites overhead? Beacons on the ground?</li>
+                <li><strong>Why is outdoor accuracy high, and indoor accuracy still decent?</strong> Are they the same underlying method?</li>
+                <li><strong>Why does the blue dot jump around when you first open the map?</strong> Is that "drift" or "fusion"?</li>
+                <li><strong>Who knows where you are?</strong> Your phone — or the servers behind the map app?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the result matters</h3>
+
+            <p>
+                In your eyes, it's just a blue dot. It follows you around. The error is a little big sometimes, but usually good enough.
+            </p>
+
+            <p>
+                If you've paid attention, you'll notice two details:
+                <strong>right when the map opens, the dot often "jumps"</strong> — from somewhere far away to right next to you;
+                inside a big mall, the accuracy drops, but it still roughly gets the floor right.
+            </p>
+
+            <p>
+                These two details actually reveal something: location isn't <em>one method</em> — it's <strong>several methods competing and then fusing together</strong>.
+            </p>
+
+            <h3 class="section-code">The implementation layer: starting to see the machinery</h3>
+
+            <p>
+                A phone typically uses <strong>four</strong> ways to figure out where it is, each with strengths and weaknesses:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🛰️ GPS / BeiDou</h4>
+                    <p>Receives timing signals from 4+ satellites, uses geometry to compute distance. Accuracy 5–10 m.<br><strong>Downside:</strong> slow to start (30 seconds+), almost useless indoors.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📡 Cell tower</h4>
+                    <p>Your phone is always connected to nearby towers, and the carrier knows each tower's latitude/longitude. Accuracy: a few hundred meters to a few kilometers.<br><strong>Upside:</strong> always available. <strong>Downside:</strong> coarse.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📶 WiFi</h4>
+                    <p>Every WiFi network around you is broadcasting its MAC address. Map companies scanned entire cities in advance and built a giant table of "this MAC lives here." Accuracy 20 m.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📍 Bluetooth beacons / inertial</h4>
+                    <p>Big malls deploy iBeacon Bluetooth points to place you at "the door of Starbucks" indoors. The accelerometer and gyroscope track how you're moving.</p>
+                </div>
+            </div>
+
+            <p>
+                The core idea behind GPS is really just geometry: a few satellites "shout" the current time simultaneously, the phone compares the time-of-arrival differences to compute distances, then uses the intersection of spheres to locate you.
+            </p>
+
+            <div class="code-block">// Simplified GPS positioning idea (pseudocode)
+// Each satellite broadcasts: (sat position sat_x,y,z, sat time t_sat)
+// Phone computes: (distance d = speed_of_light × (t_now - t_sat))
+
+System of equations:
+  (x - sat1_x)² + (y - sat1_y)² + (z - sat1_z)² = d1²
+  (x - sat2_x)² + (y - sat2_y)² + (z - sat2_z)² = d2²
+  (x - sat3_x)² + (y - sat3_y)² + (z - sat3_z)² = d3²
+  (x - sat4_x)² + (y - sat4_y)² + (z - sat4_z)² = d4²
+
+Solve for (x, y, z) = your latitude, longitude, and altitude
+The 4th satellite corrects for "the phone's clock isn't accurate"</div>
+
+            <p>
+                But GPS has a big problem — cold start takes tens of seconds to lock onto enough satellites. So modern phones use <strong>A-GPS (Assisted GPS)</strong>:
+                over the network, they download "where the satellites are" (ephemeris data) directly from a server, and get a fix in a few seconds. You think "it locked as soon as I opened the app" — really, the network cheated on the homework for it.
+            </p>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>
+                The real "where am I" is a <strong>fusion of multiple signals</strong> — the most trustworthy guess a system can build:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">🛰️ GPS: coarse 8 m</div>
+                <div class="step-box">📡 Cell tower: rough direction</div>
+                <div class="step-box">📶 WiFi: indoor 20 m</div>
+                <div class="step-box">📍 Bluetooth / inertial: continuous tracking</div>
+                <div class="arrow">↓ Fused via Kalman filter and similar algorithms</div>
+                <div class="step-box">🎯 Blue dot: one smooth current position</div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>The key move: what did the map companies do?</strong>
+                <ul>
+                    <li>Sent out cars (Street View vehicles) plus anonymized reports from user phones, and built a global map of every WiFi MAC address to a lat/long.</li>
+                    <li>Deployed or collected Bluetooth beacons in large indoor spaces, and drew "indoor maps."</li>
+                    <li>Built empirical models like "elevator air pressure → floor number": a clear drop in pressure within one second = you just went up.</li>
+                </ul>
+                You thought positioning was "your phone doing the math." In reality, <em>most of the credit belongs to a giant map that was already sitting on a server before you opened the app</em>.
+            </div>
+
+            <p>
+                So the "jump" of the blue dot has a reason: at first, only the cell signal is up — the dot is dropped kilometers away; a few seconds later, WiFi matches — the dot jumps close to you;
+                a few seconds after that, GPS locks — the dot settles neatly under your feet. What you see as "getting more accurate" is really <em>several systems handing off, one after another</em>.
+            </p>
+
+            <h3 class="section-tradeoff">The trade-off layer: why is it designed this way?</h3>
+
+            <p>
+                Every one of these methods is a trade-off:
+            </p>
+
+            <ul>
+                <li><strong>Accuracy vs. battery</strong>: full GPS is accurate, but it burns 30% of your battery an hour. So background positioning mostly uses low-power cell + WiFi.</li>
+                <li><strong>Speed vs. privacy</strong>: A-GPS is fast — but the price is telling a server "I'm somewhere around here."</li>
+                <li><strong>Coverage vs. cost</strong>: deploy Bluetooth beacons in every building nationwide? Astronomical cost. So they focus only on shopping districts, airports, and subway stations.</li>
+                <li><strong>Accuracy vs. availability</strong>: GPS is stuck with no signal in a canyon — rather than showing "unknown," it's better to give a rough estimate from cell towers. Users would rather see "roughly right" than "nothing."</li>
+            </ul>
+
+            <p>
+                And there's a hidden trade-off: <strong>who pays for this whole system?</strong> The price of Apple and Google providing all this for free
+                is that they've collected location and WiFi data from billions of phones. Your positioning gets more accurate because everyone using the same kind of device contributes signals.
+                You're helping map the planet for 2 billion other people — and they're mapping it for you in return.
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Try this: watch how the blue dot "evolves"</h3>
+                <p>
+                    1. Right after you exit a subway station, open the map app immediately and stare at the blue dot for 30 seconds.
+                    You'll see it shrink from a big fuzzy circle down to a precise point — that's the transition from "cell + WiFi coarse positioning" to "GPS lock."
+                </p>
+                <p>
+                    2. Walk into a big shopping mall. In a few seconds, watch the dot switch to "indoor positioning" — it'll show which shop you're standing next to.
+                    Then, if you flip off the "Precise Location" toggle in settings, accuracy will immediately go coarse — that's the OS deliberately fuzzing the GPS output.
+                </p>
+            </div>
+
+            <p>
+                Want to get more technical? Try this in the browser:
+            </p>
+
+            <div class="code-block">navigator.geolocation.getCurrentPosition(
+  (pos) =&gt; {
+    console.log("Latitude:", pos.coords.latitude);
+    console.log("Longitude:", pos.coords.longitude);
+    console.log("Accuracy (m):", pos.coords.accuracy);   // ← watch this number
+  },
+  (err) =&gt; console.log("Failed:", err.message),
+  { enableHighAccuracy: true }  // flip this on and it'll call GPS
+);</div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=1">Q1: Why does typing a URL make a page appear in front of you?</a>
+                <a href="question.html?q=5">Q5: Why doesn't deleted stuff really disappear?</a>
+                <a href="question.html?q=34">Q34: Why is privacy so hard to protect?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>From tech to the world</h3>
+                <p>
+                    "Where you are" used to be one of the most private things about a person. Today, it's a <strong>continuously generated commodity</strong>:
+                    every second of your trajectory can be packaged into "foot-traffic heat maps" sold to retail, stitched into "commute profiles" sold to advertisers, aggregated into "store-visit rates" sold to brands.
+                </p>
+                <p>
+                    Location tech made "precision marketing" possible — and turned "tracking" into a cheap commodity.
+                    Some countries have used it for pandemic tracing, criminal investigation, political profiling; some companies use it to figure out which business district you work in, how expensive a commute you can afford, how much credit you're worth.
+                </p>
+            </div>
+
+            <p>
+                One layer deeper: location isn't just "knowing where you are" — it's quietly reshaping <strong>"which places are worth money"</strong>.
+                A high rating on Dianping can double a shop's foot traffic; a food-delivery platform drawing a neighborhood as "outside delivery range" can drop the rent there.
+                Location data turns the physical world into a map that can be scored in real time — and rewarded or punished by an algorithm.
+            </p>
+
+            <p>
+                When you think you're using the map, the map is using you too.
+            </p>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                How does the map know where you are right now?
+            </p>
+
+            <p>
+                <strong>The answer:</strong> your phone is listening to four kinds of signal at once — satellite, cell tower, WiFi, Bluetooth.
+                Map companies pre-scanned every WiFi and beacon in the world, and there's a giant location dictionary sitting on a server.
+                Then a fusion algorithm stitches these uneven clues together into a "most trustworthy position" — that's the blue dot on your screen.
+                <em>You think it's tracking you. Really, you and billions of others together drew the map that lets it track you.</em>
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the question map</a>
+                <a href="question.html?q=5" class="btn">Continue to Q5 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

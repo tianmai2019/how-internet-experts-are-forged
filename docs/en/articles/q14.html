@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q14: Why do some websites open fast, while others are always slow?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q14.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q14.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q14.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Why do some websites open fast, while others are always slow?</h1>
+            <p class="subtitle">"Slow" isn't one cause — it's a whole request path getting exposed</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user: why does this question matter?</h2>
+
+            <p>
+                You've been there. Same browser, same laptop — Google and Baidu return results almost instantly, but some corporate website spins for 5 seconds. Taobao's homepage opens in a blink; some obscure shopping site makes you wait forever after one click. Why?
+            </p>
+
+            <p>
+                The reflex answer: "Their servers must suck." But is it really that simple?
+            </p>
+
+            <div class="highlight-box">
+                <strong>"Fast" and "slow" aren't a single number — they're a whole path.</strong><br><br>
+                Between you hitting Enter and the first pixel showing up, dozens — sometimes hundreds — of things happen.
+                Any one of them slows down, and all you see is "this website is slow."
+            </div>
+
+            <p>
+                Understanding "why it's slow" is really understanding "how a website is actually assembled." This is your first lesson going from The User's View to The Engineer's View.
+            </p>
+
+            <h2>🧩 Break the big question into smaller ones</h2>
+
+            <ol>
+                <li><strong>Finding the server:</strong> how long did DNS take?</li>
+                <li><strong>Establishing the connection:</strong> how long did TCP + TLS take?</li>
+                <li><strong>The request's route:</strong> how far are you from the server?</li>
+                <li><strong>Backend processing:</strong> how long did the server take to compute the answer?</li>
+                <li><strong>Resource size:</strong> how big are the HTML, JS, CSS, images, fonts?</li>
+                <li><strong>Browser rendering:</strong> once the bytes arrive, how long does painting take?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">User layer: only the outcome</h3>
+
+            <p>
+                An ordinary user has one sensation: "fast" or "slow." They don't distinguish "DNS was slow" from "rendering was slow." They only know that if the white screen lasts more than 3 seconds, they're gone.
+            </p>
+
+            <p>
+                Google found this back in 2009: <strong>400ms more load time = 0.6% more users lost</strong>. Amazon has estimated that every 100ms of extra latency costs 1% in sales.
+            </p>
+
+            <h3 class="section-code">Implementation layer: seeing how it's built</h3>
+
+            <p>
+                Open Chrome DevTools, click the Network panel, pick any request, and you'll see a <strong>Waterfall chart</strong>:
+            </p>
+
+            <div class="code-block">Request: https://example.com/index.html
+├── Queueing         2 ms
+├── DNS Lookup       35 ms      ← finding the server
+├── Initial connection 80 ms    ← TCP three-way handshake
+├── SSL              120 ms     ← TLS handshake (HTTPS)
+├── Request sent     1 ms
+├── Waiting (TTFB)   240 ms     ← server is computing
+└── Content Download 45 ms      ← downloading HTML
+                                                 Total: ~523 ms</div>
+
+            <p>
+                That's the "health report" for a single request. <strong>TTFB (Time To First Byte)</strong> reflects backend speed. <strong>Content Download</strong> reflects resource size and network speed. <strong>DNS / SSL</strong> reflects the cost of setting up the connection.
+            </p>
+
+            <h3 class="section-system">System layer: the full path</h3>
+
+            <p>
+                A real "open a website" is a relay race. Any runner drops the baton, and the whole race stalls:
+            </p>
+
+            <div class="diagram-box">
+User's browser
+  ↓  ① DNS resolution (could be 5ms, could be 300ms)
+  ↓  ② TCP + TLS handshake (across an ocean → 200ms+)
+  ↓  ③ Request sent, through ISPs, backbones, CDN edge nodes
+  ↓
+CDN edge node (cache hit → return immediately)
+  ↓  ④ Cache miss → back to origin
+  ↓
+Load balancer → application server
+  ↓  ⑤ App layer: read cache / query database / call downstream APIs
+  ↓
+Database / Redis / external services
+  ↓  ⑥ Return the result, all the way back to the browser
+  ↓
+Browser: parse HTML → request CSS/JS/images → layout → paint
+                                      ↑ ⑦ first paint</div>
+
+            <p>
+                So the "fast" websites are usually the ones doing these things right:
+            </p>
+
+            <ul>
+                <li><strong>CDN for local delivery:</strong> put static assets on the edge node closest to the user — 200ms across an ocean becomes 10ms across a city.</li>
+                <li><strong>HTTP/2, HTTP/3, connection reuse:</strong> fewer handshakes, multiplexed streams.</li>
+                <li><strong>Backend caching:</strong> hot data lives in Redis, so you don't hit the database every time.</li>
+                <li><strong>Asset optimization:</strong> WebP/AVIF for images, code splitting and lazy loading for JS, font subsetting.</li>
+                <li><strong>Critical-path optimization:</strong> inline above-the-fold CSS, defer non-critical JS.</li>
+            </ul>
+
+            <p>
+                And the "slow" websites? Odds are they skipped every one of the above — or stepped on a landmine somewhere (20MB banner video above the fold, one backend call that runs 8 database queries).
+            </p>
+
+            <h3 class="section-tradeoff">Trade-off layer: why is it designed this way?</h3>
+
+            <p>
+                Performance isn't free. Every "fast" hides a cost:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Adding a CDN</h4>
+                    <p>Faster access, but a bigger bandwidth bill every month; cache invalidation has lag; dynamic content doesn't fit.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Adding a cache</h4>
+                    <p>QPS goes up, but data may be stale; cache-vs-database consistency bugs are notoriously hard to chase.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Splitting into microservices</h4>
+                    <p>Each service scales independently, but one request now crosses several services — network RTT stacks up.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Adding pre-rendering / SSR</h4>
+                    <p>First paint is faster, but the server does more work and the architecture gets more complex.</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>Common mistake:</strong> blaming "slow" on "bad servers." In reality, 80% of the slowness comes from frontend assets, DNS/TLS, cross-region and trans-oceanic hops, and the N+1 database queries no one noticed — the server CPU is often sitting idle.
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Give two websites a "health check"</h3>
+                <p>
+                    In Chrome, hit F12 → Network panel → check "Disable cache" → then open:
+                </p>
+                <ol>
+                    <li>google.com</li>
+                    <li>any small domestic site you find slow</li>
+                </ol>
+                <p>
+                    Compare: whose TTFB is longer? Whose assets are bigger? Who makes more requests? Who has no CDN (no <code>x-cache</code>, no <code>cf-ray</code> in Response Headers)?
+                </p>
+                <p>
+                    You'll see with your own eyes — <strong>"slow" is never a single cause</strong>.
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Related questions to explore:</h3>
+                <a href="question.html?q=1">Q1: What happens after you type a URL?</a>
+                <a href="question.html?q=9">Q9: Why does the frontend keep getting more complex?</a>
+                <a href="question.html?q=17">Q17: Why do large systems always talk about caching, queues, and rate limiting?</a>
+                <a href="question.html?q=20">Q20: Why does caching boost performance so dramatically?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>A slow website = unoptimized complexity, exposed to the user</h3>
+                <p>
+                    A fast website isn't fast because it's simple. It's fast because engineers <strong>hid</strong> the complexity — into the CDN, into the cache, into prefetching, into async loading.
+                </p>
+                <p>
+                    A slow website is slow because engineers had no time, no budget, or simply didn't notice — and <strong>dumped the internal complexity straight onto the user</strong>.
+                </p>
+                <p>
+                    So performance isn't a pure technical problem. It's a mirror of resources, org structure, and priorities. How far you can push performance depends on how much the company is willing to invest.<br><br>
+                    <strong>Why are big-company websites fast?</strong> Not because their engineers are smarter — because they have dedicated SRE teams, dedicated performance budgets, and dedicated UX KPIs watching those few dozen milliseconds.
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So, why do some websites open fast and others slow?
+            </p>
+
+            <div class="highlight-box">
+                <strong>Because "opening a website" was never one thing — it's a whole request path.</strong><br><br>
+                A fast site is one where every step got real attention;<br>
+                a slow site is one where some step — or several — got left to no one.<br><br>
+                What you feel as "fast or slow" is really the <strong>capability profile</strong> of a team and its system.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=15" class="btn">Continue to Q15 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

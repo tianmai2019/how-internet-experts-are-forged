@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q25: Why are big websites always doing monitoring, logging, tracing, and chaos drills?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q25.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q25.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q25.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Why are big websites always doing monitoring, logging, tracing, and chaos drills?</h1>
+            <p class="subtitle">A system you can't see is a system out of control — chaos drills are vaccines for your system</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's view: why does this matter?</h2>
+
+            <p>
+                You've probably heard engineers say things like: "No deploys today — we're load testing." "This weekend we're running a full-path chaos drill." "We'll trace this bug by its traceId."
+                To outsiders it sounds like alien code — but this is literally the heartbeat of any big tech company.
+            </p>
+
+            <p>
+                In a system with 100 machines and thousands of services, when something breaks, how do you <strong>know</strong> where it broke? Guess? Pray?
+                The answer — big companies pour insane amounts of effort into one thing: <strong>making the system "visible"</strong>.
+            </p>
+
+            <div class="highlight-box">
+                <strong>The core idea:</strong><br><br>
+                <strong>A system you can't see is a system out of control.</strong><br>
+                If you can't "observe" the state of the system, you can't maintain it.<br>
+                If you've never "rehearsed" a failure, when a real one hits, you're a blind man feeling an elephant.
+            </div>
+
+            <h2>🧩 Breaking it down</h2>
+
+            <ol>
+                <li><strong>What exactly is "invisible" inside a system?</strong></li>
+                <li><strong>Monitoring, logs, tracing — what's the actual difference?</strong></li>
+                <li><strong>How does anyone actually debug a real failure?</strong></li>
+                <li><strong>Why would you "deliberately break" your own system?</strong></li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the outcome</h3>
+
+            <p>
+                What ordinary users perceive about observability is: <strong>nothing — except that "this service is really stable."</strong>
+            </p>
+
+            <ul>
+                <li>10am one day, Douyin's splash screen flashes white occasionally — you never notice, but the engineers' alerts have already fired 100 times</li>
+                <li>Payments in one region get slow — engineers pull up tracing and see the "payment → risk-control" step's P99 has climbed from 100ms to 2000ms</li>
+                <li>Weibo's servers hit trouble — but the trending hot search "held up," because they'd rehearsed this exact scenario 47 times</li>
+            </ul>
+
+            <h3 class="section-code">The implementation layer: starting to see the structure</h3>
+
+            <p>
+                The most primitive form of "observing" is — <code>print</code>.
+            </p>
+
+            <div class="code-block">
+def buy(item_id):
+    print(f"[INFO] user buying item {item_id}")
+    try:
+        result = do_buy(item_id)
+        print(f"[INFO] success: {result}")
+    except Exception as e:
+        print(f"[ERROR] failed: {e}")
+            </div>
+
+            <p>
+                That's the crudest form of a <strong>log</strong>.
+                But when you have 1000 machines, each running tens of thousands of QPS, and billions of log lines scattered everywhere —
+                how do you know "which line is the problem?", "which machines did this one user's request pass through?", "what's the overall state of the system in this exact second?"
+            </p>
+
+            <p>
+                So observability evolved along three different "dimensions":
+            </p>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>
+                The industry's canonical <strong>Three Pillars of Observability</strong>:
+            </p>
+
+            <div class="diagram-box">
+                【Metrics】<br>
+                → Time-series numbers — answers "what's the current state?"<br>
+                → e.g. QPS, CPU, error rate, P99 latency<br>
+                → Tools: Prometheus + Grafana<br>
+                <br>
+                【Logs】<br>
+                → Structured text — answers "what happened?"<br>
+                → e.g. detailed info printed by a request, error stack traces<br>
+                → Tools: ELK (Elasticsearch + Logstash + Kibana), Loki<br>
+                <br>
+                【Traces】<br>
+                → The full journey of one request — answers "which segment across services is broken?"<br>
+                → e.g. an order request: gateway 3ms → user 5ms → inventory 200ms(⚠️) → payment 20ms<br>
+                → Tools: Jaeger, SkyWalking, OpenTelemetry
+            </div>
+
+            <p>
+                The three are <strong>complementary</strong>, not substitutes:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Metrics</h4>
+                    <p>Shows <strong>overall health</strong>: Is CPU pegged at 100%? Did the error rate spike?<br>Strengths: lightweight, long retention, great for alerting.<br>Weakness: tells you "something's wrong," not "why."</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Logs</h4>
+                    <p>Shows <strong>details</strong>: which line of code errored? What's the stack?<br>Strengths: most complete info, deepest queries.<br>Weakness: massive volume, expensive to query, hard to stitch across services.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Traces</h4>
+                    <p>Shows <strong>the path</strong>: a request touched 20 services — which segment got slow?<br>Strengths: visualizes cross-service, cross-machine flow.<br>Key requirement: a <strong>traceId</strong> that threads through the full path.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Events / Alerts</h4>
+                    <p>Shows <strong>changes</strong>: When did we deploy? When did we scale out?<br>Ties "human actions" to "system changes" — the 4th pillar for actual debugging.</p>
+                </div>
+            </div>
+
+            <p>
+                A real debugging case: one day <code>P99</code> latency jumps from 100ms to 800ms.
+            </p>
+
+            <ol>
+                <li>Check <strong>Metrics</strong> first — only the payment service's latency has climbed</li>
+                <li>Then <strong>Traces</strong> — inside payment, the "call risk-control" step is the slow one</li>
+                <li>Then <strong>Logs</strong> — the risk-control service is erroring with "connection pool exhausted"</li>
+                <li>Cross-reference <strong>Events</strong> — risk-control shipped a new release half an hour ago</li>
+                <li>Conclusion: the new release had a bad connection pool config — roll it back</li>
+            </ol>
+
+            <p>
+                That's a full loop from alert to root cause — <strong>without observability, you can't crack it in half an hour, period</strong>.
+            </p>
+
+            <h3 class="section-tradeoff">The trade-off layer: why is it built this way?</h3>
+
+            <p>
+                You might ask: if logs are so great, why not just "record everything"? — because the cost is staggering.
+            </p>
+
+            <div class="highlight-box">
+                <strong>The core trade-off:</strong><br>
+                <strong>Visibility</strong> ↔ <strong>Cost & performance</strong><br>
+                The more fine-grained and complete the record, the higher the storage cost and the worse the system performs.<br>
+                Real systems use <strong>sampling</strong> — only capture the full detail for, say, 1% of requests.
+            </div>
+
+            <ul>
+                <li><strong>Metrics are "pre-aggregated"</strong>: no raw data — just the "QPS number per second." Cheap, fast.</li>
+                <li><strong>Logs need sampling and rotation</strong>: INFO kept for 7 days, DEBUG for a few hours, expired lines deleted automatically.</li>
+                <li><strong>Traces need head-based sampling</strong>: you can't trace every request — usually 1%–10%. But error requests and slow requests are always captured.</li>
+            </ul>
+
+            <h3>💥 Chaos drills: vaccines for your system</h3>
+
+            <p>
+                After monitoring, logs, and tracing, there's one more "deranged" thing to do: <strong>chaos drills (Chaos Engineering)</strong> — deliberately injecting failures into your own system.
+            </p>
+
+            <div class="diagram-box">
+                Thursday, 3pm:<br>
+                <br>
+                The SRE says: "Drill starts now."<br>
+                → Randomly kill 5% of the machines<br>
+                → Cut network to one availability zone for 3 minutes<br>
+                → Add 500ms to database latency<br>
+                → Blow through 10% of the cache<br>
+                <br>
+                Observe:<br>
+                · Did alerts fire?<br>
+                · Did autoscaling kick in?<br>
+                · Did users see errors?<br>
+                · How long did recovery take?
+            </div>
+
+            <p>
+                This methodology was originally proposed by Netflix. Their famous tool is called <strong>Chaos Monkey</strong> — it really does randomly break things in <strong>production</strong>.
+                You might think they're nuts, but their logic is:
+            </p>
+
+            <div class="highlight-box">
+                <strong>"Failures will happen anyway.<br>
+                Rather than wait for the worst day to find out you weren't ready,<br>
+                deliberately cause small failures now — see if the system can take them."</strong>
+            </div>
+
+            <p>
+                That's the idea of "vaccinating the system" — <strong>using small, controlled doses of failure to give the system immunity to failure</strong>.
+                Alibaba calls it "red-vs-blue"; ByteDance calls it "chaos engineering"; Tencent calls it "failure drills" — different names, same essence.
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>A common misconception:</strong> "the more alerts, the better."<br>
+                Too many alerts and nobody reads them — this is called "alert fatigue." Good monitoring is: <strong>it only fires when a human actually needs to intervene; self-healing problems fix themselves</strong>.
+                A single P99 blip shouldn't wake anyone; five minutes of blipping should. One machine at 100% CPU shouldn't page; a cluster averaging 80% should.
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Add a traceId to your own project</h3>
+                <p>
+                    In any web app, try this:<br>
+                    1. When a request comes in, generate a UUID and call it <code>traceId</code>.<br>
+                    2. Prepend it to every log line: <code>[trace=abc123] user login</code>.<br>
+                    3. Pass it downstream (via the HTTP header <code>X-Trace-Id</code>).<br>
+                    4. Downstream services also stamp the same <code>traceId</code> into their own logs.
+                </p>
+                <p>
+                    Then, when a user reports "something went wrong with this action," you just ask them for the <code>traceId</code> of that request,
+                    and <strong>you can search across N services' logs and reconstruct the complete path of that one request</strong> —
+                    that's the seed of distributed tracing.
+                    Once you've felt it, you never go back to the "no-traceId" era of logging.
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Related questions to explore:</h3>
+                <a href="question.html?q=19">Q19: Why is deploying to production so complicated?</a>
+                <a href="question.html?q=24">Q24: Under high concurrency, the hardest thing is stability</a>
+                <a href="question.html?q=31">Q31: Why does stability matter more than clever tricks?</a>
+                <a href="question.html?q=23">Q23: Why are distributed systems this complex?</a>
+                <a href="question.html?q=22">Q22: How does load balancing absorb massive traffic?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>A system you can't see is a system out of control</h3>
+                <p>
+                    A truth that comes out of Occam's Razor: <strong>you can't manage what you can't measure.</strong><br><br>
+                    This applies to more than systems. It also applies to —
+                </p>
+                <ul style="color:white;">
+                    <li><strong>Running a company:</strong> a CEO without a dashboard is flying blind. KPIs, financials, monthly retrospectives — these are the monitoring for "the company as a system."</li>
+                    <li><strong>Personal growth:</strong> a person who doesn't "review + record + reflect" spins in place forever. What we call "journaling" is really observability for your life.</li>
+                    <li><strong>Governing a country:</strong> census, statistics, audits — these are the metrics and logs of "society as a system." Faking the data means the system goes blind.</li>
+                </ul>
+                <p>
+                    And "chaos drills" cut even deeper — <strong>the philosophy is "admitting you will fail."</strong><br><br>
+                    A truly powerful system isn't one that "never fails" — it's one that <strong>"is constantly making trouble for itself on purpose."</strong><br><br>
+                    · Fire drills: vaccines for a city<br>
+                    · Military exercises: vaccines for a nation<br>
+                    · Emergency plans: vaccines for an organization<br>
+                    · Retrospectives: vaccines for a team<br><br>
+                    <strong>Every great system that outlasts its era does the same thing: fail deliberately and cheaply, so you don't fail for real and expensively.</strong>
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why are big websites always doing monitoring, logging, tracing, and chaos drills?
+            </p>
+
+            <p>
+                <strong>Because once a system gets complex enough, "can you see it?" matters more than "did you write it correctly?"</strong>
+                Metrics show you "what's happening," Logs show you "the details," Traces show you "the path it took" — and drills mean by the time real failure arrives, you've already rehearsed the response.
+            </p>
+
+            <div class="highlight-box">
+                <strong>The secret of a mature system isn't "never failing" —<br>
+                it's "when it does fail, you've already run this drill 100 times."</strong><br><br>
+                That's also why the most valuable skill of an engineer is never "writing code" —<br>
+                it's "when the system's on fire, locating the problem in 5 minutes and restoring service in 10."
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the question map</a>
+                <a href="question.html?q=26" class="btn">Continue to Q26 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q8: What are frontend and backend actually doing?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q08.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q08.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q08.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 Layer 2 · The Beginner Coder's View</div>
+            <h1>What are frontend and backend actually doing?</h1>
+            <p class="subtitle">A restaurant's front-of-house and back-of-house</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's take: why does this question matter?</h2>
+
+            <p>
+                You've probably heard a programmer friend say something like: "I do frontend," or "I'm a backend engineer."
+                It sounds like two totally different jobs — but a webpage is just a webpage, right? Why does it take two separate crews to build one?
+            </p>
+
+            <p>
+                This question matters because it hides the internet's <strong>most basic division of labor</strong>:
+                <strong>what should run on your device, and what should run on some faraway server?</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>Core insight:</strong><br><br>
+                Frontend = what you can see, touch, and run on your phone / laptop<br>
+                Backend = what you can't see, running on someone else's machine, keeping the data<br><br>
+                They talk to each other through <code>HTTP + JSON</code>.
+            </div>
+
+            <p>
+                Once you get this split, you'll suddenly understand: "my connection is slow, the page won't load" and "the server crashed, nobody can use it" are two completely different kinds of failure.
+            </p>
+
+            <h2>🧩 Peel it back: break the big question into small ones</h2>
+
+            <p>To understand frontend and backend, you only need to ask yourself 4 questions:</p>
+
+            <ol>
+                <li><strong>Who's running the code?</strong> Your browser, or a faraway machine?</li>
+                <li><strong>Who's storing the data?</strong> Where does it live, and who can change it?</li>
+                <li><strong>How do they talk?</strong> What language do frontend and backend use with each other?</li>
+                <li><strong>Why split it this way?</strong> Can't the browser just do everything?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the outcome matters</h3>
+
+            <p>
+                You open Taobao, tap "My Orders," and the page shows you the shoes you bought yesterday. In that moment, it never crosses your mind:
+                "This order info actually flew here from a database thousands of kilometers away."
+            </p>
+
+            <p>
+                In the user's eyes, it's all just "the webpage." <strong>There is no frontend or backend — only "works" or "doesn't work."</strong>
+            </p>
+
+            <h3 class="section-code">The implementation layer: starting to see the structure</h3>
+
+            <p>
+                Let's use a metaphor: <strong>an internet service is like a restaurant.</strong>
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🍽️ Frontend = front-of-house</h4>
+                    <p>The menu, the tables, the lighting, the waiter's smile. <strong>Everything the customer can see.</strong></p>
+                    <p>Responsible for: presenting the menu beautifully, taking down what the customer wants, and bringing the food to the table.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🔥 Backend = back-of-house</h4>
+                    <p>The pantry, the stove, the dishwasher, the ledger. <strong>Invisible to the customer — but it's what defines the real strength.</strong></p>
+                    <p>Responsible for: cooking, tallying the bill, managing stock, recording orders.</p>
+                </div>
+            </div>
+
+            <p>
+                So frontend does: <strong>what the page looks like + how users can interact with it</strong>.
+                Backend does: <strong>where data lives + how business rules get computed</strong>.
+            </p>
+
+            <p>
+                Here's a concrete example — a "like" button:
+            </p>
+
+            <div class="code-block">// [Frontend] Written in the browser — decides what the button looks like and how it reacts
+&lt;button id="like-btn"&gt;❤️ Like&lt;/button&gt;
+
+document.getElementById('like-btn').addEventListener('click', async () =&gt; {
+  // Turn red — give the user instant feedback
+  document.getElementById('like-btn').classList.add('liked');
+
+  // Quietly tell the backend: this user liked this post
+  await fetch('/api/like', {
+    method: 'POST',
+    body: JSON.stringify({ postId: 42 })
+  });
+});</div>
+
+            <div class="code-block"># [Backend] Written on the server — decides what "like" actually means
+@app.post("/api/like")
+def like(request):
+    user_id = get_current_user(request)     # Who are you?
+    post_id = request.json["postId"]        # Which post?
+    db.execute(                             # Write it to the database
+        "INSERT INTO likes(user_id, post_id) VALUES(?, ?)",
+        [user_id, post_id]
+    )
+    return {"ok": True, "total": count_likes(post_id)}</div>
+
+            <p>
+                See it clearly? The <em>look</em> of the button and the <em>click-turns-red</em> effect belong to the frontend.
+                But "this like was actually remembered, and counted into the total" — that belongs to the backend.
+            </p>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>
+                Put them together, and one interaction looks like this:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">👆 You tap the button</div>
+                <div class="arrow">↓ (JS runs in the browser)</div>
+                <div class="step-box">📦 Package a JSON request</div>
+                <div class="arrow">↓ (HTTP goes over the network)</div>
+                <div class="step-box">🌐 Backend endpoint receives it</div>
+                <div class="arrow">↓ (Runs business logic)</div>
+                <div class="step-box">💾 Reads / writes the database</div>
+                <div class="arrow">↓ (Packages the result)</div>
+                <div class="step-box">📨 Returns JSON</div>
+                <div class="arrow">↓ (Browser parses it)</div>
+                <div class="step-box">🎨 Updates the page</div>
+            </div>
+
+            <p>
+                That invisible line between frontend and backend has a proper name — <strong>API</strong> (Application Programming Interface).
+                It's like the restaurant's <strong>order ticket</strong> — it spells out "what to make, what to add, what to leave out."
+                Front-of-house and back-of-house both accept the same format. Swap out any person, and it still works.
+            </p>
+
+            <div class="highlight-box">
+                <strong>The API contract usually looks like this:</strong><br><br>
+                Request: <code>POST /api/like</code>, carrying <code>{ "postId": 42 }</code><br>
+                Response: <code>{ "ok": true, "total": 133 }</code><br><br>
+                Once this "contract" is locked, frontend and backend can each change independently — as long as both sides still honor the contract.
+            </div>
+
+            <p>
+                This is why, at big companies, frontend and backend can be two different teams — even writing in two totally different languages (JavaScript on the frontend, Java / Python / Go on the backend) —
+                and the product still works.
+            </p>
+
+            <h3 class="section-tradeoff">The trade-off layer: why design it this way?</h3>
+
+            <p>
+                You might wonder: browsers are getting more powerful every year — why not just let the browser do everything? Or the other way: why not have the backend handle everything?
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🚫 The problem with "all frontend"</h4>
+                    <p>Users can edit the code! You write "ship only after payment succeeds" — they change <code>if (paid)</code> to <code>if (true)</code>, and they get it for free.</p>
+                    <p>Data also can't be shared — the like you tapped on your phone won't show up on your laptop.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🚫 The problem with "all backend"</h4>
+                    <p>Every single click has to make a round trip to the server. Scrolling, hovering, animations… the experience gets so laggy nobody wants to use it.</p>
+                    <p>And the server load would explode.</p>
+                </div>
+            </div>
+
+            <p>
+                So engineers eventually settled on an unspoken agreement:
+            </p>
+
+            <div class="highlight-box">
+                <strong>The division principle:</strong><br><br>
+                • <strong>Display, interaction, animation</strong> → frontend (as close to the user as possible)<br>
+                • <strong>Data, rules, permissions, billing</strong> → backend (as close to trust as possible)<br>
+                • <strong>Stateless APIs</strong> → so the backend can be copied and scaled at will
+            </div>
+
+            <p>
+                Note that last point: most backend endpoints are <strong>stateless</strong> —
+                every request carries enough information on its own (like a login token), so the backend doesn't need to "remember what you said last time."
+                That's what lets the system scale horizontally to thousands of servers — any one of them can handle your request.
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Try this: see frontend and backend talking, with your own eyes</h3>
+                <p>
+                    1. Open any webpage (Zhihu, Bilibili, whatever)<br>
+                    2. Press <code>F12</code> to open DevTools<br>
+                    3. Switch to the <strong>Network</strong> tab and filter to <strong>Fetch/XHR</strong><br>
+                    4. Click around, scroll, like something, leave a comment
+                </p>
+                <p>
+                    You'll see a stream of requests appear — that's <strong>the frontend quietly having a conversation with the backend</strong>!
+                    Click into any one of them, and you can see: the JSON sent out, the JSON that came back. Right there in the open.
+                </p>
+                <p>
+                    In that moment, you go from "webpage user" to "webpage observer."
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=7">Q7: How is a webpage actually made?</a>
+                <a href="question.html?q=10">Q10: After you click the button, where does the data go?</a>
+                <a href="question.html?q=11">Q11: Sign up, log in, comment… what are these, really?</a>
+                <a href="question.html?q=9">Q9: Why can a browser display a page at all?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>The frontend / backend split is the birth of the "trust boundary"</h3>
+                <p>
+                    Today we take "frontend / backend separation" as the natural order — but history didn't start there.
+                </p>
+                <p>
+                    In the early web (the 90s), there was barely any concept of "frontend" — the server spat out a full HTML page, and the browser just displayed it.
+                    It wasn't until AJAX arrived (around 2005) that browsers could, for the first time, "talk behind the server's back."
+                    Then smartphones exploded, SPAs (single-page apps) took over, and only then did frontend truly emerge as its own discipline.
+                </p>
+                <p>
+                    <strong>The essence of that dividing line is the boundary of trust.</strong>
+                </p>
+                <p>
+                    Your device can be modified by you — so anything that "must be true" — your balance, your identity, whether an order has been paid — has to live somewhere you can't touch.
+                    Backend isn't just a technical choice. It's <strong>the gatekeeper of the rules</strong>.
+                </p>
+                <p>
+                    Every time you open an app, you're agreeing to one thing: <em>"In this world, some truths aren't mine to decide."</em>
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — what are frontend and backend actually doing?
+            </p>
+
+            <p>
+                <strong>Frontend handles "presentation" and "interaction" — making it something you can see, tap, and feel at home with.</strong><br>
+                <strong>Backend handles "memory" and "rules" — deciding what's true, what should happen, and who's allowed to do what.</strong>
+            </p>
+
+            <p>
+                They talk to each other through an API — like a restaurant's front-of-house and back-of-house passing order tickets.
+                The front can change its style, its language; the back can swap chefs, swap stoves — as long as the "contract" on the ticket doesn't change, the customer always gets their plate of food.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Next thought:</strong><br><br>
+                When you write frontend code, you're "sculpting user experience."<br>
+                When you write backend code, you're "writing the rules of the world."<br><br>
+                Neither one can stand alone — together, they're what we call a "product."
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=9" class="btn">Continue to Q9 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

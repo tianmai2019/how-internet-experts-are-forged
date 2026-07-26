@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q3: Why does the platform seem to know exactly what you want to watch?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q03.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q03.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q03.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-1">
+            <div class="level-badge">🎯 Layer 1 · The User's View</div>
+            <h1>Why does the platform seem to know exactly what you want to watch?</h1>
+            <p class="subtitle">You never told it what you like — but somehow, it knows</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's view: why does this question matter?</h2>
+
+            <p>
+                Open TikTok. The first 5 videos are pretty boring. Scroll 10 more — suddenly it's all stuff you actually care about. A week in, the picks feel "creepy-accurate" —
+                you never searched for it, you never liked it, and yet it <em>guessed</em>.
+            </p>
+
+            <p>
+                YouTube slides you the next video you didn't know you wanted. NetEase Cloud Music builds a playlist you loop all day.
+                Taobao puts the thing you're about to want right on your homepage — before you even realize you want it.
+            </p>
+
+            <p>
+                This isn't luck. It isn't mind-reading either. Behind all of it is a full <strong>recommendation system</strong>, quietly learning from every swipe, every pause, every skip.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Why does this matter?</strong><br>
+                More and more of what you watch, buy, listen to, and date is <em>filtered by algorithms first</em>.
+                Understanding how they work is understanding why the "world" you see looks different from the one your friend sees.
+            </div>
+
+            <h2>🧩 Break the big question into small ones</h2>
+
+            <ol>
+                <li><strong>How does the platform figure out what you like?</strong> Which of your behaviors does it read as preference?</li>
+                <li><strong>Why does it get "better and better" at guessing?</strong> How does it actually "learn"?</li>
+                <li><strong>Does it push what you truly like — or just what you'll click?</strong> These are not the same thing.</li>
+                <li><strong>Why do two people open the same app and see completely different worlds?</strong></li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user's view: only the outcome</h3>
+
+            <p>
+                You only feel two things — see something you like, feel good; see something you don't, swipe away fast.
+            </p>
+
+            <p>
+                But here's what you don't see: <strong>the swipe itself is the strongest signal</strong>. Every millisecond you spend on a video is being recorded.
+                3-second stop vs 10-second stop vs full watch vs like vs share — each is a vote, and together they decide what shows up next.
+            </p>
+
+            <h3 class="section-code">The build layer: starting to see the structure</h3>
+
+            <p>
+                The classic approach is called <strong>collaborative filtering</strong> — find people whose behavior looks like yours, see what they like, and you'll probably like it too.
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">🧍 You watched A, B, C</div>
+                <div class="arrow">↓ Find someone "very much like you"</div>
+                <div class="step-box">🧍 They watched A, B, C — and also D</div>
+                <div class="arrow">↓ Inference</div>
+                <div class="step-box">🎯 So D goes to you too</div>
+            </div>
+
+            <p>
+                The more modern move is to turn each user and each piece of content into a string of numbers (called an <strong>embedding vector</strong>),
+                and then use "how close are the two strings" to measure "how likely are you to like it."
+            </p>
+
+            <div class="code-block"># Minimal pseudocode: how one recommendation gets computed
+user_vec   = embed_user(user_id)           # [0.12, -0.34, 0.88, ...] 256 dims
+candidates = recall(user_vec, top=5000)    # coarse filter from tens of millions down to 5000
+
+# Ranking: score each candidate with "probability you'll like it"
+scores = []
+for item in candidates:
+    item_vec = embed_item(item.id)
+    p_click   = model_ctr(user_vec, item_vec, context)   # will you click?
+    p_finish  = model_finish(user_vec, item_vec)         # will you finish it?
+    p_like    = model_like(user_vec, item_vec)           # will you like it?
+    # Multi-objective blend: different products weight these differently
+    score = 0.4 * p_click + 0.3 * p_finish + 0.3 * p_like
+    scores.append((item, score))
+
+feed = sorted(scores, key=lambda x: -x[1])[:20]   # the 20 items your pull-to-refresh returns</div>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>
+                From "you flick your thumb" to "the next video is pushed to you" is actually a giant pipeline running millions of times per second:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">📱 Every action you take</div>
+                <div class="arrow">↓ Log ingestion</div>
+                <div class="step-box">📊 Behavior log system</div>
+                <div class="arrow">↓ Feature engineering</div>
+                <div class="step-box">🧠 Model training (offline + real-time)</div>
+                <div class="arrow">↓ Deploy</div>
+                <div class="step-box">🎯 Recommendation service: recall → coarse ranking → fine ranking → re-ranking</div>
+                <div class="arrow">↓ Return</div>
+                <div class="step-box">📱 Your next screen</div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>There's a hidden weapon in this whole path: A/B testing.</strong>
+                A platform runs dozens or hundreds of "experiment versions" at the same time — 1% of users get bucket A, another 1% get bucket B,
+                and it watches which one has higher completion rate, better retention. The winner scales. That's the real engine behind "it keeps getting better at knowing you" — not one genius algorithm delivered in one shot,
+                but thousands of <em>tiny victories</em> per day, compounding.
+            </div>
+
+            <h3 class="section-tradeoff">The trade-off view: why is it designed this way?</h3>
+
+            <p>
+                Here's the question that keeps engineers and PMs up at night: <strong>"what you like" and "what you'll click" are not the same thing.</strong>
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Optimize for click-through rate</h4>
+                    <p>Short-term metrics rocket. You keep scrolling. But content drifts toward clickbait, outrage, extremes — because those are the things that "trick you into tapping" the best.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Optimize for long-term satisfaction</h4>
+                    <p>Sounds right — but hard to measure. What even counts as "satisfied"? Retention? Return visits? Or "will you still recommend this to a friend six months from now"? Weak signal, slow training.</p>
+                </div>
+            </div>
+
+            <p>
+                So every platform is quietly trading off: one more second now vs a return in five years — novelty vs familiarity —
+                pushing viral hits vs pushing niche quality. <strong>Every parameter in a recommendation system is a values choice</strong> —
+                just one hidden inside engineers' spreadsheets and A/B win rates.
+            </p>
+
+            <p>
+                There's also a side effect you can't ignore: <strong>the filter bubble</strong>. The better it knows you, the more it leans toward "things you'll like" —
+                and the less you see of "things you won't like but might matter." Over time, you think "the world just is this way" — but really, it's "the world as the algorithm thinks you see it."
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Try this — open a "burner" account for yourself</h3>
+                <p>
+                    Sign up for a brand-new TikTok / YouTube account. For the first 30 minutes, watch only one kind of content (say, only cats). Then scroll freely for another 10 minutes,
+                    and watch how the mix of what it pushes shifts.
+                </p>
+                <p>
+                    Now do it again with a different identity — this time only watch something completely different (say, cooking).
+                    Compare the two worlds. You'll see, with your own eyes, <strong>how "you, in the eyes of the algorithm" gets shaped</strong>.
+                </p>
+            </div>
+
+            <p>
+                If you want to go one step deeper, peek at these URL parameters:
+            </p>
+
+            <div class="code-block">GET /feed?user_id=xxx&amp;last_seen=1690000000&amp;session=abc
+    &amp;ab_bucket=exp_v3_variant_b     ← you got bucketed into group B
+    &amp;refresh_reason=pull_down       ← you pull-to-refreshed (different sources trigger different strategies)</div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=33">Q33: Why does the platform know what you want to see?</a>
+                <a href="question.html?q=35">Q35: How do recommendation algorithms work?</a>
+                <a href="question.html?q=36">Q36: What is machine learning?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>From tech to world</h3>
+                <p>
+                    We used to think "taste is something you grow on your own" — the songs you love, the movies you rewatch, the team you cheer for — all free choices, all yours.
+                    More and more evidence says otherwise: <strong>half of your taste is being shaped by the recommendation system</strong>.
+                    It guesses what you'll like — you get pushed it enough times — and eventually you really do like it — and then that becomes a positive training example the next round.
+                </p>
+                <p>
+                    This is a very quiet kind of power. It doesn't tell you what you can't see — it just doesn't show you certain things.
+                    It doesn't tell you what to believe — it just makes some views appear three times a day, and others never at all.
+                </p>
+            </div>
+
+            <p>
+                What's more unsettling: the optimize target of these systems is <em>their</em> business goal, not your life goal.
+                It wants you to scroll three more minutes — not to make you happier, wiser, or braver.
+                Sometimes those overlap. Often they don't.
+            </p>
+
+            <p>
+                So understanding recommendation systems is really understanding one thing: <strong>the feed in front of you isn't "the world" — it's "a version of the world customized for you"</strong>.
+                And the one doing the customizing — that's not you.
+            </p>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                Why does the platform seem to know exactly what you want to watch?
+            </p>
+
+            <p>
+                <strong>The answer:</strong> because every swipe, every pause, every like, every skip of yours gets turned into a number,
+                and fed into a model that updates itself every single day. It doesn't "know you" — it <em>uses your past behavior to predict your next second of behavior</em>,
+                and then pushes whichever prediction it's most confident about right in front of your eyes.
+                Over time, what it shapes isn't just your feed — it's your taste, your mood, the self you think you are.
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=4" class="btn">Keep going to Q4 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

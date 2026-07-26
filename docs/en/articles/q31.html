@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q31: Why is stability usually more important than "flashy design"?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q31.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q31.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q31.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to Home</a>
+
+        <div class="article-header article-header--level-4">
+            <div class="level-badge">⚖️ Layer 4 · The Senior Engineer's View</div>
+            <h1>Why is stability usually more important than "flashy design"?</h1>
+            <p class="subtitle">A real senior engineer doesn't compete on cool code — they compete on how few incidents they cause</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The Beginner's Take: Why does this matter?</h2>
+
+            <p>You've probably heard stories like these:</p>
+
+            <ul>
+                <li>An e-commerce company launches a "brand-new smart rate-limiting algorithm" on the day of a huge sale — the site goes down for 20 minutes, losing over a hundred million;</li>
+                <li>A payment company, wanting to "show off", rewrites a mature service in reactive programming — all the debugging tools stop working, and a small glitch turns into a major incident;</li>
+                <li>A social app adopts the latest GraphQL + Serverless stack. It looks cutting-edge, but a cold-start storm takes the whole app down for 3 hours.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>Young engineers love writing "clever code". Experienced engineers write "boring code".</strong> Not because they can't be clever — but because <strong>boring code doesn't wake you up at 3 a.m.</strong>
+            </div>
+
+            <p>The key insight at this layer: <strong>treat "stability" as a first-class citizen, and treat "flashiness" as a cost.</strong></p>
+
+            <h2>🧩 Breaking it down</h2>
+
+            <ol>
+                <li>Why is "flashiness" always a cost?</li>
+                <li>How do you actually measure stability?</li>
+                <li>How do you use SLOs and Error Budgets?</li>
+                <li>How do you build a "stability-first" mindset?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">User layer: only the outcome matters</h3>
+
+            <p>Users have zero awareness of whether your tech stack is "cutting-edge". The only things they perceive are:</p>
+
+            <ul>
+                <li>Payment keeps spinning → bad review</li>
+                <li>App won't open → uninstall</li>
+                <li>Data lost → complaint, dispute, gone forever</li>
+            </ul>
+
+            <p>Your service written in the coolest reactive programming style — as soon as it goes down once, nobody remembers how "advanced" it was.</p>
+
+            <h3 class="section-code">Implementation layer: starting to understand structure</h3>
+
+            <p>"Flashiness" usually shows up in a few places:</p>
+
+            <div class="code-block">The temptation to show off:
+  1. Adopting new stacks (rewrite in Rust, GraphQL, Serverless, eBPF)
+  2. Hand-rolling infrastructure (custom RPC, custom cache, custom MQ)
+  3. Over-abstraction (4 layers of inheritance, design patterns nested inside design patterns)
+  4. Chasing extreme optimization (lock-free concurrency, SIMD, kernel bypass)
+  5. Throwing it all out and starting over ("I can refactor this in a day")
+
+The boring choice:
+  1. Use the language the team knows best (even if it's Java 8)
+  2. Use the most widely adopted mature components (Nginx, MySQL, Redis)
+  3. Straightforward procedural code + clear boundaries
+  4. Stop optimizing once the goal is met
+  5. Incremental change, small steps</div>
+
+            <p>The core insight here: <strong>every "flashy choice" is a hidden bet — a bet that your team can understand it, maintain it, and rescue it when it burns. Every "boring choice" is collecting a "certainty dividend".</strong></p>
+
+            <h3 class="section-system">System layer: seeing the full path</h3>
+
+            <p>The full path of stability looks like this:</p>
+
+            <div class="diagram-box">
+                <span class="step-box">Define SLO</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Error Budget</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Monitoring & Alerts</span>
+                <br>
+                <span class="step-box">Canary Release</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Failure Drills</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Postmortem & Fix</span>
+            </div>
+
+            <p>It's not a feature — it's an entire <strong>engineering culture</strong>.</p>
+
+            <h3 class="section-tradeoff">Trade-off layer: why is it built this way?</h3>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Flashy design</h4>
+                    <p>✅ Great on your résumé<br>✅ Fun tech talks<br>✅ Engineers feel good<br>❌ High team learning cost<br>❌ Immature ecosystem<br>❌ No debugging tools<br>❌ Can't rescue it when it breaks</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Stability-first design</h4>
+                    <p>✅ Low team learning cost<br>✅ Mature ecosystem, every problem has an answer<br>✅ Complete debugging path<br>✅ You can rescue it at 3 a.m.<br>❌ "Doesn't look impressive"<br>❌ Engineers may feel they're not growing</p>
+                </div>
+            </div>
+
+            <h2>📊 SLO: turn stability into a manageable resource</h2>
+
+            <p>Google's SLO (Service Level Objective) framework turns stability from a "feeling" into a "budget":</p>
+
+            <div class="code-block">SLO: the target availability for a service
+  Example: Search service SLO = 99.9%
+
+Error Budget:
+  100% - 99.9% = 0.1%
+  Meaning: you're "allowed" 43.8 minutes of downtime each month
+
+Key insight:
+  ✅ Error Budget not used up → you can ship new features aggressively
+  ❌ Error Budget used up → freeze all changes, fix stability first
+
+The result:
+  - Product says "we need to ship features fast" → OK, but you spend your error budget
+  - Engineering says "we need a big refactor" → OK, but make sure the budget covers it
+  - SRE says "stability first" → they have evidence, no more shouting matches</div>
+
+            <div class="highlight-box">
+                <strong>Error Budget is the greatest invention of SRE culture.</strong> It turns the eternal "stability vs. iteration" debate into a computable, negotiable, decidable <strong>shared language</strong>.
+            </div>
+
+            <h2>🐒 Netflix's Chaos Monkey: break things on purpose</h2>
+
+            <p>Netflix has a famous tool called Chaos Monkey — it <strong>randomly</strong> kills servers, cuts networks, and destroys disks in production. Sounds insane? But this is stability culture taken to the extreme:</p>
+
+            <div class="highlight-box">
+                <strong>Netflix's philosophy:</strong> "We no longer pray that failures won't happen. We make failures happen every day — so when the real big one arrives, we've already practiced it a thousand times."
+            </div>
+
+            <p>That's what "stability first" really looks like: <strong>not avoiding complexity, but digesting complexity ahead of time.</strong></p>
+
+            <h2>💥 Cautionary tale: Facebook's 6-hour outage in 2021</h2>
+
+            <p>On October 4, 2021, all of Facebook went down for 6 hours. Not a hack, not hardware failure — just a <strong>seemingly harmless BGP routing change</strong>.</p>
+
+            <p>The irony gets better: that change was itself a "stability drill". But it accidentally pulled Facebook's DNS off the public internet — which meant engineers <strong>couldn't even get into their own internal tools</strong>, and had to physically send people to the data center to recover things by hand.</p>
+
+            <p>Two things this story teaches us:</p>
+
+            <ol>
+                <li><strong>Even the most stable systems will go down</strong> — so you need a plan, not luck;</li>
+                <li><strong>"Flashy changes", even stability-related ones, can bite back</strong> — the change itself is the biggest enemy of stability.</li>
+            </ol>
+
+            <div class="callout callout--warning">
+                <strong>Bust the myth: "good stability" doesn't mean "never change anything".</strong> Real stability means "I know the risk of a change, I use the smallest blast radius, and I can roll back at any time". <strong>A system that's afraid to change is the least stable system of all</strong> — because tech debt only compounds, until one day the whole thing collapses.
+            </div>
+
+            <h2>🧭 Habits of stability-first thinking</h2>
+
+            <div class="code-block">Before you write the code, ask a few extra questions:
+
+1. Once this ships, what happens if it breaks?
+   → Is there monitoring? Alerting? Graceful degradation?
+
+2. What's the worst case for this change?
+   → How many users? How long to recover?
+
+3. This new tech — how many people on the team can rescue it?
+   → Fewer than 3? Don't adopt it.
+
+4. Can this change be canaried? Can it be rolled back?
+   → If not, add that first.
+
+5. Six months from now, someone's on-call at 3 a.m. — how do they debug it?
+   → If you can't imagine it, don't ship it.
+
+Just build the habit of asking these 5 questions —
+and your code is already more "senior" than 90% of your colleagues'.</div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Run a "stability vs. flashiness" checkup</h3>
+                <p>Look at the tech decisions your team made in the last six months and answer:</p>
+                <ol>
+                    <li>How many "new technologies" did we adopt in the last six months?</li>
+                    <li>Of those, how many were "the business actually needed", and how many were "the team wanted to learn"?</li>
+                    <li>For each new technology, how many people on the team could rescue it?</li>
+                    <li>How many incidents were caused by these new technologies?</li>
+                    <li>If you could start over, which technologies would you skip?</li>
+                </ol>
+                <p>Answer honestly and you'll find: <strong>most "flashy adoptions" weren't business needs — they were engineers who wanted to play</strong>. That's not wrong, but you need to be aware of the cost.</p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=24">Q24: How do high-concurrency systems hold up?</a>
+                <a href="question.html?q=25">Q25: How do you keep a system highly available?</a>
+                <a href="question.html?q=26">Q26: Why is there no silver bullet in system design?</a>
+                <a href="question.html?q=30">Q30: Beautiful on the whiteboard, not always worth it in production</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>A real senior engineer doesn't compete on cool code — they compete on how few incidents they cause</h3>
+                <p>Junior engineers get their kick from "writing beautiful code". Mid-level engineers get their kick from "using a lot of impressive tech". <strong>Senior engineers get their kick from "no incidents this year".</strong></p>
+                <p>That shift is hard, because "no incidents" is an <em>absent achievement</em> — you can't see it, and nobody praises it. Bosses don't hand out awards for "six months, zero failures". Users don't post on social media about "how stable" you are. Stability is a <strong>silent value</strong>.</p>
+                <p>And that silence is exactly what tests your maturity. Plenty of people can write flashy code — but those who hold back, patiently do the boring work, and keep the system humming along quietly — those are the people who treat engineering as a profession, not a performance.</p>
+                <p>The grandmaster's view: <strong>the tech industry's shiny narrative always favors "new" and "cool", but what actually keeps the internet running is the people willing to do the "boring but correct" things in the shadows. Stability isn't conservatism — it's responsibility to your users, your teammates, and your future self.</strong></p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>Why is stability usually more important than "flashy design"?</p>
+
+            <div class="highlight-box">
+                <strong>Because the ultimate value of technology isn't how advanced it is — it's whether it can be trusted.</strong><br><br>
+                Users trust that your product works. Teammates trust that your code can be changed. Your boss trusts that your service won't go down. Every one of those "trusts" is built up, piece by piece, by stability.<br><br>
+                Flashiness earns momentary applause — only stability earns long-term trust. And in this industry, all the big players are ultimately competing on one thing: <strong>trust</strong>.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to Knowledge Map</a>
+                <a href="question.html?q=32" class="btn">Continue to Q32 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

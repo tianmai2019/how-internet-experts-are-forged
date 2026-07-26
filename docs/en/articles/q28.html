@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q28: Why aren't monoliths automatically outdated, and microservices automatically advanced?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q28.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q28.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q28.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-4">
+            <div class="level-badge">⚖️ Layer 4 · The Senior Engineer's View</div>
+            <h1>Why aren't monoliths automatically outdated, and microservices automatically advanced?</h1>
+            <p class="subtitle">Architecture isn't a race to be modern — it's a game of "fit"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's view: why does this matter?</h2>
+
+            <p>For the past decade, "microservices" has been almost politically correct in tech circles. Job listings ask for "microservices experience preferred." Tech talks are titled "how to split microservices." At internal architecture reviews, whoever proposes a monolith looks like they showed up naked.</p>
+
+            <p>But the real world has been quietly reversing course:</p>
+
+            <ul>
+                <li><strong>Segment</strong> merged 140 microservices back into a monolith — and performance actually improved.</li>
+                <li><strong>Uber</strong> split their system into 2,200 microservices, then started a "service consolidation" campaign.</li>
+                <li><strong>Amazon Prime Video</strong> published a 2023 post: after consolidating a serverless microservice architecture into a monolith, costs dropped 90%.</li>
+                <li><strong>Basecamp/37signals</strong> runs a 20-year-old Ruby on Rails monolith that serves millions of users.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>These aren't "regressions" — they're a disenchantment.</strong> The industry is starting to admit: microservices are a <em>solution</em>, not a mark of <em>superiority</em>.
+            </div>
+
+            <h2>🧩 Peel it back: break the big question into small ones</h2>
+
+            <ol>
+                <li>What problem do monoliths and microservices actually solve?</li>
+                <li>Why does Conway's Law say "architecture grows into the shape of your org"?</li>
+                <li>What are the hidden costs of microservices?</li>
+                <li>What size, what kind of org, actually needs microservices?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">User layer: only the outcome matters</h3>
+
+            <p>A user never picks a product because "there are microservices behind it." What users see is: <strong>is it fast, is it stable, does it do what I need?</strong> A well-built monolith feels great. A badly-built microservice system feels like garbage. <strong>Users don't reward architecture — they reward results.</strong></p>
+
+            <h3 class="section-code">Implementation layer: starting to understand the structure</h3>
+
+            <p>The core difference between a monolith and microservices isn't the tech stack — it's <strong>"one process or many" plus "one database or many"</strong>:</p>
+
+            <div class="code-block">Monolith:
+  one repo → one binary → one process → one database
+  function calls are "local calls" (nanoseconds)
+  transactions are "local transactions" (the DB handles it)
+
+Microservices:
+  many repos → many binaries → many processes → many databases
+  function calls become "network calls" (milliseconds, can fail)
+  transactions become "distributed transactions" (Saga / eventual consistency)</div>
+
+            <p>The key shift at this layer: <strong>you upgraded "function calls" into "network protocols," and "local transactions" into "distributed coordination."</strong> Every upgrade means a new failure point.</p>
+
+            <h3 class="section-system">System layer: seeing the full path</h3>
+
+            <p>Once you go microservices, one user request may cross 10 services:</p>
+
+            <div class="diagram-box">
+                <span class="step-box">API Gateway</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Auth</span>
+                <span class="arrow">→</span>
+                <span class="step-box">User</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Order</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Payment</span>
+                <br>
+                <span class="step-box">Inventory</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Notification</span>
+                <span class="arrow">→</span>
+                <span class="step-box">...</span>
+            </div>
+
+            <p>Every arrow can bring network latency, timeouts, failures, retries. To keep the whole path at 99.9% availability, every link needs 99.99%+ — and that composite availability decays <strong>exponentially</strong>.</p>
+
+            <h3 class="section-tradeoff">Trade-off layer: why designed this way?</h3>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>The truth about monoliths</h4>
+                    <p>✅ Simple to develop — one IDE, one project<br>✅ Simple to debug — just set a breakpoint<br>✅ Simple transactions — ACID, out of the box<br>✅ Simple deploy — one jar, one image<br>❌ Team-size ceiling around 50 people<br>❌ One bad module drags down the whole thing<br>❌ Scaling granularity is coarse</p>
+                </div>
+                <div class="compare-card">
+                    <h4>The truth about microservices</h4>
+                    <p>✅ Teams can move in parallel<br>✅ Services can scale independently<br>✅ Local failures can be isolated<br>✅ Tech stacks can vary<br>❌ Distributed complexity explodes<br>❌ Data consistency is hard<br>❌ Ops cost is 3–10× higher<br>❌ Debugging needs end-to-end tracing</p>
+                </div>
+            </div>
+
+            <h2>🏢 Conway's Law: architecture grows into the shape of your org</h2>
+
+            <p>In 1968, Melvin Conway put it this way:</p>
+
+            <div class="highlight-box">
+                <strong>"Any organization that designs a system will produce a design whose structure is a copy of the organization's communication structure."</strong>
+            </div>
+
+            <p>In plain words: <strong>however many teams you have, that's how many modules your system will grow.</strong></p>
+
+            <p>So the essence of microservices isn't "technical splitting" — it's "organizational splitting":</p>
+
+            <div class="code-block">10-person team → monolith is optimal
+  one team = one repo = one deploy unit
+  splitting into microservices = manufacturing pointless communication cost
+
+50-person team → modular monolith or coarse-grained services
+  split a few big services along business domains
+  each service owned by a 5–10 person team
+
+500-person team → microservices become a must
+  without microservices, teams drown in merge conflicts
+  each team must be able to release, deploy, and scale independently
+
+5000-person team → service mesh + platformization
+  microservices themselves need a "meta-architecture" to govern them</div>
+
+            <div class="callout callout--warning">
+                <strong>Bust the myth:</strong> if your team is 20 people and you've split 30 microservices, that's not "advanced" — that's "using microservices to fix a communication problem." It's like commuting to work by high-speed rail. Technically fine, but wildly overbuilt.
+            </div>
+
+            <h2>💥 A real case: Uber's reverse engineering</h2>
+
+            <p>Uber was one of the most fervent adopters of microservices, at one point running 2,200+ of them. Then they realized:</p>
+
+            <ul>
+                <li>A simple ride flow crossed dozens of services.</li>
+                <li>Debugging one bug meant staring at hundreds of dashboards.</li>
+                <li>Shipping a new feature meant coordinating 10+ teams.</li>
+                <li>A new hire needed months to understand a single business flow.</li>
+            </ul>
+
+            <p>So after 2020, Uber started their "Domain-Oriented Microservice Architecture (DOMA)" effort: <strong>regroup those 2,200 microservices along business domains into about 70 "domains" — tightly coupled inside a domain, loosely coupled between them.</strong> Basically, take over-split microservices and reassemble them into "coarse-grained services."</p>
+
+            <h2>💰 Amazon Prime Video's cost-saving story</h2>
+
+            <p>In 2023, the Amazon Prime Video team published a post: "Scaling up the Prime Video audio/video monitoring service and reducing costs by 90%."</p>
+
+            <p>They took a "cloud-native microservice architecture" built on AWS Lambda + Step Functions and rebuilt it as a <strong>monolith</strong> running on ECS. The result:</p>
+
+            <div class="highlight-box">
+                <strong>Costs dropped 90% — and scalability actually got better.</strong><br><br>
+                Why: under the microservice architecture, services shuffled data through S3 and network calls. Transfer costs and orchestration latency alone were eating most of the compute. As a monolith, data moved inside one process — no more serialization, no more network round-trips, no more state orchestration.
+            </div>
+
+            <p>Amazon's own team openly admitted: "microservices aren't a universal answer." Before 2023, that kind of statement would have been unthinkable heresy.</p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Do a quick "architecture fit" self-assessment</h3>
+                <p>Answer these 6 questions. Each "yes" = 1 point:</p>
+                <ol>
+                    <li>Is our team over 50 people?</li>
+                    <li>Do multiple teams constantly hit merge conflicts in the same codebase?</li>
+                    <li>Has our release process turned into "queue up for a window"?</li>
+                    <li>Do our business modules have traffic gaps of more than 10× between them?</li>
+                    <li>Do we have a dedicated SRE/DevOps team?</li>
+                    <li>Is "deploys stepping on each other" a frequent line in our post-mortems?</li>
+                </ol>
+                <p><strong>0–2 points:</strong> Stick with a monolith. Microservices will drag you down.<br>
+                <strong>3–4 points:</strong> Consider a "modular monolith" or "coarse-grained services."<br>
+                <strong>5–6 points:</strong> Now it's worth seriously evaluating microservices.</p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=23">Q23: How do large internet systems handle hundreds of millions of users?</a>
+                <a href="question.html?q=26">Q26: Why is there no silver bullet in system design?</a>
+                <a href="question.html?q=27">Q27: An advanced architecture isn't always the right one</a>
+                <a href="question.html?q=29">Q29: How do you trade off consistency, performance, and availability?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>Architecture isn't a race to be modern — it's a game of "fit"</h3>
+                <p>Our generation of engineers is too easily captured by "architecture narratives." Whether an architecture is good is usually answered not from "does it solve the concrete problem," but from "does it match the current tech fashion." That's fundamentally a <strong>path dependency of technical aesthetics</strong>.</p>
+                <p>But anyone who's lived through a few tech cycles will tell you: <strong>architecture has no "evolution theory" — only a "matching theory."</strong> Monolith, SOA, microservices, serverless, service mesh — these aren't a linear staircase of progress. They're <em>tools</em>, each aimed at different scales, different orgs, different problems.</p>
+                <p>What The Grandmaster's View sees: <strong>tech fashions change, but the standard of "fit" never changes. When everyone is chasing the new, the ability to say "we don't need this" — that's real maturity.</strong></p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>Why aren't monoliths automatically outdated, and microservices automatically advanced?</p>
+
+            <div class="highlight-box">
+                <strong>Because the value of an architecture has never been about "new or not" — it's about "fit or not."</strong><br><br>
+                Monoliths and microservices aren't replacements for each other — they're <strong>stages</strong>. Every team that started with a monolith, moved to microservices, and then walked back to consolidate will tell you the same thing:<br><br>
+                <em>"The best architecture is the one that lets your current team move the fastest."</em>
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to knowledge map</a>
+                <a href="question.html?q=29" class="btn">Continue to Q29 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q32: Why is tech debt never just a code problem — but something that time, organization, and business pile up together?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q32.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q32.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q32.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-4">
+            <div class="level-badge">⚖️ Layer 4 · The Senior Engineer's View</div>
+            <h1>Why is tech debt never just a code problem — but something that time, organization, and business pile up together?</h1>
+            <p class="subtitle">Tech debt = the bill for every shortcut the org ever took</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's view: why does this question matter?</h2>
+
+            <p>"Tech debt" sounds like "the mess programmers leave behind when they write bad code." So a lot of newcomers think — if I write cleanly, follow the conventions, stick to best practices, I won't have any tech debt.</p>
+
+            <p>Then you land at a real company and discover it doesn't work that way at all:</p>
+
+            <ul>
+                <li>Old code from five years ago — the person who wrote it left the company long ago;</li>
+                <li>A "temporary" fix from three years back is now on the critical path;</li>
+                <li>A year ago product said "let's ship the big-sale campaign first," and no one ever went back to fix it;</li>
+                <li>Last month the org restructured, and the team that owned this module got broken up.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>Tech debt is never just a code problem.</strong> It's <strong>time</strong> (old decisions get older) + <strong>organization</strong> (people leave, teams dissolve) + <strong>business</strong> (requirements shift, strategy pivots) — three forces piling up into <strong>compound-interest debt</strong>.
+            </div>
+
+            <p>The key at this layer: <strong>tech debt = the bill for every shortcut the org ever took — and someone always has to pay it in the end.</strong></p>
+
+            <h2>🧩 Break it down</h2>
+
+            <ol>
+                <li>What are the four sources of tech debt?</li>
+                <li>Why does tech debt "compound"?</li>
+                <li>When should you pay it down, and when should you carry it?</li>
+                <li>How do you tell "healthy debt" from "toxic debt" apart?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">User layer: only sees the outcome</h3>
+
+            <p>What users can actually feel about tech debt:</p>
+
+            <ul>
+                <li>Why does this app get slower with every update?</li>
+                <li>Why has this bank's app looked this ugly for ten years?</li>
+                <li>Why was that feature promised a year ago and still isn't shipped?</li>
+                <li>Why does something always break during the big sale?</li>
+            </ul>
+
+            <p>Users don't say "that's tech debt" — but every degradation in their experience is almost always tech debt quietly collecting interest.</p>
+
+            <h3 class="section-code">Implementation layer: starting to see the structure</h3>
+
+            <p>The classic definition comes from Ward Cunningham (1992): <em>"Shipping something less-than-perfect to move fast is like taking out a loan — it runs in the short term, but you'll pay interest long-term."</em></p>
+
+            <p>That definition only covers "code debt." In the real world, tech debt has <strong>four sources</strong>:</p>
+
+            <div class="code-block">1. Code Debt
+   Cause: rushing, skill gaps, missing review
+   Example: copy-paste, hardcoding, no tests
+
+2. Architecture Debt
+   Cause: early decisions no longer fit today's scale
+   Example: the monolith can't hold up anymore, single-DB single-table is bursting
+
+3. Organization Debt
+   Cause: the author left, teams reshuffled, ownership unclear
+   Example: a critical module nobody dares touch, because no one understands it
+
+4. Knowledge Debt
+   Cause: missing docs, unrecorded decisions, lost context
+   Example: why was it designed this way? Nobody knows anymore</div>
+
+            <h3 class="section-system">System layer: seeing the full path</h3>
+
+            <p>The "compound-interest formula" of tech debt looks like this:</p>
+
+            <div class="diagram-box">
+                <span class="step-box">Take a shortcut today</span>
+                <span class="arrow">↓</span>
+                <span class="step-box">Tomorrow's iteration is a bit slower</span>
+                <span class="arrow">↓</span>
+                <span class="step-box">Six months later, people route around it</span>
+                <span class="arrow">↓</span>
+                <span class="step-box">A year later, it's legacy</span>
+                <span class="arrow">↓</span>
+                <span class="step-box">Three years later, nobody dares touch it</span>
+                <span class="arrow">↓</span>
+                <span class="step-box">Five years later, it gets rewritten</span>
+            </div>
+
+            <p>Each step costs 2-3x more to repay than the last. That's "compound interest" — not linear growth, but exponential growth.</p>
+
+            <h3 class="section-tradeoff">Trade-off layer: why was it designed this way?</h3>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Healthy tech debt</h4>
+                    <p>✅ A conscious choice<br>✅ A clear repayment plan<br>✅ Short-term gain &gt; long-term interest<br>✅ Documented, team knows about it<br><br>Example: hardcode to ship for the big sale, then refactor within 2 weeks after</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Toxic tech debt</h4>
+                    <p>❌ Accumulated unconsciously<br>❌ No repayment plan<br>❌ Long-term interest &gt; short-term gain<br>❌ Nobody knows, nobody owns it<br><br>Example: a "temporary fix" from three years ago that's still running on the critical path</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>Bust the myth:</strong> "tech debt = bad" is wrong. <strong>Tech debt itself is neutral — even necessary.</strong> The question isn't "do you owe debt or not," it's "do you know clearly what you owe, and do you pay it back in time?" Like a credit card — swiping isn't the problem, forgetting to pay is.
+            </div>
+
+            <h2>🕰️ The time dimension: why yesterday's best practice is today's tech debt</h2>
+
+            <p>A brutal fact: <strong>the code you carefully write today, following "best practices," will probably still get rewritten five years from now.</strong></p>
+
+            <p>Why? Because:</p>
+
+            <ul>
+                <li>Business scale grows 10x — the architecture that supported 10K users won't hold 10M;</li>
+                <li>The tech stack moves on — the framework version you use is no longer maintained;</li>
+                <li>Requirements pivot — you started domestic-only, now you need to go global;</li>
+                <li>Teams turn over — the coders have rotated three times.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>Time is the strongest amplifier of all tech debt.</strong> Debt you don't pay right away will be paid later, in a more expensive form — not because the code got worse, but because the world moved and the code didn't.
+            </div>
+
+            <h2>🏢 The organization dimension: Conway's Law's hidden aftermath</h2>
+
+            <p>Remember Conway's Law from Q28? "Architecture grows to look like the org." The reverse is also true: <strong>when the org changes, the architecture can't keep up — that's organization debt.</strong></p>
+
+            <p>Classic organization-debt scenarios:</p>
+
+            <ul>
+                <li><strong>Team merge</strong>: two teams merge, but their systems still speak past each other;</li>
+                <li><strong>Team split</strong>: one team splits into two, but nobody wants to inherit that codebase;</li>
+                <li><strong>Attrition</strong>: the core author leaves, and the code becomes a "living fossil" — no one dares change it because no one understands it;</li>
+                <li><strong>Business pivot</strong>: the company shifts strategy from B2C to B2B, and the whole architecture is built on C-side assumptions.</li>
+            </ul>
+
+            <p>This kind of debt isn't about badly written code — it's about <strong>the org that wrote the code no longer existing</strong>.</p>
+
+            <h2>📈 The business dimension: the compound interest of shifting requirements</h2>
+
+            <p>Business debt is the hardest to handle, because it's "you did the right thing at the time — the right answer just changed":</p>
+
+            <div class="code-block">V1.0: domestic users only
+  → time as int, Chinese-only storage, single currency
+  → best practice at the time
+
+V2.0: go international
+  → timezones become a nightmare, string-encoding bugs explode, multi-currency needs a rewrite
+  → yesterday's right = today's debt
+
+V3.0: compliance (GDPR)
+  → user data must be deletable and exportable
+  → the original data model didn't leave room for that
+  → yesterday's right = today's debt
+
+V4.0: the AI era
+  → the original data had no tracking, no labels
+  → you add tracking now, but historical data can never be backfilled
+  → yesterday's right = today's debt</div>
+
+            <h2>💰 When do you pay it back? Three repayment strategies</h2>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Big Bang (one-shot rewrite)</h4>
+                    <p>✅ Done once, done forever<br>✅ Architecture gets completely refreshed<br>❌ Enormous risk<br>❌ Business grinds to a halt<br>❌ 90% of rewrite projects fail or slip<br><br>Example: Twitter migrating from Rails to JVM</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Strangler Fig</h4>
+                    <p>✅ Controlled risk<br>✅ Swap while running<br>✅ Rollback anytime<br>❌ Long cycle (1-3 years)<br>❌ Old-and-new coexistence gets complex<br><br>Example: eBay's and Shopify's multi-year refactors</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Boy Scout Rule</h4>
+                    <p>✅ Every change leaves it a little better<br>✅ Zero risk, zero cost<br>✅ Compounds over time<br>❌ Treats symptoms, not the root<br>❌ Can't tackle architecture-level debt<br><br>Example: everyday code maintenance</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Ignore (don't repay, keep carrying it)</h4>
+                    <p>✅ No effort short-term<br>❌ Long-term interest snowballs<br>❌ Sooner or later it blows up<br><br>When it's OK:<br>the system is about to be retired, the company is dying, or this line of business is about to be shut down</p>
+                </div>
+            </div>
+
+            <h2>💥 Real case: an archaeology dig into Zhihu's code</h2>
+
+            <p>Zhihu once shared a "code archaeology" story publicly. In a critical piece of their core search, they found an odd hack — with a comment saying "temporary fix, shipped March 2015."</p>
+
+            <p>Turns out that piece of code:</p>
+
+            <ul>
+                <li>The engineer who wrote it left in 2016;</li>
+                <li>The three people who inherited it never dared touch it — they just kept adding code to route around it;</li>
+                <li>By 2020, that hack was affecting 20+ downstream services;</li>
+                <li>It took six months of careful work to safely remove it.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>That's the compound-interest effect of tech debt:</strong> 5 minutes of shortcut in 2015 → 6 months of repayment in 2020. <strong>Interest rate: roughly <em>10,000x</em>.</strong>
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Build your team's "tech-debt ledger"</h3>
+                <p>Grab a piece of paper. Write down all the tech debt your team currently carries:</p>
+                <ol>
+                    <li>List every "debt" you can think of (code, architecture, organization, knowledge)</li>
+                    <li>Score each one:
+                        <ul>
+                            <li>Impact scope (1-5)</li>
+                            <li>Repayment cost (1-5)</li>
+                            <li>Annual interest if not paid (1-5)</li>
+                        </ul>
+                    </li>
+                    <li>Compute priority: impact × annual interest ÷ repayment cost</li>
+                    <li>Pick the Top 3 — those become the debts you must pay next quarter</li>
+                </ol>
+                <p>Do this once, and you're already more mature than 80% of teams — because most teams <strong>don't even know how much debt they're carrying</strong>.</p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=26">Q26: Why is there no silver bullet in system design?</a>
+                <a href="question.html?q=37">Q37: Why does system complexity accumulate over time?</a>
+                <a href="question.html?q=38">Q38: Why does code always carry historical baggage?</a>
+                <a href="question.html?q=48">Q48: How do organizations shape the technical artifact?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>Tech debt = the bill for every shortcut the org ever took</h3>
+                <p>The deepest thing about tech debt isn't that it's a "technical problem" — it's that it's <strong>the org's mirror in time</strong>. Open a company's old codebase, and you're basically flipping through the last 10 years of its history:</p>
+                <p>See hardcoded values — you know they once rushed a big sale. See awkward architecture — you know someone made a bad strategic bet. See an unowned module — you know somebody left without doing a handoff. See three copies of the same logic — you know there was once an architecture battle that no one won.</p>
+                <p><strong>Code doesn't lie — it honestly records every choice, every compromise, every failure, every act of forgetting the org has ever made.</strong> To truly read a company, don't look at its homepage — its codebase is enough.</p>
+                <p>The grandmaster's view: <strong>tech debt is fundamentally "a bill from past-you to future-you." Every time today you say "let me just note it down and fix it later," you're planting a landmine for some 3 a.m. of your future. The truly mature organizations are the ones willing to <em>pay tomorrow's money today</em>; the truly mature engineers are the ones who believe "future me is also me."</strong></p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>Why is tech debt never just a code problem — but something that time, organization, and business pile up together?</p>
+
+            <div class="highlight-box">
+                <strong>Because code is never something that exists in isolation.</strong><br><br>
+                Every line of code was written at a specific time, by a specific person, for a specific business. When the time changes, the person changes, the business pivots — the code becomes a "triple-dislocated-in-time" artifact. <strong>It's nobody's fault as an individual — it's the org's time drifting.</strong><br><br>
+                So paying off tech debt is never just refactoring code. It's <strong>refactoring time</strong> (which old decisions should be retired), <strong>refactoring the org</strong> (who owns what, redrawn), <strong>refactoring the business</strong> (which historical baggage can be cut) — a three-in-one project.<br><br>
+                People who see this layer are the ones who truly cross from "programmer" to "engineer."
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=33" class="btn">Continue to Q33 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

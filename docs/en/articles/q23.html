@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q23: Why are distributed systems so much more complex than single-machine ones?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q23.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q23.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q23.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Why are distributed systems so much more complex than single-machine ones?</h1>
+            <p class="subtitle">A single machine is one brain calling the shots. Distributed is a group of brains that has to hold a meeting.</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's angle: why does this matter?</h2>
+
+            <p>
+                You've probably heard "distributed system" thrown around a lot, but you may not have realized: <strong>almost every internet service you use today is, at its core, a distributed system.</strong>
+                WeChat, TikTok, Taobao, 12306, Alipay — none of them are "one big computer" serving you.
+            </p>
+
+            <p>
+                You may have heard engineers grumble: "This bug only shows up in distributed environments!" "Why don't the numbers match?" — behind those complaints is the kind of <strong>hair-losing complexity</strong> that distributed systems bring.
+            </p>
+
+            <div class="highlight-box">
+                <strong>The core awkwardness of distributed systems:</strong><br><br>
+                Things that are "obvious" on a single machine can all be wrong in distributed land.<br>
+                For example:<br>
+                · "Time" isn't globally synchronized<br>
+                · A "call" doesn't always come back<br>
+                · "Someone else wrote the data" doesn't mean "you can read it"
+            </div>
+
+            <h2>🧩 Peel it back: break the big question into small ones</h2>
+
+            <ol>
+                <li><strong>Why is a single machine "simple"?</strong> Because there's only one brain deciding.</li>
+                <li><strong>Does adding one more machine make it complex?</strong> Yes — going from 1 to 2 is a qualitative leap.</li>
+                <li><strong>Why is the network so terrifying?</strong> It can be "slow" — and it can "lie" to you.</li>
+                <li><strong>How does a group of brains agree?</strong> That's the consensus problem.</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the outcome matters</h3>
+
+            <p>
+                A user's experience of a distributed system is usually just a few "strange moments":
+            </p>
+            <ul>
+                <li>A Weibo post you just deleted reappears after a refresh (cache inconsistency)</li>
+                <li>A bank transfer says "processing" for a few seconds (waiting for multi-party confirmation)</li>
+                <li>Payment succeeded but the order still shows unpaid (cross-service state delay)</li>
+                <li>A feature works for some people but not others (canary release + partition routing)</li>
+            </ul>
+
+            <p>
+                These "little bugs" aren't really bugs — they're physical properties of the distributed system itself: <strong>state doesn't sync across machines that easily</strong>.
+            </p>
+
+            <h3 class="section-code">The implementation layer: seeing how it's built</h3>
+
+            <p>
+                The simplest distributed setup is "two machines doing the work together."
+                Looks like just one extra machine? Actually, you've gone from "dictatorship" to "council" — and every coordination problem comes with it.
+            </p>
+
+            <div class="code-block">
+# Single-machine version: decrement stock, simple and reliable
+def buy(item_id):
+    lock.acquire()               # in-memory lock
+    stock = memory[item_id]
+    if stock > 0:
+        memory[item_id] -= 1
+        return "success"
+    return "sold_out"
+    lock.release()
+
+# Distributed version: two machines selling at once — problems appear
+def buy(item_id):
+    # The in-memory lock is useless now — each machine has its own memory
+    # You need a "distributed lock" living in shared Redis / Etcd
+    with distributed_lock(item_id):
+        stock = redis.get(item_id)
+        if int(stock) > 0:
+            redis.decr(item_id)
+            return "success"
+        return "sold_out"
+            </div>
+
+            <p>
+                Looks like you just added a <code>distributed_lock</code>, but you've opened a whole Pandora's box:
+                What if Redis dies? What if the lock isn't released? What if the two nodes see different stock counts?
+                <strong>Every "simple-looking" distributed operation hides a dozen corner cases.</strong>
+            </p>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>
+                In distributed systems, one theorem gets quoted more than any other — <strong>the CAP theorem</strong>. It says:
+            </p>
+
+            <div class="diagram-box">
+                【C】Consistency: every node reads the same, latest data<br>
+                【A】Availability: every request gets a response (no errors)<br>
+                【P】Partition tolerance: the system keeps running when the network breaks<br>
+                <br>
+                CAP theorem: <strong>you can only pick two of the three</strong>.<br>
+                Network trouble is inevitable (P is unavoidable),<br>
+                so the real choice is — <strong>sacrifice C or sacrifice A?</strong>
+            </div>
+
+            <p>
+                These few "invisible enemies" are the root of why distributed systems are insanely complex:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Network Partition</h4>
+                    <p>The fiber between two data centers snaps, a router dies, a firewall throws a fit — both sides are still running, but they can't see each other.<br>The system automatically "splits in half," each half keeps taking customers, and both may modify the same piece of data.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Clock Skew</h4>
+                    <p>Every machine has its own clock. NTP sync is only millisecond-accurate, and it drifts.<br>You can't just "use timestamps to decide who's latest" — Google Spanner literally uses GPS + atomic clocks to dare do global consistency.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Opaque Failures</h4>
+                    <p>When a single machine crashes, your process exits — the feedback is clear.<br>In distributed land, when a call "doesn't return," did the other side never receive it? Still processing? Finished but the reply got lost? <strong>You literally can't tell.</strong></p>
+                </div>
+                <div class="compare-card">
+                    <h4>State Consistency</h4>
+                    <p>Three replicas store different data — what now? Who's right?<br>You rely on a <strong>consensus protocol (Paxos / Raft)</strong> — multiple nodes "vote" to decide a value. Writing one line of code takes several network round-trips.</p>
+                </div>
+            </div>
+
+            <p>
+                Consensus protocols are the most important and hardest thing in distributed systems:
+                <strong>Paxos</strong> — proposed by Leslie Lamport in 1989, theoretically perfect but so hard to understand that even Google engineers complain;
+                <strong>Raft</strong> — the "human-friendly" consensus algorithm from Stanford in 2013, used by Etcd, TiKV, Consul.
+                They solve one core problem — <strong>how does a group of independent nodes, over an unreliable network, agree on "what the next value should be"?</strong>
+            </p>
+
+            <h3 class="section-tradeoff">The trade-off layer: why was it designed this way?</h3>
+
+            <p>
+                The most painful thing about distributed complexity isn't that "it's technically hard" — it's that <strong>you have to make choices</strong>, and every choice hurts.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Real-world distributed choices:</strong><br><br>
+                · <strong>CP systems</strong> (consistency first): ZooKeeper / Etcd. When the network breaks, they'd rather refuse service than serve wrong data. Used for finance, locks, service registries.<br>
+                · <strong>AP systems</strong> (availability first): Cassandra / DynamoDB / most e-commerce display layers. Even if data is "eventually consistent," they always respond.<br>
+                · <strong>Somewhere in between</strong>: TiDB / Spanner. Raft + optimizations, trying to have their cake and eat it too — at the cost of hardware and network spend.
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>Common misconception:</strong> "Distributed = better, more powerful."<br>
+                A lot of startups jump straight to microservices + distributed databases, only to find themselves paying "1 billion requests / day" complexity for a "10 thousand requests / day" system.
+                <strong>If a single machine works, use one. If primary/replica works, don't build a cluster</strong> — distributed is a "reluctant last resort," not a "goal to flex about."
+            </div>
+
+            <p>
+                The Fallacies of Distributed Computing (the eight fallacies) are worth memorizing for every engineer:
+            </p>
+
+            <ol>
+                <li>The network is reliable (❌)</li>
+                <li>Latency is zero (❌)</li>
+                <li>Bandwidth is infinite (❌)</li>
+                <li>The network is secure (❌)</li>
+                <li>Topology doesn't change (❌)</li>
+                <li>There is one administrator (❌)</li>
+                <li>Transport cost is zero (❌)</li>
+                <li>The network is homogeneous (❌)</li>
+            </ol>
+
+            <p>
+                Every pain in distributed systems can be traced back to one of these eight lines.
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Feel a "network partition" firsthand</h3>
+                <p>
+                    If you have a Linux server nearby, try this:<br>
+                    1. Use <code>iptables</code> to block outbound connections on a port:<br>
+                    <code>sudo iptables -A OUTPUT -p tcp --dport 6379 -j DROP</code><br>
+                    2. What happens when your app connects to Redis? — it <strong>won't error out immediately</strong>. It'll just "hang" until TCP times out (30+ seconds by default).<br>
+                    3. Remove the rule: <code>sudo iptables -D OUTPUT -p tcp --dport 6379 -j DROP</code>
+                </p>
+                <p>
+                    This tiny experiment lets you feel it in your bones: <strong>"no response" and "responded but slowly" are indistinguishable to the client</strong>.
+                    That's the source of 99% of the head-scratcher bugs in distributed systems.
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=15">Q15: How do frontend and backend split the work?</a>
+                <a href="question.html?q=22">Q22: How does load balancing hold up huge traffic?</a>
+                <a href="question.html?q=29">Q29: How do you trade off consistency, performance, and availability?</a>
+                <a href="question.html?q=24">Q24: Under high concurrency, stability is the hardest part</a>
+                <a href="question.html?q=25">Q25: Why do we need monitoring and distributed tracing?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>Single machine = one brain. Distributed = a group of brains holding a meeting.</h3>
+                <p>
+                    The single-machine world is pure: <strong>one brain calls the shots</strong>.
+                    It gives the orders, it makes the final call, and when something breaks, "where it broke" is crystal clear.<br><br>
+                    The distributed world is like human society: <strong>a group of brains has to hold a meeting</strong>.
+                    Every brain has its own memory, its own clock, its own biases.
+                    To get them to agree, you need meetings, votes, protocols, arbitration.
+                    "Complexity" isn't technical redundancy — it's <strong>the cost of collaboration</strong>.<br><br>
+                    This insight changes how you see the real world:<br>
+                    · <strong>Why does a company hold so many meetings?</strong> Because it's a distributed system — consensus has a cost.<br>
+                    · <strong>Why is national decision-making slow?</strong> Because it's a super-scale distributed system — the consensus cost is astronomical.<br>
+                    · <strong>Why is marriage hard?</strong> Because it's a 2-node distributed system, and the network often partitions.<br><br>
+                    <strong>Anywhere more than one person makes a decision is a distributed system. And a distributed system's complexity is never a technical problem — it's the political cost of "multi-party coordination."</strong><br><br>
+                    Engineers who learn CAP, Paxos, and Raft quietly learn something else too:<br>
+                    "All cooperation has a price — if you want it faster, you give up some consistency; if you want zero errors, you accept some waiting."
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So, why are distributed systems so much more complex than single-machine ones?
+            </p>
+
+            <p>
+                <strong>Because "communication" is now part of the job.</strong>
+                Unreliable networks, unsynchronized clocks, invisible failures, hard-to-unify state — these aren't programming problems, they're <strong>a tax the physical world levies on multi-machine cooperation</strong>.
+                A single machine only needs to "get it right." Distributed systems also need to "communicate, reach consensus, and tolerate failure."
+            </p>
+
+            <div class="highlight-box">
+                Every engineer who goes deep eventually gets it:<br>
+                <strong>Writing distributed code isn't hard. What's hard is "thinking clearly about what state every other node might be in when each action happens."</strong><br>
+                That's not programming anymore — it's multi-party game theory.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=24" class="btn">Continue to Q24 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

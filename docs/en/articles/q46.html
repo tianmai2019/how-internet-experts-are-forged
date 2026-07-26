@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q46: Why does a whole system path hide behind a single button?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #667eea;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .button-demo {
+            background: linear-gradient(135deg, #F9F6FF 0%, #FFF 100%);
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 30px 0;
+            border: 2px dashed #667eea;
+        }
+
+        .demo-button {
+            display: inline-block;
+            padding: 20px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .layers-behind {
+            display: grid;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background: #F9FAFB;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .layer-icon {
+            font-size: 2rem;
+            margin-right: 20px;
+        }
+
+        .layer-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        /* ============================================
+           SVG full-loop button path diagram (Q46)
+           ============================================ */
+        .diagram-svg-wrap {
+            background: var(--bg-secondary, #F9FAFB);
+            border: 2px dashed var(--border-color, #D1D5DB);
+            border-radius: 12px;
+            padding: 24px 20px 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .loop-svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+        }
+        .loop-node rect {
+            transition: transform 0.2s ease, filter 0.2s ease;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .loop-node:hover rect {
+            transform: translateY(-2px);
+            filter: drop-shadow(0 6px 12px rgba(139, 92, 246, 0.35));
+        }
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            font-style: italic;
+        }
+        [data-theme="dark"] .diagram-svg-wrap {
+            background: rgba(102, 126, 234, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* Mobile: the SVG loop becomes a vertical "start -> 6 stages -> end" flow */
+        .loop-mobile { display: none; }
+        @media (max-width: 640px) {
+            .loop-svg { display: none; }
+            .loop-mobile {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+            }
+            .loop-mobile li {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 14px;
+                margin-bottom: 8px;
+                border-radius: 12px;
+                color: #fff;
+                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+                position: relative;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .loop-mobile li.start, .loop-mobile li.end {
+                background: linear-gradient(135deg, #F472B6 0%, #DB2777 100%);
+            }
+            .loop-mobile li:not(:last-child)::after {
+                content: "↓";
+                position: absolute;
+                left: 50%;
+                bottom: -14px;
+                transform: translateX(-50%);
+                color: var(--text-muted, #9CA3AF);
+                font-size: 0.95rem;
+                z-index: 1;
+            }
+            .loop-mobile-icon { font-size: 1.5rem; flex-shrink: 0; }
+            .loop-mobile li strong {
+                display: block;
+                font-size: 0.94rem;
+                margin-bottom: 2px;
+            }
+            .loop-mobile li span:not(.loop-mobile-icon) {
+                display: block;
+                font-size: 0.76rem;
+                color: rgba(255, 255, 255, 0.9);
+            }
+        }
+
+        .highlight-box {
+            background: #F9F6FF;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #764ba2;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="en" href="/en/articles/q46.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q46.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q46.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header">
+            <div class="level-badge">🌟 Summary question</div>
+            <h1>Why does a whole system path hide behind a single button?</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">Looks simple — actually, wildly complex</p>
+        </div>
+
+        <div class="article-content">
+            <h2>👆 One simple button</h2>
+
+            <p>
+                Picture this — you're in a shopping app, and you tap the "Buy Now" button.
+            </p>
+
+            <div class="button-demo">
+                <div class="demo-button">🛒 Buy Now</div>
+                <p style="margin-top: 20px; color: #6B7280;">Looks simple, right?</p>
+            </div>
+
+            <p>
+                You did just one thing: <strong>tap</strong>.
+            </p>
+
+            <p>
+                From where you're sitting, it's just a reaction on the screen — the button changes color, a loading spinner appears, a new page opens…
+            </p>
+
+            <p>
+                But behind that tap, a whole universe just came to life in an instant.
+            </p>
+
+            <h2>🌊 The full path behind the button</h2>
+
+            <p>
+                Let's peel this "simple" button back, layer by layer.
+            </p>
+
+            <div class="diagram-svg-wrap">
+                <svg viewBox="0 0 720 380" class="loop-svg" role="img"
+                     aria-label="Button loop diagram: tap the button -> frontend -> API gateway -> business service -> cache / database -> message queue -> notifications -> back to the button showing success">
+                    <defs>
+                        <linearGradient id="btn-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#F472B6"/>
+                            <stop offset="100%" stop-color="#DB2777"/>
+                        </linearGradient>
+                        <linearGradient id="stage-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#8B5CF6"/>
+                            <stop offset="100%" stop-color="#6D28D9"/>
+                        </linearGradient>
+                        <linearGradient id="data-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#F59E0B"/>
+                            <stop offset="100%" stop-color="#D97706"/>
+                        </linearGradient>
+                        <marker id="loop-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                                markerWidth="8" markerHeight="8" orient="auto">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+                        </marker>
+                    </defs>
+
+                    <!-- Center: the user's-view bubble -->
+                    <g transform="translate(360 190)">
+                        <ellipse rx="130" ry="42" fill="rgba(139, 92, 246, 0.08)"
+                                 stroke="var(--border-color, #E5E7EB)" stroke-width="1.5"
+                                 stroke-dasharray="4 4"/>
+                        <text y="-4" text-anchor="middle" font-size="24">🛒</text>
+                        <text y="20" text-anchor="middle" font-size="12"
+                              fill="var(--text-muted, #6B7280)" font-style="italic">
+                            User's view · just one button
+                        </text>
+                    </g>
+
+                    <!-- Layout: top row 3 (1->2->3), right side curves down to 4, bottom row 3 (4->5->6), left side curves back up to 1 -->
+                    <!-- Boxes unified at 130x60, gap 30. Top row y=50, bottom row y=270 -->
+
+                    <!-- 1. Frontend capture (top-left) -->
+                    <g class="loop-node" transform="translate(60 50)">
+                        <rect width="140" height="60" rx="12" fill="url(#stage-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">📱</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">Frontend capture</text>
+                    </g>
+
+                    <!-- 2. API gateway (top-middle) -->
+                    <g class="loop-node" transform="translate(290 50)">
+                        <rect width="140" height="60" rx="12" fill="url(#stage-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">🌐</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">API gateway + auth</text>
+                    </g>
+
+                    <!-- 3. Business service (top-right) -->
+                    <g class="loop-node" transform="translate(520 50)">
+                        <rect width="140" height="60" rx="12" fill="url(#stage-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">🧩</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">Order · risk control</text>
+                    </g>
+
+                    <!-- 4. Cache / DB (bottom-right, orange to differentiate) -->
+                    <g class="loop-node" transform="translate(520 270)">
+                        <rect width="140" height="60" rx="12" fill="url(#data-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">⚡🗄️</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">Cache / database</text>
+                    </g>
+
+                    <!-- 5. Message queue (bottom-middle) -->
+                    <g class="loop-node" transform="translate(290 270)">
+                        <rect width="140" height="60" rx="12" fill="url(#stage-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">📮</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">Message queue (async)</text>
+                    </g>
+
+                    <!-- 6. Notification · warehouse (bottom-left) -->
+                    <g class="loop-node" transform="translate(60 270)">
+                        <rect width="140" height="60" rx="12" fill="url(#stage-grad)"/>
+                        <text x="70" y="26" text-anchor="middle" font-size="18" fill="#fff">📧📦</text>
+                        <text x="70" y="46" text-anchor="middle" font-size="12"
+                              font-weight="700" fill="#fff">Notify · warehouse</text>
+                    </g>
+
+                    <!-- Clockwise loop arrows: 4 straight lines + 2 U-curves -->
+                    <g fill="none" stroke-width="2.5"
+                       stroke="var(--accent-primary, #667eea)"
+                       style="color: var(--accent-primary, #667eea);">
+                        <!-- 1->2: top row straight line -->
+                        <line x1="200" y1="80" x2="278" y2="80" marker-end="url(#loop-arrow)"/>
+                        <!-- 2->3: top row straight line -->
+                        <line x1="430" y1="80" x2="508" y2="80" marker-end="url(#loop-arrow)"/>
+                        <!-- 3->4: right-side curve down -->
+                        <path d="M 660 110 Q 690 190, 660 258" marker-end="url(#loop-arrow)"/>
+                        <!-- 4->5: bottom row straight line (reverse) -->
+                        <line x1="520" y1="300" x2="442" y2="300" marker-end="url(#loop-arrow)"/>
+                        <!-- 5->6: bottom row straight line (reverse) -->
+                        <line x1="290" y1="300" x2="212" y2="300" marker-end="url(#loop-arrow)"/>
+                        <!-- 6->1: left-side curve up -->
+                        <path d="M 60 270 Q 30 190, 60 122" marker-end="url(#loop-arrow)"/>
+                    </g>
+
+                    <!-- Start label: sits above "Frontend capture" -->
+                    <g transform="translate(75 20)">
+                        <rect width="110" height="20" rx="10" fill="url(#btn-grad)"/>
+                        <text x="55" y="14" text-anchor="middle" font-size="11"
+                              font-weight="700" fill="#fff">👆 Tap starts here</text>
+                    </g>
+
+                    <!-- End label: sits below "Notify · warehouse" -->
+                    <g transform="translate(55 340)">
+                        <rect width="150" height="20" rx="10" fill="url(#btn-grad)"/>
+                        <text x="75" y="14" text-anchor="middle" font-size="11"
+                              font-weight="700" fill="#fff">🎉 Result comes back to you</text>
+                    </g>
+                </svg>
+
+                <!-- Mobile fallback -->
+                <ol class="loop-mobile" aria-hidden="true">
+                    <li class="start">
+                        <span class="loop-mobile-icon">👆</span>
+                        <div><strong>You tap the button</strong><span>🛒 Buy Now</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">📱</span>
+                        <div><strong>Frontend captures the event</strong><span>JavaScript fires off some code</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">🌐</span>
+                        <div><strong>API gateway + auth</strong><span>Confirms you're a logged-in user</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">🧩</span>
+                        <div><strong>Order · risk control</strong><span>Business service runs the main flow</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">⚡🗄️</span>
+                        <div><strong>Cache / database</strong><span>Check cache first — miss? Fall back to the DB</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">📮</span>
+                        <div><strong>Message queue (async)</strong><span>Kick non-critical work out, don't block the main flow</span></div>
+                    </li>
+                    <li>
+                        <span class="loop-mobile-icon">📧📦</span>
+                        <div><strong>Notify · warehouse</strong><span>Email / SMS / pick and pack</span></div>
+                    </li>
+                    <li class="end">
+                        <span class="loop-mobile-icon">🎉</span>
+                        <div><strong>Result comes back to you</strong><span>The "tap succeeded" moment you see</span></div>
+                    </li>
+                </ol>
+
+                <p class="diagram-caption">Figure: the full loop one button triggers · in the center is the "user's view", and everything spinning around it is the system you never see</p>
+            </div>
+
+            <div class="layers-behind">
+                <div class="layer-item">
+                    <div class="layer-icon">📱</div>
+                    <div>
+                        <div class="layer-title">1. Frontend captures the event</div>
+                        <div>JavaScript listens for your tap and fires a piece of code</div>
+                    </div>
+                </div>
+                <div class="layer-item">
+                    <div class="layer-icon">🔐</div>
+                    <div>
+                        <div class="layer-title">2. Authentication</div>
+                        <div>The system confirms you're logged in and allowed to buy</div>
+                    </div>
+                </div>
+                <div class="layer-item">
+                    <div class="layer-icon">📊</div>
+                    <div>
+                        <div class="layer-title">3. Inventory check</div>
+                        <div>Query the database — is this item still in stock?</div>
+                    </div>
+                </div>
+                <div class="layer-item">
+                    <div class="layer-icon">💰</div>
+                    <div>
+                        <div class="layer-title">4. Price calculation</div>
+                        <div>Discounts, coupons, shipping… what's the final price?</div>
+                    </div>
+                </div>
+                <div class="layer-item">
+                    <div class="layer-icon">🚨</div>
+                    <div>
+                        <div class="layer-title">5. Risk control</div>
+                        <div>Is this transaction fraud? Do we need extra verification?</div>
+                    </div>
+                </div>
+                <div class="layer-item">
+                    <div class="layer-icon">💳</div>
+                    <div>
+                        <div class="layer-title">6. Payment gateway</div>
+                        <div>Call a third-party payment system (Alipay, WeChat Pay…)</div>
+                    </div>
+                </div>
+                <div class="layer-item">
+                    <div class="layer-icon">📦</div>
+                    <div>
+                        <div class="layer-title">7. Order system</div>
+                        <div>Create the order record, lock the inventory</div>
+                    </div>
+                </div>
+                <div class="layer-item">
+                    <div class="layer-icon">🏭</div>
+                    <div>
+                        <div class="layer-title">8. Warehouse and logistics</div>
+                        <div>Tell the warehouse to allocate goods and arrange shipment</div>
+                    </div>
+                </div>
+                <div class="layer-item">
+                    <div class="layer-icon">📧</div>
+                    <div>
+                        <div class="layer-title">9. Notification system</div>
+                        <div>Send you an email, an SMS, a push notification</div>
+                    </div>
+                </div>
+                <div class="layer-item">
+                    <div class="layer-icon">📈</div>
+                    <div>
+                        <div class="layer-title">10. Data analytics</div>
+                        <div>Log this purchase — feeds recommendations, sales stats, and more</div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                And that's just the main line! Every step above may have more hiding behind it:
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>Cache layer</strong> — speeds up queries</li>
+                <li><strong>Message queue</strong> — handles work asynchronously</li>
+                <li><strong>Monitoring</strong> — tracks down problems</li>
+                <li><strong>Disaster recovery</strong> — guards against failure</li>
+                <li><strong>Logging</strong> — records everything</li>
+            </ul>
+
+            <h2>🤔 Why is it this complex?</h2>
+
+            <p>
+                You might ask — why can't it just be simple?
+            </p>
+
+            <div class="highlight-box">
+                <strong>Because "simple" is what the user gets to see. "Complex" is the price of delivering that simplicity.</strong><br><br>
+                Every single stage solves a real problem:<br>
+                - Without authentication, anyone could buy anything<br>
+                - Without inventory checks, you'd oversell<br>
+                - Without risk control, fraud would run wild<br>
+                - Without analytics, you can't improve the product<br><br>
+                Add up all these necessary stages, and you get one complete request path.
+            </div>
+
+            <h2>💡 What does this tell us?</h2>
+
+            <p>
+                Once you understand that "a whole path lives behind a single button," you've picked up a way of seeing:
+            </p>
+
+            <div class="highlight-box">
+                <strong>See simple — think complex.<br>
+                See the result — think the process.<br>
+                See the instant — think the system.</strong>
+            </div>
+
+            <p>
+                And this isn't just about software — it applies to everything in life.
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li>Behind a beautiful piece of work is countless hours of practice</li>
+                <li>Behind an "offhand" decision is long, deliberate thought</li>
+                <li>Behind a thriving society is a web of complex institutions</li>
+            </ul>
+
+            <h2>👑 The Grandmaster's View: from a button to the world</h2>
+
+            <div class="emperor-box">
+                <h3>See through "simple"</h3>
+                <p>
+                    The grandmaster's wisdom — never be fooled by the surface of "simple."
+                </p>
+                <p>
+                    You see a fast web page — you think CDNs and optimization.<br>
+                    You see a smooth feature — you think of the countless iterations behind it.<br>
+                    You see a clever decision — you think of the trade-offs no one showed you.
+                </p>
+                <p>
+                    That's the core shift from "user" to "grandmaster":
+                    <strong>you keep asking "what's behind this?"</strong>
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Keep exploring:</h3>
+                <a href="question.html?q=47">Q47: Why does a bigger system always turn into a complexity problem?</a>
+                <a href="question.html?q=48">Q48: Why does going deep into tech lead to understanding people and society?</a>
+                <a href="question.html?q=49">Q49: Why is a real worldview about weaving knowledge into a structure?</a>
+                <a href="question.html?q=50">Q50: Why does it work this way?</a>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why does a whole system path hide behind a single button?
+            </p>
+
+            <p>
+                <strong>Because the essence of modern software is wrapping enormous complexity inside a simple interface.</strong>
+            </p>
+
+            <p>
+                The button you see is only the "entrance" to that complexity —
+                the real world is what lives behind it.
+            </p>
+
+            <div class="nav-footer">
+                <a href="q40.html" class="btn btn-outline">← Q40</a>
+                <a href="../questions/00-question-map.html" class="btn btn-outline">🗺️ Knowledge map</a>
+                <a href="q47.html" class="btn">Next: Q47 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

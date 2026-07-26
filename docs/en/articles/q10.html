@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q10: After you click a button, where does the data go?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q10.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q10.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q10.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 Layer 2 · The Beginner Coder's View</div>
+            <h1>After you click a button, where does the data go?</h1>
+            <p class="subtitle">One click — an entire assembly line of "trust handoffs"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's angle: why does this question matter?</h2>
+
+            <p>
+                You tap the "Place order" button, a "Payment successful" toast pops up, and suddenly your phone has one more order.
+                But have you ever thought about this: <strong>in the 0.1 seconds your finger was pressing down, how much actually happened?</strong>
+            </p>
+
+            <p>
+                This question matters because the full path behind a single click is the smallest working sample of <strong>how the internet "remembers a thing."</strong>
+                Once you see it, you see how apps work, why food delivery gets late, why Singles' Day crashes.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Core insight:</strong><br><br>
+                Your "click" is really a signal — it kicks off a journey through <strong>browser → network → server → database → and all the way back</strong>.<br><br>
+                Every step on that journey is decades of engineering convention, built for one purpose: to make the world remember this one event.
+            </div>
+
+            <h2>🧩 Break it down: turn the big question into small ones</h2>
+
+            <ol>
+                <li>The click itself — who feels it first?</li>
+                <li>How does the browser know "this click needs to fire off a request"?</li>
+                <li>How does the request fly halfway around the planet?</li>
+                <li>Once the server gets the request, what happens inside?</li>
+                <li>How does the result come back to your hand and update the page?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the result matters</h3>
+
+            <p>
+                You press the button — the button greys out, spins for a second, and then flashes "Submitted."
+                You feel: OK, done.
+            </p>
+
+            <p>
+                But if you're in an elevator with bad signal, the same button might spin for 5 seconds and then throw "Network error, please retry."
+                And your gut instinct kicks in: "Did my data actually get through or not?"
+            </p>
+
+            <p>
+                That gut question is the best doorway into "where did the data go."
+            </p>
+
+            <h3 class="section-code">The implementation layer: start seeing the construction</h3>
+
+            <p>
+                Let's look at a concrete example — "post a comment on some article." The frontend code roughly looks like this:
+            </p>
+
+            <div class="code-block">// ① Find the "submit" button
+const btn = document.getElementById('submit-comment');
+
+// ② Bind a "what to do on click" function
+btn.addEventListener('click', async () =&gt; {
+  // ③ Grab data from the input field
+  const text = document.getElementById('comment-input').value;
+
+  // ④ Wrap it in JSON, send to the backend
+  const res = await fetch('/api/comments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ postId: 42, text })
+  });
+
+  // ⑤ Read the backend's reply
+  const data = await res.json();
+
+  // ⑥ Update the page
+  if (data.ok) {
+    showToast('Comment posted!');
+    appendCommentToList(data.comment);
+  }
+});</div>
+
+            <p>
+                A handful of lines, doing 6 things. And <strong>step 4, the fetch</strong> — that's the real watershed:
+                from that line on, the data <strong>has left your device</strong>.
+            </p>
+
+            <h3 class="section-system">The system layer: see the full path</h3>
+
+            <p>
+                Slow this click down by a factor of a million and look at where the data actually travels:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">① 👆 Your finger presses the button</div>
+                <div class="arrow">↓ Browser captures the event</div>
+                <div class="step-box">② 🎯 Event listener fires</div>
+                <div class="arrow">↓ Package the JSON</div>
+                <div class="step-box">③ 📦 HTTP request takes shape</div>
+                <div class="arrow">↓ DNS + TCP + TLS</div>
+                <div class="step-box">④ 🌍 Packets hit the road</div>
+                <div class="arrow">↓ Through ISPs, fiber, data centers</div>
+                <div class="step-box">⑤ 🚪 Arrive at the load balancer</div>
+                <div class="arrow">↓ Dispatched to one server</div>
+                <div class="step-box">⑥ 🔧 Backend routes it to a specific endpoint</div>
+                <div class="arrow">↓ Validate, run business logic</div>
+                <div class="step-box">⑦ 💾 Write to the database</div>
+                <div class="arrow">↓ Package the response</div>
+                <div class="step-box">⑧ 📨 Return JSON</div>
+                <div class="arrow">↓ Back along the same path</div>
+                <div class="step-box">⑨ 🎨 Browser updates the page</div>
+            </div>
+
+            <p>
+                Let's zoom in on a few key nodes:
+            </p>
+
+            <div class="highlight-box">
+                <strong>What does the backend endpoint actually look like inside?</strong>
+            </div>
+
+            <div class="code-block"># Backend (Python/FastAPI as an example)
+@app.post("/api/comments")
+def create_comment(request):
+    # 1. Auth: who are you, really?
+    user = verify_token(request.headers["Authorization"])
+    if not user:
+        return {"ok": False, "error": "Please log in first"}, 401
+
+    # 2. Validate: is the data legit?
+    body = request.json
+    if not body.get("text") or len(body["text"]) &gt; 500:
+        return {"ok": False, "error": "Invalid comment content"}, 400
+
+    # 3. Store: write it to the database
+    comment = db.execute(
+        "INSERT INTO comments(user_id, post_id, text, created_at) "
+        "VALUES (?, ?, ?, NOW()) RETURNING *",
+        [user.id, body["postId"], body["text"]]
+    )
+
+    # 4. Respond: tell the frontend the result
+    return {"ok": True, "comment": comment}</div>
+
+            <p>
+                See it? What the backend does boils down to four words: <strong>authenticate → validate → store → respond</strong>.
+                Almost every web endpoint is a variation on this pattern.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Why does a "load balancer" have to sit in the middle?</strong><br><br>
+                Because one server can't take millions of users at once.<br>
+                A load balancer is like the greeter at a mall entrance — it hands off requests to dozens, or thousands, of backend servers.<br>
+                Any single one goes down, the rest keep serving.
+            </div>
+
+            <h3 class="section-tradeoff">The trade-off layer: why is it designed this way?</h3>
+
+            <p>
+                You might ask: why not just store the comment on your phone? Why does it have to go all the way to a server?
+            </p>
+
+            <p>
+                Because anything stored on your phone <strong>only you can see</strong>. But the whole point of a comment is that other people see it — it has to live somewhere everyone can reach, and that somewhere is <strong>a server</strong>.
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>💭 The naive design</h4>
+                    <p>Click button → hit the database directly → return result</p>
+                    <p>Problem: anyone can change anything. The system collapses in a minute.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>✅ The real design</h4>
+                    <p>Click button → <strong>authenticate</strong> → <strong>validate params</strong> → <strong>business rules</strong> → write DB → respond</p>
+                    <p>Every step is a checkpoint for "trust" and "safety."</p>
+                </div>
+            </div>
+
+            <p>
+                And engineers have layered on a whole set of survival mechanisms:
+            </p>
+
+            <ul>
+                <li><strong>Idempotency</strong>: tap "submit" twice, you don't get two comments — enforced by a request ID or a database unique constraint.</li>
+                <li><strong>Optimistic UI</strong>: pretend it succeeded on the frontend, roll back if the backend returns failure — makes the app feel "instant."</li>
+                <li><strong>Retries</strong>: request timed out? Try again automatically — but be careful not to trigger duplicates.</li>
+                <li><strong>Rate limiting</strong>: 1,000 clicks in one second? Sorry, cool down first — anti-spam, anti-attack.</li>
+            </ul>
+
+            <p>
+                Every click carries with it this hard-won engineering wisdom — <strong>paid for in blood and tears</strong>.
+            </p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Try this: trace a click with your own eyes</h3>
+                <p>
+                    1. Open Zhihu (or any site that requires login), hit <code>F12</code> to open DevTools<br>
+                    2. Switch to the <strong>Network</strong> tab, tick <strong>Fetch/XHR</strong> to see only API calls<br>
+                    3. <strong>Like</strong> a piece of content<br>
+                    4. You'll see a new request fly out — usually a <code>POST</code>, with <code>like</code> or <code>vote</code> in the URL
+                </p>
+                <p>
+                    Click it and look at these four things:<br>
+                    • <strong>Headers</strong>: the request headers, containing your cookie / token (proof of who you are)<br>
+                    • <strong>Payload</strong>: the JSON going out, telling the backend which item you liked<br>
+                    • <strong>Response</strong>: the JSON coming back, usually with the updated like count<br>
+                    • <strong>Timing</strong>: how many milliseconds it took from send to receive
+                </p>
+                <p>
+                    That's the full evidence of "where the data went." Congratulations — you just did a bit of network detective work!
+                </p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Related questions to explore:</h3>
+                <a href="question.html?q=8">Q8: What are the frontend and backend actually doing?</a>
+                <a href="question.html?q=11">Q11: Signup, login, comments… what are they really?</a>
+                <a href="question.html?q=13">Q13: How does a system stay up under heavy traffic?</a>
+                <a href="question.html?q=46">Q46: The complete journey of one network request</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>One click is trust being assembled</h3>
+                <p>
+                    In the 300 milliseconds after you tap "Confirm payment," far more happens than you imagine:
+                </p>
+                <p>
+                    • The bank's validator confirms the card can be charged<br>
+                    • The payment gateway confirms the merchant actually exists<br>
+                    • The risk-control system confirms this isn't fraud<br>
+                    • The inventory system confirms the item is in stock<br>
+                    • The order system writes a permanent record<br>
+                    • The notification system tells the merchant to ship…
+                </p>
+                <p>
+                    Each step is run by a different company, on different servers, in different databases, maintained by different engineering teams.
+                    They don't know each other — but they cooperate tightly, contract by contract (the API specs), so you can believe: <em>"I paid, they'll ship."</em>
+                </p>
+                <p>
+                    <strong>The moment you press that button, you're not just "using software" — you're <em>summoning</em> a globe-spanning trust protocol.</strong>
+                </p>
+                <p>
+                    That's what the modern internet really is: <em>turning trust between strangers into a repeatable software procedure.</em>
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — after you click a button, where does the data go?
+            </p>
+
+            <p>
+                <strong>It leaves your browser, becomes an HTTP request; then crosses the ISP network, arrives at a load balancer in the cloud;
+                then gets dispatched to some backend server, where authentication, validation, and database writes happen; then travels back along the same path, into your browser, and updates the page.</strong>
+            </p>
+
+            <p>
+                This path is the most common, the most fundamental, and the most profound "trust handoff" in the internet world.
+            </p>
+
+            <div class="highlight-box">
+                <strong>Next time you tap a button, you'll know:</strong><br><br>
+                In the 0.3 seconds under your finger, machines hundreds of kilometers away are working for you,<br>
+                databases in other countries are writing a row for you,<br>
+                dozens of protocols are cooperating — just to make this one "success" real.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=11" class="btn">Continue to Q11 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

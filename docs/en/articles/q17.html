@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q17: Why do large systems always talk about caching, queues, load balancing, rate limiting, degradation, and circuit breaking?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q17.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q17.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q17.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 Layer 3 · The Engineer's View</div>
+            <h1>Why do large systems always talk about caching, queues, load balancing, rate limiting, degradation, and circuit breaking?</h1>
+            <p class="subtitle">This isn't a "six-piece flex kit" — it's six kinds of brakes on uncertainty</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's view: why does this question matter?</h2>
+
+            <p>
+                If you've read even a few backend architecture posts, the same words keep showing up: <strong>caching, message queues, load balancing, rate limiting, graceful degradation, circuit breaking</strong>. They appear on almost every architecture diagram.
+            </p>
+
+            <p>
+                You might start to wonder — "Why is everyone talking about the exact same set? Is the industry just following trends?"
+            </p>
+
+            <div class="highlight-box">
+                <strong>It's not a trend. All six solve the same root problem: uncertainty.</strong><br><br>
+                Traffic is uncertain. Downstreams are uncertain. Failures are uncertain. User behavior is uncertain — and engineers use these tools to box the chaos into something predictable.
+            </div>
+
+            <h2>🧩 Breaking it down</h2>
+
+            <ol>
+                <li>Where does the "chaos" a system faces come from?</li>
+                <li>What kind of chaos does caching / queues / LB each handle?</li>
+                <li>Why are rate limiting / degradation / circuit breaking grouped separately?</li>
+                <li>When do you use which? How do they relate to each other?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">User layer: only the outcome matters</h3>
+
+            <p>
+                Users can't feel any of these six things — unless one of them fails. What they actually notice:
+            </p>
+
+            <ul>
+                <li>The page loads instantly (caching / CDN doing its job)</li>
+                <li>At checkout, suddenly "please try again later" (rate limiting kicked in)</li>
+                <li>On the payment success page, recommendations don't load (degradation cut the non-critical path)</li>
+                <li>No lag during a flash sale, but coupon approval feels slower (queue smoothing at work)</li>
+            </ul>
+
+            <h3 class="section-code">Implementation layer: starting to see the structure</h3>
+
+            <p>
+                I split the six into two groups by "what problem they solve":
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>The offense group: make the system take more</h4>
+                    <p><strong>Caching</strong>: keep hot data close, cut slow ops.<br>
+                       <strong>Queues</strong>: spread bursts over time.<br>
+                       <strong>Load balancing</strong>: split traffic across many machines.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>The defense group: fail gracefully</h4>
+                    <p><strong>Rate limiting</strong>: actively reject anything beyond capacity.<br>
+                       <strong>Degradation</strong>: sacrifice the nice-to-have to save the must-have.<br>
+                       <strong>Circuit breaking</strong>: fail fast on faults — don't drag others down.</p>
+                </div>
+            </div>
+
+            <p>
+                The offense group is attack — it lets the system swallow more traffic. The defense group is defense — it holds a floor when the system can't keep swinging. Real systems need both.
+            </p>
+
+            <h3 class="section-system">System layer: seeing the full path</h3>
+
+            <p>
+                Put them all on one architecture diagram and it looks like this:
+            </p>
+
+            <div class="diagram-box">
+[ Traffic from tens of millions of users ]
+       ↓
+   CDN / Edge cache ────────────────── ① Cache (bring it close)
+       ↓
+   Load balancer (Nginx / LVS) ─────── ② LB (split the flow)
+       ↓
+   ┌────────┬────────┬────────┐
+   │ App-1  │ App-2  │ App-N  │  ← horizontal scaling
+   └────────┴────────┴────────┘
+       ↓  ← ③ Rate limiting (hold the flood at the gate)
+       ↓
+   Business layer → Redis cache ───── ④ Cache (business)
+       ↓
+       ├─→ ⑤ Message queue (Kafka) ── peak shaving, async, decoupling
+       │       ↓
+       │   Downstream consumers (can catch up slowly)
+       ↓
+   Downstream service calls (RPC / HTTP)
+       ↓  ← ⑥ Circuit breaker (Hystrix / Sentinel / Resilience4j)
+       ↓
+   Downstream service (if it's down, go to ⑦ fallback / degradation)
+       ↓
+   Database</div>
+
+            <p>
+                This isn't six isolated techniques — it's one full <strong>defense in depth</strong>:
+            </p>
+
+            <ul>
+                <li><strong>Cache + CDN</strong> block 80% of requests — they never even reach the backend.</li>
+                <li><strong>LB</strong> spreads the rest across machines, so no single one gets overloaded.</li>
+                <li><strong>Rate limiting</strong> holds the floor at the gate, so nothing kills the machines.</li>
+                <li><strong>Queues</strong> spread bursty writes along the timeline, letting downstreams digest slowly.</li>
+                <li><strong>Circuit breaking</strong>: downstream A is down — stop hitting it, stop waiting on it.</li>
+                <li><strong>Degradation</strong>: can't get the data, return "last known" or "default" — don't throw the error at the user.</li>
+            </ul>
+
+            <p>
+                At every layer, the "possible range of chaos" gets narrower. That's why big-company architecture posts keep circling back to these six words.
+            </p>
+
+            <h3 class="section-tradeoff">Trade-off layer: why design it this way?</h3>
+
+            <p>
+                Every one of the six has a price. Picking each is a real decision:
+            </p>
+
+            <ul>
+                <li><strong>Caching</strong>: consistency risk (stale data, cache penetration, cache avalanche).</li>
+                <li><strong>Queues</strong>: async means the user no longer sees results "in real time" — debugging gets harder when things break.</li>
+                <li><strong>Load balancing</strong>: stateful services are hard — sessions, stickiness, health checks are all traps.</li>
+                <li><strong>Rate limiting</strong>: too coarse and you kill real users; too fine and the logic explodes.</li>
+                <li><strong>Degradation</strong>: who defines the "minimum viable set after degrading"? That's a product-vs-engineering fight.</li>
+                <li><strong>Circuit breaking</strong>: when do you trip? when do you recover? Bad thresholds are worse than no breaker.</li>
+            </ul>
+
+            <div class="callout callout--warning">
+                <strong>Common misconception:</strong> "My business is small — I don't need any of this." Actually, the six-piece kit is a <strong>function of scale</strong> — at QPS 100 you really don't need it, at QPS 10,000 you can't skip it. And "10,000" is what any marketing hit, celebrity endorsement, or viral share can bring you. The real question is: <strong>how much preparation do you want to keep on hand for the scale that might happen?</strong>
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Add a "circuit breaker" to a toy service</h3>
+                <p>
+                    Start two services locally: A calls B. Make B sleep 3 seconds 30% of the time. Use Node's <code>opossum</code> or Java's <code>Resilience4j</code> to add a circuit breaker to A:
+                </p>
+                <div class="code-block">const CircuitBreaker = require('opossum')
+const breaker = new CircuitBreaker(callB, {
+    timeout: 500,              // over 500ms counts as failure
+    errorThresholdPercentage: 50, // 50% failure rate trips the breaker
+    resetTimeout: 5000         // try to recover after 5s
+})
+breaker.fallback(() =&gt; ({ msg: 'B is down, using cache' }))</div>
+                <p>
+                    Then load-test it. You'll see — without the breaker, A's response gets dragged to 3 seconds; with the breaker, A immediately returns the fallback and stops getting dragged down by B.
+                </p>
+            </div>
+
+            <h2>🔗 Follow-up questions</h2>
+
+            <div class="related-questions">
+                <h3>Related questions to explore:</h3>
+                <a href="question.html?q=13">Q13: What happens after you type a URL?</a>
+                <a href="question.html?q=16">Q16: Why are there so many moving parts behind a simple feature?</a>
+                <a href="question.html?q=20">Q20: Why can caching improve performance so much?</a>
+                <a href="question.html?q=21">Q21: Why use a message queue?</a>
+                <a href="question.html?q=22">Q22: Why do load balancing?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>The six-piece kit isn't a flex — it's six kinds of brakes on uncertainty</h3>
+                <p>
+                    Engineering systems have a startling analogue in human society: <strong>the bigger the scale, the more you need "shock absorbers"</strong>.
+                </p>
+                <p>
+                    Caching = memory (don't start from scratch every time);<br>
+                    Queues = queuing up (turn a burst into an order);<br>
+                    Load balancing = division of labor (don't let one person carry it all);<br>
+                    Rate limiting = rationing (limited resources demand restraint);<br>
+                    Degradation = priority (protect the critical first);<br>
+                    Circuit breaking = isolation (a burning room needs its door closed).
+                </p>
+                <p>
+                    This is almost the shared pattern of every <strong>complex social system</strong> — hospital triage, airport security, bank queue numbers, power grid rationing, tiered pandemic response. Once you can see these abstract structures on a single architecture diagram, you start to understand: <strong>"engineering" is essentially "how to make reliable things in an uncertain world"</strong>.
+                </p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>
+                So — why do large systems always talk about this six-piece kit?
+            </p>
+
+            <div class="highlight-box">
+                Because once scale kicks in, <strong>certainty becomes a luxury</strong>.<br><br>
+                These six pieces are six brakes, six buffers, six insurance policies engineers install on the system.<br>
+                They don't solve the business problem — they solve the "can this business survive in the real world?" problem.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=18" class="btn">Keep exploring Q18 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q30: Why do so many technical plans look great on a whiteboard but underwhelm in production?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q30.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q30.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q30.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-4">
+            <div class="level-badge">⚖️ Layer 4 · The Senior Engineer's View</div>
+            <h1>Why do so many technical plans look great on a whiteboard but underwhelm in production?</h1>
+            <p class="subtitle">The whiteboard shows "intent" — production shows "reality"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 The ordinary user's view: why does this matter?</h2>
+
+            <p>At a technical review, an engineer draws a beautiful architecture diagram on the whiteboard:</p>
+
+            <div class="diagram-box">
+                Client → CDN → Gateway → Microservice cluster → Cache → Database<br>
+                <em>(Clean arrows, tidy layers, looks bulletproof.)</em>
+            </div>
+
+            <p>The plan is approved. The code gets written. It passes in staging. On launch day, ops looks at the dashboards:</p>
+
+            <ul>
+                <li>Gateway P99 suddenly spikes to 3 seconds</li>
+                <li>Cache hit rate is only 40% (expected: 95%)</li>
+                <li>Database CPU is pinned</li>
+                <li>One microservice is stuck in GC pauses</li>
+                <li>There's an old service on the call path that "wasn't in the diagram" — and it's dragging everything down</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>The whiteboard captures "design intent." Production runs "physical reality."</strong> Between them sit a hundred things you can't see on the whiteboard: real data distributions, real traffic shapes, real hardware, real concurrency, real failures, real other systems.
+            </div>
+
+            <p>The core of this layer: <strong>what you learn on paper is shallow — true knowledge only comes from going live.</strong></p>
+
+            <h2>🧩 Peel it back, layer by layer</h2>
+
+            <ol>
+                <li>What does the whiteboard plan leave out?</li>
+                <li>Where does production diverge from staging?</li>
+                <li>Why does the fourth 9 come down to "luck"?</li>
+                <li>How do you drag a plan from paper into production?</li>
+            </ol>
+
+            <h2>🎯 One layer at a time</h2>
+
+            <h3 class="section-user">User layer: only the outcome matters</h3>
+
+            <p>What the user sees is the "translated" version of your whiteboard plan — a product that either opens or doesn't, is fast or slow, stable or shaky. No matter how pretty the whiteboard is, one 5xx and they vote with their feet.</p>
+
+            <h3 class="section-code">Implementation layer: starting to understand the machinery</h3>
+
+            <p>The things skipped on the whiteboard tend to hide in the code as "details":</p>
+
+            <div class="code-block">Whiteboard: service.call(request)
+
+Reality:
+  try {
+      // Serialization overhead?
+      // Timeout — how long?
+      // Retry strategy? Are retries idempotent?
+      // Circuit breaker? Graceful degradation?
+      // Rate limiting?
+      // Context propagation? TraceID?
+      // Logs? Metrics?
+      // Error handling? Error code conventions?
+      // Cache penetration / breakdown / avalanche?
+      // Distributed locks?
+      response = service.call(request);
+  } catch (TimeoutException e) {
+      // Fallback? Degrade? Return stale data? Fail outright?
+  } catch (Exception e) {
+      // Unknown exception — what now?
+  }</div>
+
+            <p>One line on the whiteboard, a hundred lines in code — and every one of those lines is a place things can go wrong.</p>
+
+            <h3 class="section-system">System layer: seeing the full path</h3>
+
+            <p>The "hidden participants" whiteboard plans usually ignore:</p>
+
+            <div class="diagram-box">
+                <span class="step-box">Network jitter</span>
+                <span class="step-box">DNS flakiness</span>
+                <span class="step-box">JVM GC</span>
+                <br>
+                <span class="step-box">Clock drift</span>
+                <span class="step-box">Cold cache</span>
+                <span class="step-box">Disk IO</span>
+                <br>
+                <span class="step-box">Noisy neighbors</span>
+                <span class="step-box">Expired certs</span>
+                <span class="step-box">Config drift</span>
+            </div>
+
+            <p>None of these show up on the whiteboard — but any one of them can be the root cause of your next production incident.</p>
+
+            <h3 class="section-tradeoff">Trade-off layer: why is it designed this way?</h3>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Whiteboard plan</h4>
+                    <p>✅ Clean logic<br>✅ Covers the happy path<br>✅ Clear component roles<br>❌ Assumes the network is always up<br>❌ Assumes data is evenly distributed<br>❌ Assumes components are always available<br>❌ Ignores canary, monitoring, rollback</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Production plan</h4>
+                    <p>✅ Timeouts / retries / circuit breakers<br>✅ Canary rollout<br>✅ Monitoring & alerts<br>✅ Rollback playbook<br>✅ Degradation paths<br>✅ Capacity planning<br>❌ 5–10× the complexity of the whiteboard</p>
+                </div>
+            </div>
+
+            <h2>📉 SLOs and "Error Budget": the fourth 9 is luck</h2>
+
+            <p>Google's SRE book has a striking observation: <strong>going from 99.9% to 99.99% (the fourth 9) costs 10× more; from 99.99% to 99.999%, another 10×. The last sliver often <em>isn't architecture — it's luck</em></strong> — because at that point you can't control third parties, human error, data-center power outages, or someone cutting the fiber with a backhoe.</p>
+
+            <div class="code-block">Availability vs annual allowed downtime:
+
+  99%       →   3.65 days    (easy)
+  99.9%     →   8.77 hours   (doable if you try)
+  99.99%    →   52.6 minutes (needs a real SRE team)
+  99.999%   →   5.26 minutes (needs massive engineering investment)
+  99.9999%  →   31.5 seconds (nearly impossible — luck-dependent)
+
+Each extra 9: cost ×10, complexity ×10, marginal benefit ×0.1</div>
+
+            <div class="callout callout--warning">
+                <strong>Myth-buster:</strong> when a PM says "we want 100% availability," what they're really saying is "I don't understand what that sentence costs." Your job isn't to promise 100% — your job is to <strong>tell them roughly what each 9 costs</strong>.
+            </div>
+
+            <h2>🛠️ From whiteboard to production: four things that make a plan real</h2>
+
+            <h3>1. Canary rollout</h3>
+
+            <p>Never let a new plan go from 0 to 100% overnight. A sane cadence:</p>
+
+            <div class="code-block">0.1% traffic → watch for 30 minutes
+1%   traffic → watch for 2 hours
+10%  traffic → watch for 24 hours
+50%  traffic → watch for 3 days
+100% traffic → only now is it truly "live"</div>
+
+            <h3>2. Monitoring + alerts</h3>
+
+            <p>The four key metric families (Google's "four golden signals"):</p>
+
+            <ul>
+                <li><strong>Latency</strong>: P50 / P95 / P99 percentiles</li>
+                <li><strong>Traffic</strong>: QPS / RPS</li>
+                <li><strong>Errors</strong>: error rate, error-code distribution</li>
+                <li><strong>Saturation</strong>: CPU / memory / disk / connection pools</li>
+            </ul>
+
+            <h3>3. Rollback playbook</h3>
+
+            <p>Rollback must be faster and more reliable than the rollout. Rules:</p>
+
+            <ul>
+                <li>Non-reversible changes need extra caution (e.g. incompatible DB schema changes)</li>
+                <li>The rollback button has to be one click — no hidden steps</li>
+                <li>The rollback itself needs monitoring — rollbacks can fail too</li>
+            </ul>
+
+            <h3>4. Postmortems</h3>
+
+            <p>Every production incident is a whiteboard plan's blind spot revealing itself. Mature teams do <strong>blameless postmortems</strong>:</p>
+
+            <ul>
+                <li>Don't chase who to blame — chase which part of the system is broken</li>
+                <li>The output isn't "XXX will be more careful next time" — it's "we'll change this process"</li>
+                <li>Every action item has an owner, a deadline, and an acceptance criterion</li>
+            </ul>
+
+            <h2>💥 Real case: Knight Capital's 45 minutes</h2>
+
+            <p>On August 1, 2012, the US brokerage Knight Capital rolled out a code change. On the whiteboard it was perfect — a new high-frequency trading algorithm.</p>
+
+            <p>But during deployment, an engineer forgot to push the new code to 1 of 8 servers. That one server kept running the old, deprecated code — and the old code reused an old flag that the new code had repurposed. That flag flipped an "infinite-loop order placement" branch on.</p>
+
+            <p>In 45 minutes, Knight Capital lost <strong>$440 million</strong>, the stock cratered 75% that day, and the company was acquired a few months later.</p>
+
+            <div class="highlight-box">
+                <strong>The words "deployment failure" don't appear on any whiteboard.</strong> But in the real world, almost every serious incident traces back to the same thing: "we assumed it would work."
+            </div>
+
+            <h2>🐋 Real case: Twitter's Fail Whale era</h2>
+
+            <p>From 2007 to 2010, Twitter went down almost every day. That "fail whale" icon became a generational memory. Cause: their whiteboard architecture (a pretty Rails monolith) simply gave out as traffic grew exponentially.</p>
+
+            <p>Twitter spent a full three years rebuilding: splitting services, moving to the JVM, rewriting core components, introducing Kafka, adopting Manhattan for distributed storage. Not one of those decisions was foreseeable on a whiteboard — every one of them came from "getting slapped by production."</p>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Run a "whiteboard vs production" check</h3>
+                <p>Take a technical plan you built recently and answer these six questions:</p>
+                <ol>
+                    <li>What happens if an upstream service times out?</li>
+                    <li>What happens if a downstream returns bad data?</li>
+                    <li>What happens if traffic 10× overnight?</li>
+                    <li>If you need to roll back, how long does it take?</li>
+                    <li>For the first 24 hours after launch, which 3 metrics will you stare at?</li>
+                    <li>If something breaks at 3am, how does the on-call person find it?</li>
+                </ol>
+                <p>If more than 3 out of 6 stump you, your plan is still just a "whiteboard plan" — not a "production plan."</p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=26">Q26: Why is there no silver bullet in system design?</a>
+                <a href="question.html?q=27">Q27: An advanced architecture isn't always right for your current business</a>
+                <a href="question.html?q=29">Q29: How do you trade off consistency, performance, and availability?</a>
+                <a href="question.html?q=31">Q31: Why does stability matter more than showing off?</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>The whiteboard shows "intent" — production runs "reality"</h3>
+                <p>Why is the deepest difference between a senior engineer and a beginner not "design skill" but "humility toward reality"?</p>
+                <p>Because the beginner believes in the whiteboard — they think once the design is drawn and the code is written, it's done. The senior engineer knows the whiteboard is the "starting point," not the "finish line." What actually makes a system run is all the things that <strong>aren't on the whiteboard, aren't in the code, and can only be learned through the bloody lessons of production</strong>: circuit breakers, degradation, capacity, canaries, monitoring, rollbacks, drills, postmortems.</p>
+                <p>This isn't a technique — it's <strong>a kind of reverence for "real-world complexity"</strong> — admitting you can't think of everything up front, admitting the system will fail in ways you never imagined, admitting the real world is always rougher, messier, and sneakier than your model of it.</p>
+                <p>The grandmaster's view: <strong>don't worship the design, don't look down on ops — treat every production incident as free tuition from the universe, and slowly you go from "the person who draws diagrams" to "the person who builds systems."</strong></p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>Why do so many technical plans look great on a whiteboard but underwhelm in production?</p>
+
+            <div class="highlight-box">
+                <strong>Because the whiteboard is 2D — reality is multi-dimensional.</strong><br><br>
+                The whiteboard only draws the "logic dimension." Reality also has: the network dimension, the timing dimension, the failure dimension, the concurrency dimension, the evolution dimension, the organizational dimension...<br><br>
+                So a real technical review shouldn't stop at the whiteboard. It should also ask: <strong>what happens when it goes live? What happens when it breaks? What happens when traffic 10×? What happens after it's been running for a year?</strong><br><br>
+                Answer those questions well, and only then does the whiteboard plan earn the right to become a production plan.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=31" class="btn">Continue to Q31 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

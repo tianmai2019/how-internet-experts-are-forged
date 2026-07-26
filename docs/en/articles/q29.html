@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q29: Why is there always a trade-off between consistency, performance, availability, cost, and complexity?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="en" href="/en/articles/q29.html">
+    <link rel="alternate" hreflang="zh-CN" href="/articles/q29.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q29.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to home</a>
+
+        <div class="article-header article-header--level-4">
+            <div class="level-badge">⚖️ Layer 4 · The Senior Engineer's View</div>
+            <h1>Why is there always a trade-off between consistency, performance, availability, cost, and complexity?</h1>
+            <p class="subtitle">From CAP to PACELC — architecture decisions never have an optimal answer, only "the least bad one under these constraints"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 An ordinary user's view: why does this matter?</h2>
+
+            <p>Imagine you're the architect at a bank. Your boss hands you five requirements:</p>
+
+            <ul>
+                <li>Transfers must "arrive instantly" (performance)</li>
+                <li>Transfer data must be "correct down to the last cent" (consistency)</li>
+                <li>The system must be "7×24, never down" (availability)</li>
+                <li>Cost must be "as low as possible" (cost)</li>
+                <li>The architecture must be "simple — anyone can understand it" (complexity)</li>
+            </ul>
+
+            <p>All five sound reasonable. But anyone who knows a little about distributed systems already sees it: <strong>satisfying all five at the same time is impossible.</strong></p>
+
+            <p>Math doesn't allow it. Physics doesn't allow it. This isn't "our tech isn't good enough yet" — it's a <strong>basic constraint of the universe</strong>. The speed of light is finite. Machines fail. Networks partition.</p>
+
+            <div class="highlight-box">
+                <strong>So the architect's core job isn't "achieve every goal" — it's <em>choose which goal to give up</em>.</strong> That's the most painful and most important lesson at this layer.
+            </div>
+
+            <h2>🧩 Breaking it down</h2>
+
+            <ol>
+                <li>Why are these 5 dimensions inherently in conflict?</li>
+                <li>What is the CAP theorem actually saying?</li>
+                <li>What does PACELC add on top?</li>
+                <li>For common business scenarios, how should you make the trade-off?</li>
+            </ol>
+
+            <h2>🎯 Peel it back, layer by layer</h2>
+
+            <h3 class="section-user">The user layer: only the outcome matters</h3>
+
+            <p>Users expect the system to be "fast and accurate and never down and free and simple." Users don't need to understand why that's impossible — users only know they've hit these pain points:</p>
+
+            <ul>
+                <li>The transfer says "success," but the other side gets it an hour later → "consistency" was sacrificed</li>
+                <li>The page spins during a flash sale → "performance" was sacrificed</li>
+                <li>System maintenance at 3 AM → "availability" was sacrificed</li>
+                <li>Free users queue, paid users get a fast lane → "cost" is being traded off</li>
+                <li>A 500-page manual → "complexity" out of control</li>
+            </ul>
+
+            <h3 class="section-code">The implementation layer: seeing the machinery</h3>
+
+            <p>Let's look at a concrete example — you place an order on an e-commerce site, and five things have to happen at once:</p>
+
+            <div class="code-block">1. Deduct inventory
+2. Deduct balance
+3. Create order
+4. Send message to logistics
+5. Update user loyalty points</div>
+
+            <p>Put it all in a single database, one transaction wraps it up — simple, consistent, but performance is capped and availability rests on a single machine.</p>
+
+            <p>Split it distributed — performance goes up, it scales, but how do you guarantee consistency?</p>
+
+            <div class="code-block">Option A: Distributed transaction (2PC)
+  Pro: strong consistency
+  Con: slow, blocking, poor availability
+
+Option B: Saga pattern
+  Pro: good performance, high availability
+  Con: only eventual consistency, compensation logic is complex
+
+Option C: TCC (Try-Confirm-Cancel)
+  Pro: flexible
+  Con: heavy refactor cost, business code gets complicated
+
+Option D: Reliable messaging + idempotency
+  Pro: decoupled, good performance
+  Con: business side has to accept "eventual consistency"</div>
+
+            <h3 class="section-system">The system layer: seeing the full path</h3>
+
+            <p>Draw the 5 dimensions as a pentagon, and you'll see them pulling against each other:</p>
+
+            <div class="diagram-box">
+              Consistency ←→ Performance<br>
+              ↑          ↓<br>
+              Availability ←→ Complexity<br>
+              ↖──── Cost ────↗<br>
+              <br>
+              <em>Pull any one corner up, and the others weaken</em>
+            </div>
+
+            <h3 class="section-tradeoff">The trade-off layer: why is it designed this way?</h3>
+
+            <h2>📐 The CAP theorem: the three-body problem of distributed systems</h2>
+
+            <p>The CAP theorem (Eric Brewer, 2000) says: <strong>when a network partition happens, you can only pick one of consistency (C) or availability (A).</strong></p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>CP systems (pick consistency)</h4>
+                    <p>During a partition, they'd rather refuse service than return possibly-wrong data.<br><br>Typical: ZooKeeper, etcd, traditional banking cores.<br><br>Cost: unavailable during partitions.</p>
+                </div>
+                <div class="compare-card">
+                    <h4>AP systems (pick availability)</h4>
+                    <p>During a partition, respond first — reconcile the data later.<br><br>Typical: DynamoDB, Cassandra, most social systems.<br><br>Cost: you might read stale data.</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>Myth-busting:</strong> CAP is often misread as "pick two out of three." In reality, when the network is <em>fine</em>, both C and A can hold. CAP only forces a two-way choice at the moment a <strong>partition actually happens</strong>. So the right question isn't "CA or CP?" — it's "when a partition happens, how do you want the system to behave?"
+            </div>
+
+            <h2>🧮 PACELC: a more honest picture</h2>
+
+            <p>Daniel Abadi proposed PACELC in 2010, expanding CAP into two scenarios:</p>
+
+            <div class="code-block">If a Partition happens:
+  A (available) vs C (consistent)   ← classic CAP
+
+Else:
+  L (low latency) vs C (consistent) ← the real trade-off most of the time</div>
+
+            <p>PACELC tells us: <strong>even without a partition, you still trade off between "latency" and "consistency"</strong> — because guaranteeing strong consistency means syncing multiple replicas, syncing means waiting, and waiting means slow.</p>
+
+            <p>Classified with PACELC:</p>
+
+            <ul>
+                <li><strong>PA/EL</strong>: pick availability under partition, low latency otherwise — DynamoDB, Cassandra</li>
+                <li><strong>PA/EC</strong>: pick availability under partition, consistency otherwise — MongoDB (configurable)</li>
+                <li><strong>PC/EC</strong>: pick consistency under partition, consistency otherwise too — traditional RDBs, Spanner</li>
+                <li><strong>PC/EL</strong>: pick consistency under partition, low latency otherwise — pretty rare</li>
+            </ul>
+
+            <h2>💰 Add "cost" to the picture</h2>
+
+            <p>Textbooks only talk about CAP, but in the real world, cost is the reality that trumps everything:</p>
+
+            <div class="code-block">Want 3-region disaster recovery (high availability)
+  → 3× data center cost + inter-region private lines + data sync
+  → cost × 5
+
+Want strong consistency across replicas (Spanner-grade)
+  → need atomic clocks, majority consensus
+  → cost × 10
+
+Want P99 &lt; 10ms (extreme performance)
+  → in-memory DB + edge deployment + CDN
+  → cost × 3
+
+Want 99.999% availability (5 minutes of downtime per year)
+  → every additional 9 doubles the cost
+  → from 99.9% to 99.999%, cost × 30-100</div>
+
+            <div class="highlight-box">
+                <strong>There's a line in the Google SRE book:</strong> "100% availability is the wrong goal. Because the cost of reaching 100% far exceeds the value it brings to users."
+            </div>
+
+            <h2>🎯 The scenario decides the choice</h2>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Banking core</h4>
+                    <p>Pick: CP + strong consistency + high cost<br>Give up: performance, complexity<br>Why: not a single cent can be wrong</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Social feed</h4>
+                    <p>Pick: AP + eventual consistency + low cost<br>Give up: strong consistency<br>Why: seeing a like 1 second late is fine</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Flash sale</h4>
+                    <p>Pick: performance + local strong consistency<br>Give up: global consistency, cost control<br>Why: inventory can't oversell — everything else is tolerable</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Big-data analytics</h4>
+                    <p>Pick: low cost + eventual consistency<br>Give up: performance, real-time<br>Why: a few minutes late doesn't affect decisions</p>
+                </div>
+            </div>
+
+            <h2>✋ Try it yourself</h2>
+
+            <div class="try-box">
+                <h3>Draw a "trade-off radar chart"</h3>
+                <p>Take a system you're building (or recently built), and score it 1-5 on these 5 dimensions:</p>
+                <ol>
+                    <li>Consistency requirement</li>
+                    <li>Performance requirement (P99 latency)</li>
+                    <li>Availability requirement (how many 9s)</li>
+                    <li>Cost constraint</li>
+                    <li>Acceptable complexity</li>
+                </ol>
+                <p>Rule: <strong>the total cannot exceed 15.</strong> If it does, you're kidding yourself. If you scored 5 on all of them, you haven't made a real trade-off yet.</p>
+                <p>This exercise forces "I want it all" to become "what do I want the most?"</p>
+            </div>
+
+            <h2>🔗 Related questions</h2>
+
+            <div class="related-questions">
+                <h3>Explore related questions:</h3>
+                <a href="question.html?q=23">Q23: How do large internet systems support billions of users?</a>
+                <a href="question.html?q=26">Q26: Why is there no silver bullet in system design?</a>
+                <a href="question.html?q=30">Q30: Looks great on the whiteboard, not always worth it in production</a>
+            </div>
+
+            <h2>👑 The Grandmaster's View: how does this shape reality?</h2>
+
+            <div class="emperor-box">
+                <h3>Architecture decisions never have an optimal answer — only "the least bad one under these constraints"</h3>
+                <p>Junior engineers keep asking for the "best practice," as if some universal, one-size-fits-all answer really exists out there. Mid-level engineers start admitting "it depends on the scenario." By the senior stage, you realize what you're really doing is one thing: <strong>translating "what I want" into "what price I'm willing to pay."</strong></p>
+                <p>Life works the same way. You want career success, a happy family, good health, free time, financial freedom — each one alone is reasonable, but nobody has ever gotten all of them at once. Truly mature people don't try to have it all. They <strong>look at themselves honestly, and pick one or two things as the main thread</strong>.</p>
+                <p>The grandmaster's view is this: <strong>don't waste time on "how to get everything" — put the work into "how to give things up gracefully." Giving up isn't failure. It's respecting reality, and focusing on what matters.</strong></p>
+            </div>
+
+            <h2>✨ Back to the question</h2>
+
+            <p>Why is there always a trade-off between consistency, performance, availability, cost, and complexity?</p>
+
+            <div class="highlight-box">
+                <strong>Because they're all line items on the same budget.</strong><br><br>
+                Your budget is finite — machines, headcount, time, attention. Spend more on one dimension, and you inevitably spend less on another. This isn't a flaw. It's <strong>order under constraint</strong>.<br><br>
+                A real architect isn't someone who "invents magic that cancels the trade-off" — they're someone who <strong>makes trade-offs clearly, consciously, and defensibly</strong>.<br><br>
+                When you can explain "why I sacrificed this dimension," you've left the beginner zone.
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← Back to the knowledge map</a>
+                <a href="question.html?q=30" class="btn">Continue to Q30 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 How Internet Grandmasters Are Forged</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>
