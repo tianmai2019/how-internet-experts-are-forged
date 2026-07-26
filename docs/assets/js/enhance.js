@@ -690,12 +690,62 @@
     };
 
     // ==========================================
+    // 8. 导航头（左返回上一页 · 右返回首页）
+    // 把每篇文章原有的单个 .back-btn 包成"上一页 | 首页"的双向导航
+    // ==========================================
+    const NavHeader = {
+        init: function() {
+            const btn = document.querySelector('.back-btn');
+            if (!btn) return;
+
+            // 首页 / 已经包过的页面：跳过
+            if (btn.closest('.nav-header')) return;
+
+            // 计算"返回首页"的相对路径（跟原按钮 href 保持一致）
+            const homeHref = btn.getAttribute('href');
+
+            const nav = document.createElement('div');
+            nav.className = 'nav-header';
+
+            // 左：上一页
+            const prev = document.createElement('a');
+            prev.className = 'nav-back-prev';
+            prev.href = '#';
+            prev.innerHTML = '← 上一页';
+            prev.setAttribute('aria-label', '返回上一页');
+            prev.addEventListener('click', function(e) {
+                e.preventDefault();
+                // 只有站内跳转来的才走 history.back，否则回首页
+                // （避免书签 / 外部链接直接打开时按下"上一页"跳到无关站点或空白）
+                const ref = document.referrer;
+                const sameOrigin = ref && ref.indexOf(window.location.origin) === 0;
+                if (sameOrigin && window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    window.location.href = homeHref;
+                }
+            });
+
+            // 右：首页（复用原按钮的样式和 href）
+            btn.classList.add('nav-back-home');
+            btn.textContent = '🏠 首页';
+
+            // 用 nav 替换原按钮位置，再把上一页 + 原按钮塞进去
+            const parent = btn.parentNode;
+            parent.replaceChild(nav, btn);
+            nav.appendChild(prev);
+            nav.appendChild(btn);
+        }
+    };
+
+    // ==========================================
     // 初始化所有模块
     // ==========================================
     function init() {
         // 动态注入 side-toc.css
         injectSideTocCSS();
 
+        NavHeader.init();
         ThemeManager.init();
         BackToTop.init();
         ReadingProgress.init();

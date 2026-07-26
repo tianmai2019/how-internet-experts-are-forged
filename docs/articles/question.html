@@ -162,9 +162,11 @@
         // 检查是否有已发布的文章
         function checkPublished(id) {
             if (PUBLISHED[id]) {
-                // 跳转到真实文章
+                // 跳转到真实文章 —— 用 replace 而不是 href，
+                // 这样中转页不会留在浏览器历史里，
+                // 从主文章跳过来后再点"返回上一页"能直接回到主文章。
                 const filename = `q${String(id).padStart(2, '0')}.html`;
-                window.location.href = filename;
+                window.location.replace(filename);
                 return true;
             }
             return false;

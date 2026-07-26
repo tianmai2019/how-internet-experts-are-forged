@@ -166,6 +166,51 @@ h1 {
     color: var(--text-inverse);
 }
 
+/* 头部双向导航：JS 运行时把单个 .back-btn 包成"上一页 | 首页" */
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.nav-header .back-btn,
+.nav-header .nav-back-prev {
+    margin-bottom: 0;   /* 在 nav 里就不需要 margin 了 */
+}
+
+.nav-back-prev {
+    display: inline-block;
+    padding: 12px 24px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 2px solid var(--border-color);
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.nav-back-prev:hover {
+    background: var(--bg-secondary);
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+/* 移动端：按钮胶囊变紧凑，避免头部太占屏 */
+@media (max-width: 600px) {
+    .nav-header {
+        gap: 8px;
+    }
+    .nav-header .back-btn,
+    .nav-header .nav-back-prev {
+        padding: 8px 16px;
+        font-size: 0.92rem;
+    }
+}
+
 .question {
     font-size: 1.3rem;
     font-weight: 600;

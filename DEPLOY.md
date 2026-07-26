@@ -3,13 +3,15 @@
 
 本项目的静态站点部署到 **Cloudflare Pages**（国内可直达，免费无限流量），代码同时备份到 **GitHub** 和 **Gitee**。
 
+- **🌐 生产站点**：https://how-internet-experts-are-forged.pages.dev
+
 ---
 
 ## 🚀 部署方案概览
 
 | 目标 | 用途 | 状态 |
 |------|------|------|
-| **Cloudflare Pages** | 生产站点，自动从 GitHub 部署 | 待启用 |
+| **Cloudflare Pages** | 生产站点，自动从 GitHub 部署 | ✅ 已上线 |
 | **GitHub** | 主代码仓库 + Cloudflare 触发源 | ✅ `tianmai2019/how-internet-experts-are-forged` |
 | **Gitee** | 国内代码备份 | ✅ `xiaolinye/how-internet-experts-are-forged` |
 
@@ -17,45 +19,31 @@
 
 ---
 
-## 📦 首次部署：Cloudflare Pages
+## 📦 首次部署：Cloudflare Pages（已完成，供未来参考）
 
 ### 1. 注册 Cloudflare 账号
 
 - 访问 https://dash.cloudflare.com/sign-up 用邮箱注册
 - 不需要备案、不需要信用卡
-- 登录后左侧菜单找 **Workers & Pages**
 
 ### 2. 创建 Pages 项目
 
-- 点 **Create application** → **Pages** → **Connect to Git**
-- 授权 Cloudflare 访问你的 GitHub（首次会跳到 GitHub 授权页）
-- 选中仓库 `tianmai2019/how-internet-experts-are-forged`
-- 点 **Begin setup**
+- 左侧 **Compute** → **Workers & Pages** → 右上 **Create application**
+- 页面推的是 Workers；**点最下方小字 "Looking to deploy Pages? Get started"** 进入 Pages 分支
+- **Connect to Git** → 授权 GitHub → 选中仓库
 
 ### 3. 构建配置
 
-填写以下字段（**只有 output directory 是关键项**）：
-
-| 字段 | 填写 |
+| 字段 | 填 |
 |------|------|
 | Production branch | `main` |
-| Framework preset | **None**（保留空） |
-| Build command | **留空**（我们没有构建步骤） |
+| Framework preset | **None** |
+| Build command | **留空** |
 | Build output directory | **`docs`** ← 关键 |
 | Root directory (advanced) | 留空 |
 | Environment variables | 不需要 |
 
-点 **Save and Deploy**。第一次部署约 1-2 分钟。
-
-### 4. 拿到站点 URL
-
-部署完成后会拿到默认域名，类似：
-
-```
-https://how-internet-experts-are-forged.pages.dev
-```
-
-这个域名**国内可直连**（无需备案），HTTPS 已自动配置。
+**Save and Deploy**，1-2 分钟后拿到 `*.pages.dev` 域名。
 
 ---
 
@@ -141,4 +129,4 @@ Cloudflare Pages 上 Giscus 会正常工作，无需额外配置。如果哪天�
 
 - **GitHub 主仓库**：https://github.com/tianmai2019/how-internet-experts-are-forged
 - **Gitee 备份仓库**：https://gitee.com/xiaolinye/how-internet-experts-are-forged
-- **生产站点**：待启用后填入 Cloudflare 分配的 URL
+- **生产站点**：https://how-internet-experts-are-forged.pages.dev
