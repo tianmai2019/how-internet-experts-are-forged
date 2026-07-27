@@ -68,6 +68,101 @@
             margin: 0;
         }
 
+        .layer-example {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(102, 126, 234, 0.06);
+            border-left: 3px solid rgba(102, 126, 234, 0.4);
+            border-radius: 6px;
+            color: #4B5563;
+            font-size: 0.88rem;
+            line-height: 1.55;
+        }
+        .layer-example b { color: #667eea; font-weight: 600; }
+
+        .disclaimer {
+            margin-top: 24px;
+            padding: 16px 20px;
+            background: #FFFBEB;
+            border: 1px dashed #F59E0B;
+            border-radius: 10px;
+            color: #78350F;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+        .disclaimer b { color: #B45309; }
+
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .persona {
+            padding: 20px;
+            background: #F9FAFB;
+            border-radius: 12px;
+            border-top: 4px solid #764ba2;
+        }
+        .persona h4 {
+            margin: 0 0 8px 0;
+            color: #1F2937;
+            font-size: 1rem;
+        }
+        .persona-path {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 6px 0;
+        }
+        .persona p {
+            color: #6B7280;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .track-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .track {
+            position: relative;
+            padding: 18px;
+            background: #F9FAFB;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .track:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        }
+        .track h4 {
+            margin: 0 0 6px 0;
+            color: #1F2937;
+            font-size: 1rem;
+        }
+        .track p {
+            color: #6B7280;
+            font-size: 0.85rem;
+            line-height: 1.55;
+            margin: 0;
+        }
+        .track-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 2px 8px;
+            background: #E5E7EB;
+            color: #6B7280;
+            font-size: 0.72rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
         .btn {
             display: inline-block;
             padding: 14px 32px;
@@ -161,7 +256,7 @@
     <div class="container">
         <header>
             <h1>How Internet Grandmasters Are Forged</h1>
-            <p class="subtitle">From clueless clicker to internet grandmaster — one ascension at a time</p>
+            <p class="subtitle">A model anyone can follow — how ordinary people grow to understand the internet</p>
             <p style="margin-top: 15px; opacity: 0.85;">From using the internet, to understanding it, to seeing the world behind it</p>
         </header>
 
@@ -175,6 +270,35 @@
         </div>
 
         <div class="card">
+            <h2>👥 Who are you? How should you read this?</h2>
+            <p class="card-intro" style="margin-bottom: 8px;">
+                Different readers care about different layers. Find yourself first — then decide where to dig in.
+            </p>
+            <div class="persona-grid">
+                <div class="persona">
+                    <h4>🙋 Ordinary internet user / curious reader</h4>
+                    <div class="persona-path">Focus on: layers 1 – 3</div>
+                    <p>Get the "what actually happens when I click" part first. From layer 4 onward it's engineering detail — skim it.</p>
+                </div>
+                <div class="persona">
+                    <h4>💻 Career switcher / new grad / junior dev</h4>
+                    <div class="persona-path">Focus on: full 1 – 5</div>
+                    <p>Use the model to locate yourself. It shows you what "the next layer" looks like — so you're not just writing code with no idea where you're heading.</p>
+                </div>
+                <div class="persona">
+                    <h4>📊 PM / Ops / Project manager</h4>
+                    <div class="persona-path">Focus on: layers 1, 3, 4, 5</div>
+                    <p>You can skim the coding details in layer 2. What matters more is request flow, engineering trade-offs, and platform mechanics — the things that show up in cross-team conversations.</p>
+                </div>
+                <div class="persona">
+                    <h4>🤖 People trying to understand the AI era</h4>
+                    <div class="persona-path">Focus on: layer 6, then back-fill 3, 4, 5</div>
+                    <p>Start by seeing what AI actually changed on top of the classic internet — then work backwards to the fundamentals. It sticks faster that way.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
             <h2>🗺️ Six layers of seeing</h2>
             <div class="layers">
                 <div class="layer">
@@ -182,6 +306,9 @@
                     <div class="layer-content">
                         <h3>🎯 The User's View</h3>
                         <p>The internet as a world that responds to you — you see results, not reasons</p>
+                        <div class="layer-example">
+                            🌰 <b>Everyday example</b>: You tap "order" in a food-delivery app, and thirty minutes later a hot meal shows up. You care whether it arrives — not which servers routed the order or how many tables the database touched.
+                        </div>
                     </div>
                 </div>
                 <div class="layer">
@@ -189,6 +316,9 @@
                     <div class="layer-content">
                         <h3>🔨 The Beginner Coder's View</h3>
                         <p>The internet as something people build — frontend, backend, database, each doing their part</p>
+                        <div class="layer-example">
+                            🌰 <b>Everyday example</b>: One log-in on any site — the frontend draws the input fields, the backend verifies your credentials, the database stores your account. Three jobs, usually three different people. Together, they add up to "you can log in."
+                        </div>
                     </div>
                 </div>
                 <div class="layer">
@@ -196,6 +326,9 @@
                     <div class="layer-content">
                         <h3>🌊 The Engineer's View</h3>
                         <p>The internet as a system in motion — you can see the whole request path</p>
+                        <div class="layer-example">
+                            🌰 <b>Everyday example</b>: One message you send in a chat app — it leaves your phone, hits a cell tower, crosses the carrier network, arrives at the company's gateway, is handled by a cluster of servers, and finally lands on your friend's phone. "Instant" is really a relay race across thousands of miles.
+                        </div>
                     </div>
                 </div>
                 <div class="layer">
@@ -203,6 +336,9 @@
                     <div class="layer-content">
                         <h3>⚖️ The Senior Engineer's View</h3>
                         <p>The internet as a system of trade-offs — engineering is choosing what to give up</p>
+                        <div class="layer-example">
+                            🌰 <b>Everyday example</b>: A video platform can't just keep adding servers forever (cost), so it rate-limits and caches. A payment system would rather be half a second slower than get a single cent wrong. Every experience is a compromise between performance, cost, and reliability.
+                        </div>
                     </div>
                 </div>
                 <div class="layer">
@@ -210,6 +346,9 @@
                     <div class="layer-content">
                         <h3>👑 The Grandmaster's View</h3>
                         <p>The internet as a system that shapes reality — how technology and society move each other</p>
+                        <div class="layer-example">
+                            🌰 <b>Everyday example</b>: A short-video app's recommendation algorithm decides what you see every day — which shapes your interests, your spending, even how you think. Technology stops being a tool and becomes an environment.
+                        </div>
                     </div>
                 </div>
                 <div class="layer">
@@ -217,8 +356,14 @@
                     <div class="layer-content">
                         <h3>💬 The AI-Era View</h3>
                         <p>The internet as a system you can talk to — where the deterministic and the probabilistic live side by side</p>
+                        <div class="layer-example">
+                            🌰 <b>Everyday example</b>: A search engine hands you ten links (deterministic retrieval). ChatGPT hands you an answer (probabilistic generation). One tells you where to look; the other just tells you. It's a leap in how humans and systems talk.
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="disclaimer">
+                💡 <b>A note before you go on</b>: These six layers are a map, not a staircase. Real growth is often out of order — some people only "get" the second layer after wrestling with trade-offs in the fourth. Others live happily in the first layer forever. <b>Don't force yourself to check them off in sequence. Find the layer you care about, and go deeper there.</b>
             </div>
             <div class="stats">
                 <div class="stat-item">
@@ -243,6 +388,48 @@
             </p>
             <a href="questions/00-question-map.html" class="btn btn-outline">📋 Question list</a>
             <a href="questions/knowledge-graph.html" class="btn">🗺️ Knowledge graph</a>
+        </div>
+
+        <div class="card">
+            <h2>🚪 Where to go from here</h2>
+            <p class="card-intro" style="margin-bottom: 8px;">
+                Building the big picture is just the start. Pick a direction you actually care about and dig in ——
+            </p>
+            <div class="track-grid">
+                <div class="track">
+                    <span class="track-badge">Coming soon</span>
+                    <h4>🌐 Networking</h4>
+                    <p>TCP/IP, HTTP, DNS, CDN — the plumbing that moves data across the planet.</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">Coming soon</span>
+                    <h4>🎨 Frontend</h4>
+                    <p>HTML/CSS/JS, React, performance — the craft behind every pixel a user sees.</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">Coming soon</span>
+                    <h4>⚙️ Backend</h4>
+                    <p>Services, databases, caches, message queues — the skeleton that holds millions of concurrent users up.</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">Coming soon</span>
+                    <h4>💡 Product thinking</h4>
+                    <p>User needs, UX, growth, monetization — going from "it works" to "people actually use it."</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">Coming soon</span>
+                    <h4>🔐 Security</h4>
+                    <p>Attack and defense, pentesting, cryptography, privacy — the parallel war being fought inside the internet.</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">Coming soon</span>
+                    <h4>🤖 AI / LLM applications</h4>
+                    <p>Prompts, RAG, agents, fine-tuning — the new engineering layer of the AI era.</p>
+                </div>
+            </div>
+            <p style="margin-top: 20px; color: #9CA3AF; font-size: 0.85rem; font-style: italic;">
+                📝 Deep dives for each direction are still being written. Let me know in the comments which one you'd like to see first.
+            </p>
         </div>
 
         <div class="card">

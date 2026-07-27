@@ -68,6 +68,103 @@
             margin: 0;
         }
 
+        .layer-example {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(102, 126, 234, 0.06);
+            border-left: 3px solid rgba(102, 126, 234, 0.4);
+            border-radius: 6px;
+            color: #4B5563;
+            font-size: 0.88rem;
+            line-height: 1.55;
+        }
+        .layer-example b { color: #667eea; font-weight: 600; }
+
+        .disclaimer {
+            margin-top: 24px;
+            padding: 16px 20px;
+            background: #FFFBEB;
+            border: 1px dashed #F59E0B;
+            border-radius: 10px;
+            color: #78350F;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+        .disclaimer b { color: #B45309; }
+
+        /* 人群指南 */
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .persona {
+            padding: 20px;
+            background: #F9FAFB;
+            border-radius: 12px;
+            border-top: 4px solid #764ba2;
+        }
+        .persona h4 {
+            margin: 0 0 8px 0;
+            color: #1F2937;
+            font-size: 1rem;
+        }
+        .persona-path {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 6px 0;
+        }
+        .persona p {
+            color: #6B7280;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* 分流出口 */
+        .track-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .track {
+            position: relative;
+            padding: 18px 18px 18px 18px;
+            background: #F9FAFB;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .track:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        }
+        .track h4 {
+            margin: 0 0 6px 0;
+            color: #1F2937;
+            font-size: 1rem;
+        }
+        .track p {
+            color: #6B7280;
+            font-size: 0.85rem;
+            line-height: 1.55;
+            margin: 0;
+        }
+        .track-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 2px 8px;
+            background: #E5E7EB;
+            color: #6B7280;
+            font-size: 0.72rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
         .btn {
             display: inline-block;
             padding: 14px 32px;
@@ -161,7 +258,7 @@
     <div class="container">
         <header>
             <h1>互联网大帝是如何炼成的</h1>
-            <p class="subtitle">互联小白如何渡劫飞升成帝</p>
+            <p class="subtitle">一套普通人也能看懂的互联网认知成长模型</p>
             <p style="margin-top: 15px; opacity: 0.85;">从使用互联网,到理解互联网,再到看见互联网背后的世界</p>
         </header>
 
@@ -175,6 +272,35 @@
         </div>
 
         <div class="card">
+            <h2>👥 你是谁？该怎么读？</h2>
+            <p class="card-intro" style="margin-bottom: 8px;">
+                不同身份的读者，关心的层级不一样。先对号入座，再决定往哪里深入。
+            </p>
+            <div class="persona-grid">
+                <div class="persona">
+                    <h4>🙋 普通网民 / 好奇的爱好者</h4>
+                    <div class="persona-path">重点看：第 1 ~ 3 层</div>
+                    <p>先搞懂"点一下之后，互联网到底发生了什么"。第 4 层之后偏工程细节，可略读。</p>
+                </div>
+                <div class="persona">
+                    <h4>💻 转行 / 应届 / 初级开发</h4>
+                    <div class="persona-path">重点看：完整 1 ~ 5 层</div>
+                    <p>用这套模型给自己定位，看清"下一层"该往哪走，避免只会写代码不知道往哪成长。</p>
+                </div>
+                <div class="persona">
+                    <h4>📊 产品 / 运营 / 项目经理</h4>
+                    <div class="persona-path">重点看：第 1、3、4、5 层</div>
+                    <p>弱化第 2 层的代码细节，重点理解请求链路、工程取舍和平台机制 —— 更贴合跨部门沟通。</p>
+                </div>
+                <div class="persona">
+                    <h4>🤖 想理解 AI 时代的人</h4>
+                    <div class="persona-path">重点看：第 6 层 + 反向补 3、4、5</div>
+                    <p>先看懂 AI 相对传统互联网变了什么，再倒回来补底层，理解得更快。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
             <h2>🗺️ 6层认知递进</h2>
             <div class="layers">
                 <div class="layer">
@@ -182,6 +308,9 @@
                     <div class="layer-content">
                         <h3>🎯 用户视角</h3>
                         <p>互联网是"会回应的世界" — 只看结果，不追问原理</p>
+                        <div class="layer-example">
+                            🌰 <b>身边例子</b>：点开外卖 App，下单几十分钟后热饭送到手 —— 你只关心"能不能吃"，不关心它经过了哪些服务器、走了多少张表。
+                        </div>
                     </div>
                 </div>
                 <div class="layer">
@@ -189,6 +318,9 @@
                     <div class="layer-content">
                         <h3>🔨 程序员入门视角</h3>
                         <p>互联网是"被构建的世界" — 理解前端、后端、数据库的分工</p>
+                        <div class="layer-example">
+                            🌰 <b>身边例子</b>：登录一次淘宝 —— 前端画出输入框，后端校验账号密码，数据库存储用户信息。三件事分别由三拨人写，合起来才叫"能登录"。
+                        </div>
                     </div>
                 </div>
                 <div class="layer">
@@ -196,6 +328,9 @@
                     <div class="layer-content">
                         <h3>🌊 工程师视角</h3>
                         <p>互联网是"流动的系统" — 看到完整请求链路</p>
+                        <div class="layer-example">
+                            🌰 <b>身边例子</b>：微信发一条消息 —— 从你手机出发，先过基站，再走运营商网络，到腾讯网关，被服务集群处理，再一路推到对方手机上。看似"秒到"，其实是一次跨越千里的接力。
+                        </div>
                     </div>
                 </div>
                 <div class="layer">
@@ -203,6 +338,9 @@
                     <div class="layer-content">
                         <h3>⚖️ 高级工程师视角</h3>
                         <p>互联网是"权衡的系统" — 理解工程中的取舍</p>
+                        <div class="layer-example">
+                            🌰 <b>身边例子</b>：短视频平台不能无限加服务器（成本），所以要限流、要缓存；支付宝宁可慢半秒也不能算错一分钱 —— 每个体验背后，都是性能、成本、稳定性之间的取舍。
+                        </div>
                     </div>
                 </div>
                 <div class="layer">
@@ -210,6 +348,9 @@
                     <div class="layer-content">
                         <h3>👑 大帝视角</h3>
                         <p>互联网是"塑造现实的系统" — 技术如何与社会互动</p>
+                        <div class="layer-example">
+                            🌰 <b>身边例子</b>：抖音的推荐算法决定了你每天看到什么内容，进而影响你的兴趣、消费、甚至认知边界。技术不再只是工具，它塑造了一整个信息环境。
+                        </div>
                     </div>
                 </div>
                 <div class="layer">
@@ -217,8 +358,14 @@
                     <div class="layer-content">
                         <h3>💬 AI时代视角</h3>
                         <p>互联网是"会对话的系统" — 理解确定性与概率性的共存</p>
+                        <div class="layer-example">
+                            🌰 <b>身边例子</b>：搜索引擎给你 10 条链接（确定性检索），而 ChatGPT 直接生成一段回答（概率性生成）。前者告诉你"去哪里找"，后者直接"告诉你结果"—— 这是交互方式的一次跃迁。
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="disclaimer">
+                💡 <b>提示</b>：这 6 层是一套认知参考坐标，不是必须按顺序走完的台阶。真实的成长可以跳跃、多层并存 —— 有人从第 4 层的"取舍"倒回来才真正理解第 2 层的分工；也有人一直停在第 1 层照样把生活过得很好。<b>不必机械对标，找到自己关心的那一层深入即可。</b>
             </div>
             <div class="stats">
                 <div class="stat-item">
@@ -243,6 +390,48 @@
             </p>
             <a href="questions/00-question-map.html" class="btn btn-outline">📋 问题清单</a>
             <a href="questions/knowledge-graph.html" class="btn">🗺️ 知识图谱</a>
+        </div>
+
+        <div class="card">
+            <h2>🚪 读完之后，你可以去往哪里</h2>
+            <p class="card-intro" style="margin-bottom: 8px;">
+                建立全局认知，只是起点。选一个你感兴趣的方向深入探索 ——
+            </p>
+            <div class="track-grid">
+                <div class="track">
+                    <span class="track-badge">敬请期待</span>
+                    <h4>🌐 网络通信</h4>
+                    <p>TCP/IP、HTTP、DNS、CDN —— 让数据在全球流动的那套底层机制。</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">敬请期待</span>
+                    <h4>🎨 前端开发</h4>
+                    <p>HTML/CSS/JS、React、性能优化 —— 用户看到的每一像素背后的手艺。</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">敬请期待</span>
+                    <h4>⚙️ 后端开发</h4>
+                    <p>服务、数据库、缓存、消息队列 —— 支撑千万人同时使用的骨架。</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">敬请期待</span>
+                    <h4>💡 产品思维</h4>
+                    <p>需求、用户体验、增长、商业化 —— 从"能用"到"有人用"的一整套逻辑。</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">敬请期待</span>
+                    <h4>🔐 网络安全</h4>
+                    <p>攻防、渗透、加密、隐私 —— 互联网世界里另一条平行的战线。</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">敬请期待</span>
+                    <h4>🤖 AI 大模型应用</h4>
+                    <p>Prompt、RAG、Agent、微调 —— AI 时代的新一层工程能力。</p>
+                </div>
+            </div>
+            <p style="margin-top: 20px; color: #9CA3AF; font-size: 0.85rem; font-style: italic;">
+                📝 各方向的深入内容还在整理中，敬请期待。想优先看哪个方向？欢迎在文末评论区告诉我。
+            </p>
         </div>
 
         <div class="card">
