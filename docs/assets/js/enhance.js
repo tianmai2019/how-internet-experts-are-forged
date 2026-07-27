@@ -154,9 +154,9 @@
         },
 
         init: function() {
-            // 检测当前是否是文章页
+            // 检测当前是否是文章页（Cloudflare Pages 会去掉 .html，所以后缀可选）
             const path = window.location.pathname;
-            const match = path.match(/q(\d+)\.html$/);
+            const match = path.match(/\/q(\d+)(?:\.html)?$/);
             if (match) {
                 const id = parseInt(match[1]);
                 // 用户在这个页面停留超过5秒就标记为已读
@@ -268,9 +268,10 @@
         CATEGORY_ID: 'DIC_kwDOTe0Cdc4DBziK',
 
         init: function() {
-            // 仅在文章页注入：q01-q50.html 或主文章 01-how-internet-experts-are-forged.html
+            // 仅在文章页注入：q01-q50 或主文章 01-how-internet-experts-are-forged
+            // 注：Cloudflare Pages 默认 clean URLs 会去掉 .html，所以后缀设为可选
             const path = window.location.pathname;
-            const isArticle = /q\d+\.html$/.test(path) || /01-how-internet-experts-are-forged\.html$/.test(path);
+            const isArticle = /\/q\d+(?:\.html)?$/.test(path) || /\/01-how-internet-experts-are-forged(?:\.html)?$/.test(path);
             if (!isArticle) return;
 
             // 未配置时不注入，避免 Giscus 抛错
