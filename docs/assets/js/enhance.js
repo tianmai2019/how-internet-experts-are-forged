@@ -268,11 +268,19 @@
         CATEGORY_ID: 'DIC_kwDOTe0Cdc4DBziK',
 
         init: function() {
-            // 仅在文章页注入：q01-q50 或主文章 01-how-internet-experts-are-forged
+            // 注入位置：
+            // - 文章页：q01-q50 或主文章 01-how-internet-experts-are-forged
+            // - 首页：/、/en/、/index.html、/en/index.html（冷启动期希望流量最大的页面也能沉淀讨论）
             // 注：Cloudflare Pages 默认 clean URLs 会去掉 .html，所以后缀设为可选
             const path = window.location.pathname;
             const isArticle = /\/q\d+(?:\.html)?$/.test(path) || /\/01-how-internet-experts-are-forged(?:\.html)?$/.test(path);
-            if (!isArticle) return;
+            const isHome = path === '/' || path === '/en/' || path === '/en' ||
+                           /\/index\.html?$/.test(path);
+            if (!isArticle && !isHome) return;
+
+            // 语言（用于评论区标题与 Giscus lang）
+            this._isEn = /^\/en\//.test(path) || path === '/en' || path === '/en/';
+            this._isHome = isHome;
 
             // 未配置时不注入，避免 Giscus 抛错
             if (this.REPO_ID.startsWith('PLACEHOLDER') || this.CATEGORY_ID.startsWith('PLACEHOLDER')) {
@@ -292,18 +300,36 @@
         },
 
         buildContainer: function() {
-            // 优先插到 .article-content 或 .content 卡片内部末尾，保持视觉一致
-            const contentEl = document.querySelector('.article-content') || document.querySelector('.content');
+            // 优先插到 .article-content 或 .content 卡片内部末尾（文章页）
+            // 首页找不到这些，再回退到 .container（顶层容器，页脚之前）
+            let contentEl = document.querySelector('.article-content') || document.querySelector('.content');
+            let insertBefore = null;
+            if (!contentEl) {
+                // 首页：挂在顶层 .container 里，插到 footer 之前
+                contentEl = document.querySelector('.container');
+                if (contentEl) insertBefore = contentEl.querySelector('footer');
+            }
             if (!contentEl) return null;
 
+            const isEn = this._isEn;
+            const heading = isEn ? '💬 Comments' : '💬 讨论区';
+            const hint = isEn
+                ? 'Sign in with your GitHub account to leave a comment. Likes and replies are visible to everyone.'
+                : '用 GitHub 账号登录即可评论。点赞、追问都能看见。';
+
             const wrap = document.createElement('div');
-            wrap.className = 'comments-section';
+            wrap.className = 'comments-section' + (this._isHome ? ' comments-home card' : '');
+            // 首页 wrap 复用 .card 样式与其他卡片视觉一致；文章页保持原状不加背景
             wrap.innerHTML = `
-                <h2 style="margin-top: 40px;">💬 讨论区</h2>
-                <p style="color: var(--text-muted); font-size: 0.95rem;">用 GitHub 账号登录即可评论。点赞、追问都能看见。</p>
+                <h2 style="margin-top: ${this._isHome ? '0' : '40px'};">${heading}</h2>
+                <p style="color: var(--text-muted, #6B7280); font-size: 0.95rem;">${hint}</p>
                 <div class="giscus" id="giscus-container"></div>
             `;
-            contentEl.appendChild(wrap);
+            if (insertBefore) {
+                contentEl.insertBefore(wrap, insertBefore);
+            } else {
+                contentEl.appendChild(wrap);
+            }
             return document.getElementById('giscus-container');
         },
 
@@ -324,7 +350,7 @@
                 'data-emit-metadata': '0',
                 'data-input-position': 'top',
                 'data-theme': this.currentTheme(),
-                'data-lang': 'zh-CN',
+                'data-lang': this._isEn ? 'en' : 'zh-CN',
                 'data-loading': 'lazy'
             };
             Object.entries(attrs).forEach(([k, v]) => script.setAttribute(k, v));
