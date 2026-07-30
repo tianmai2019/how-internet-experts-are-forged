@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q42：為什麼生成式AI和傳統軟件系統在本質上不一樣？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q42.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q42.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q42.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q42.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-6">
+            <div class="level-badge">🤖 第6層認知 · AI 時代視角</div>
+            <h1>為什麼生成式AI和傳統軟件系統在本質上不一樣？</h1>
+            <p class="subtitle">從"規則→輸出"，到"分佈→採樣"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                過去 60 年，我們對"軟件"的直覺是這樣的：
+                你寫代碼，代碼規定"如果 A，就做 B"，然後機器按你寫的做。
+                Excel 一定按公式算，登錄接口一定按邏輯判斷密碼——軟件是<strong>可預期的機器</strong>。
+            </p>
+
+            <p>
+                但用過 ChatGPT 的人都有這種感覺：<em>"這東西怎麼用起來完全不一樣？"</em>
+                同一個問題問兩次，答案不一樣；有時候特別聰明，有時候特別蠢。
+                它更像一個<strong>捉摸不定的合作者</strong>，而不是一臺機器。
+            </p>
+
+            <div class="highlight-box">
+                <strong>為什麼會這樣？</strong><br>
+                因為它壓根不是"傳統意義上的軟件"。<br>
+                傳統軟件的核心是<em>規則</em>，生成式 AI 的核心是<em>分佈</em>——這是兩種世界觀。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>傳統軟件是怎麼"決定"輸出的？</strong></li>
+                <li><strong>生成式 AI 是怎麼"決定"輸出的？</strong></li>
+                <li><strong>為什麼兩者會長得越來越像，本質卻完全相反？</strong></li>
+                <li><strong>這對我們做工程有什麼根本影響？</strong></li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                作為用戶，你看不出計算器和 ChatGPT 有什麼"本質"區別——都是輸入一段文字，出來一段結果。
+                但你會隱約感覺到：<strong>計算器是"工具"，ChatGPT 更像"對象"</strong>。
+                你不會跟計算器"討價還價"，但你會跟 AI 反覆"聊"，希望它答得更好。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                在實現層，兩者的差別一覽無餘。傳統軟件是<strong>顯式規則</strong>，代碼寫死了邏輯：
+            </p>
+
+            <div class="code-block">// 傳統軟件：SQL 查詢
+SELECT price FROM products WHERE id = 42;
+
+// 結果是"確定的"：只要數據沒變，答案永遠一樣。
+// 42 號產品的價格是 128.00 元。就是這樣。就是這樣。</div>
+
+            <p>
+                生成式 AI 完全不同。它沒有 <code>if/else</code>，沒有查詢表——它是一個<strong>裝著幾千億參數的大矩陣</strong>，
+                這些參數（weights，權重）在訓練時被"喂海量數據"調整過：
+            </p>
+
+            <div class="code-block">// 生成式 AI：LLM 補全
+prompt = "42號產品的價格是"
+→ 前向計算通過神經網絡（幾百層 Transformer）
+→ 每一層做的都是矩陣乘法 + 非線性變換
+→ 最終輸出一個"下一個 token 的概率分佈"
+→ 採樣得到："128 元"
+
+// 結果是"分佈的"：同樣輸入兩次，可能得到不同答案。
+// 因為它是從概率分佈裡採樣，不是查表。</div>
+
+            <p>
+                這裡的 <code>权重</code> 你可以粗暴理解為：一堆學出來的數字，
+                它們編碼了模型"見過的所有文字之間的統計關係"。<strong>模型不存文字，模型存的是"模式"。</strong>
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                當你把這兩種系統放到"整個鏈路"裡看，它們的差異是驚人的：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🏛️ 傳統軟件</h4>
+                    <p>
+                        <strong>範式：</strong>規則 → 輸出<br>
+                        <strong>邏輯寫在哪：</strong>代碼裡，人類寫的<br>
+                        <strong>可解釋性：</strong>可以逐行讀<br>
+                        <strong>可預測性：</strong>同輸入 → 同輸出<br>
+                        <strong>失敗方式：</strong>拋異常、報錯<br>
+                        <strong>調試方式：</strong>加日誌、打斷點
+                    </p>
+                </div>
+                <div class="compare-card">
+                    <h4>🌀 生成式 AI</h4>
+                    <p>
+                        <strong>範式：</strong>分佈 → 採樣<br>
+                        <strong>邏輯寫在哪：</strong>權重裡，訓練時"長出來的"<br>
+                        <strong>可解釋性：</strong>只能觀察，無法逐行讀<br>
+                        <strong>可預測性：</strong>同輸入 → 分佈相同、樣本可能不同<br>
+                        <strong>失敗方式：</strong>不報錯，只是輸出錯的但看起來對的<br>
+                        <strong>調試方式：</strong>改 prompt、加 RAG、微調、評估
+                    </p>
+                </div>
+            </div>
+
+            <p>
+                注意最扎心的那一行：<strong>失敗方式</strong>。
+                傳統軟件失敗時會大聲報錯（"NullPointerException！"），你至少知道出錯了。
+                生成式 AI 失敗時<strong>安靜地繼續說話</strong>——你可能讀了半天都沒意識到它錯了。
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"AI 只是複雜一點的軟件。"<br>
+                不對。它是<em>另一類</em>軟件。
+                你不能用"給傳統軟件調 bug"的姿勢去用 AI——那會讓你既失望又困惑。
+            </div>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                有人會問：既然分佈式採樣這麼不確定，為什麼不乾脆做成確定式規則？
+                答案是——<strong>做不到</strong>。
+            </p>
+
+            <p>
+                寫一段"總結這篇文章"的規則？你沒法把"總結"變成 if/else。寫一段"識別貓的圖片"的規則？
+                過去 30 年計算機視覺嘗試了，效果遠不如深度學習。
+                <strong>只要問題涉及"人類語言、感知、創意"，規則式思路就會撞牆</strong>——
+                因為這些問題的複雜度，超過了人類能顯式寫下的規則數量。
+            </p>
+
+            <p>
+                生成式 AI 的關鍵突破，是"跳過定義規則"這一步——直接從數據中<strong>湧現</strong>（emerge）出能力。
+                翻譯、推理、寫代碼這些能力，沒人顯式教它，只是模型"變大後自動會了"。
+                這是我們從沒在傳統軟件裡見過的現象。
+            </p>
+
+            <div class="highlight-box">
+                <strong>關鍵差異總結：</strong>
+                <ul>
+                    <li>傳統軟件：<em>人先想清楚規則，再讓機器執行。</em></li>
+                    <li>生成式 AI：<em>人先給數據，讓機器自己"長出"某種能力。</em></li>
+                </ul>
+                這意味著<strong>工程師的角色也變了</strong>：從"規則設計者"變成"數據策展人 + 行為觀察者"。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>讓兩個系統"同題作答"</h3>
+                <p>
+                    打開一個計算器 App 和一個 AI 助手（ChatGPT / Claude / Gemini 都行）。<br>
+                    在兩邊分別輸入：<em>"128 × 47 等於多少？"</em>
+                </p>
+                <p>
+                    觀察三件事：<br>
+                    1️⃣ 計算器：每次都得同一個數，快、穩、無解釋。<br>
+                    2️⃣ AI：可能算對，也可能算錯；換個問法結果會變；它還會"解釋推理過程"。<br>
+                    3️⃣ 讓 AI 多試幾次同樣的問題——它可能給出不同的解釋路徑，甚至不同的錯法。
+                </p>
+                <p>
+                    這就是"規則 → 輸出" vs "分佈 → 採樣"最直觀的對比。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=40">Q40: 為什麼AI看起來像在理解你？</a>
+                <a href="question.html?q=41">Q41: 為什麼AI能說得流暢卻不一定正確？</a>
+                <a href="question.html?q=43">Q43: 為什麼AI的輸出帶有概率性？</a>
+                <a href="question.html?q=45">Q45: 為什麼AI沒讓互聯網變簡單？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>軟件工程正在離開"精確定義"，進入"概率共舞"</h3>
+                <p>
+                    過去，"程序員"這個詞代表的是：<em>精確、邏輯、可預測</em>。
+                    你寫下的每一行代碼，都是一句刻在石頭上的判決。
+                </p>
+                <p>
+                    生成式 AI 打破了這個契約。它引入了一種全新的工程文化：
+                </p>
+                <ul>
+                    <li><strong>測試從"斷言相等"變成"評估質量"</strong>——你不能再斷言輸出等於某字符串。</li>
+                    <li><strong>迭代從"改代碼"變成"改 prompt + 改數據"</strong>——bug 可能在文本里，不在代碼裡。</li>
+                    <li><strong>可靠性從"每次一樣"變成"分佈上夠好"</strong>——你接受偶爾翻車，只要頻率可控。</li>
+                </ul>
+                <p>
+                    這不是軟件工程的死亡，而是它的<strong>第二次成年</strong>——
+                    我們第一次要和一種自己不完全理解的東西共同構建產品。
+                    在第 6 層認知裡，你要接受一件事：<em>控制感的減少，是能力擴展的代價。</em>
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                為什麼生成式 AI 和傳統軟件在本質上不一樣？
+            </p>
+
+            <p>
+                <strong>因為它們運行在兩種不同的世界觀裡。</strong>
+                傳統軟件的世界，是由人類顯式規則搭起來的確定性積木；
+                生成式 AI 的世界，是從數據裡生長出來的概率分佈，
+                每次採樣都是從這片分佈裡"扔一次骰子"。
+            </p>
+
+            <p>
+                當你意識到這一點，你就不會再把它當成"更聰明的搜索引擎"，
+                也不會再期待它"每次都一樣"。你會開始學一門新的語言——
+                <strong>如何在不確定性中做工程</strong>。
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=43" class="btn">繼續探索 Q43 → </a>
+            </div>
+        </div>
+
+        <footer><p>&copy; 2024 互聯網大帝是如何煉成的</p></footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

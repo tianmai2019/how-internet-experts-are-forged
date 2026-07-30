@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q31：為什麼穩定性往往比"炫技式設計"更重要？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q31.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q31.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q31.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q31.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-4">
+            <div class="level-badge">⚖️ 第4層認知 · 高級工程師視角</div>
+            <h1>為什麼穩定性往往比"炫技式設計"更重要？</h1>
+            <p class="subtitle">真正的高級工程師不比誰寫得酷，比誰少出事故</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>你可能聽過這些故事：</p>
+
+            <ul>
+                <li>某電商大促當天，架構組引入了一個"全新的智能限流算法"——大促當天宕機 20 分鐘，損失過億；</li>
+                <li>某支付公司為了"炫"，把成熟的服務重寫成響應式編程，結果排障工具全部失效，小故障變成大事故；</li>
+                <li>某社交 App 用最新的 GraphQL + Serverless 架構，看起來技術領先，但一次冷啟動風暴讓整個 App 掛了 3 小時。</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>年輕的工程師愛寫"聰明的代碼"，成熟的工程師寫"無聊的代碼"。</strong>不是因為不會聰明，而是因為——<strong>無聊的代碼不會在凌晨 3 點把你叫醒。</strong>
+            </div>
+
+            <p>這一層認知的關鍵：<strong>把"穩定"當成一等公民，把"炫技"當成成本。</strong></p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li>為什麼"炫技"是有成本的？</li>
+                <li>穩定性到底怎麼量化？</li>
+                <li>SLO 和 Error Budget 怎麼用？</li>
+                <li>如何培養"穩定性優先"的思維？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>用戶對"技術選型是否領先"沒有任何感知。用戶唯一感知的是：</p>
+
+            <ul>
+                <li>付款一直轉圈 → 差評</li>
+                <li>App 打不開 → 卸載</li>
+                <li>數據丟了 → 投訴、維權、走人</li>
+            </ul>
+
+            <p>你用最酷的響應式編程寫出來的服務，只要掛一次，用戶就永遠不會記得你多"先進"。</p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>"炫技"往往體現在幾個地方：</p>
+
+            <div class="code-block">炫技的誘惑：
+  1. 引入新技術棧（Rust 重寫、GraphQL、Serverless、eBPF）
+  2. 手寫基礎設施（自研 RPC、自研緩存、自研 MQ）
+  3. 過度抽象（4 層繼承、設計模式套娃）
+  4. 追求極致優化（無鎖併發、SIMD、內核旁路）
+  5. 一次性推翻重來（"這段代碼我一天就能重構好"）
+
+無聊的選擇：
+  1. 用團隊最熟悉的語言（哪怕是 Java 8）
+  2. 用最廣泛的成熟組件（Nginx、MySQL、Redis）
+  3. 直白的過程式代碼 + 清晰的邊界
+  4. 達到目標就停止優化
+  5. 漸進式改造，小步迭代</div>
+
+            <p>這裡的核心洞察是：<strong>每一個"炫技選擇"背後都是一個隱性賭注——賭你的團隊能理解它、能維護它、能救它的場。而每一個"無聊選擇"都是在收集"確定性紅利"。</strong></p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>穩定性的完整鏈路是這樣的：</p>
+
+            <div class="diagram-box">
+                <span class="step-box">SLO 制定</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Error Budget</span>
+                <span class="arrow">→</span>
+                <span class="step-box">監控告警</span>
+                <br>
+                <span class="step-box">灰度發佈</span>
+                <span class="arrow">→</span>
+                <span class="step-box">故障演練</span>
+                <span class="arrow">→</span>
+                <span class="step-box">復盤改進</span>
+            </div>
+
+            <p>它不是一個功能，是一整套<strong>工程文化</strong>。</p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>炫技式設計</h4>
+                    <p>✅ 簡歷好看<br>✅ 技術分享有料<br>✅ 工程師爽<br>❌ 團隊學習成本高<br>❌ 生態不成熟<br>❌ 排障工具缺失<br>❌ 出問題時救不回來</p>
+                </div>
+                <div class="compare-card">
+                    <h4>穩定優先設計</h4>
+                    <p>✅ 團隊理解成本低<br>✅ 生態完善，問題都有答案<br>✅ 排障鏈路完整<br>✅ 半夜出問題能救<br>❌ "看起來不厲害"<br>❌ 工程師可能覺得沒成長</p>
+                </div>
+            </div>
+
+            <h2>📊 SLO：把穩定性變成可管理的資源</h2>
+
+            <p>Google 提出的 SLO（Service Level Objective）體系，把穩定性從"感覺"變成了"預算"：</p>
+
+            <div class="code-block">SLO：這個服務的目標可用性
+  例：搜索服務 SLO = 99.9%
+
+Error Budget（錯誤預算）：
+  100% - 99.9% = 0.1%
+  意思是：每個月你「允許」有 43.8 分鐘的不可用時間
+
+關鍵洞察：
+  ✅ Error Budget 沒用完 → 可以激進上線新功能
+  ❌ Error Budget 用完了 → 凍結所有變更，先修穩定性
+
+這樣一來：
+  - 產品說"要快速上功能" → OK，但用你的錯誤預算
+  - 研發說"要重構大版本" → OK，但確保 Budget 夠
+  - SRE 說"穩定性優先"  → 有據可依，不再吵架</div>
+
+            <div class="highlight-box">
+                <strong>Error Budget 是 SRE 文化裡最偉大的發明。</strong>它把"穩定 vs 迭代"這個永恆爭論，變成了一個可計算、可談判、可決策的<strong>共同語言</strong>。
+            </div>
+
+            <h2>🐒 Netflix 的 Chaos Monkey：主動搞破壞</h2>
+
+            <p>Netflix 有一個著名的工具叫 Chaos Monkey——它會在生產環境<strong>隨機</strong>地殺掉服務器、切斷網絡、扔掉磁盤。聽起來瘋了？但這就是穩定性文化的極致：</p>
+
+            <div class="highlight-box">
+                <strong>Netflix 的哲學：</strong>"我們不再祈禱故障不發生。我們讓故障每天都發生，這樣當真正的大故障來臨時，我們已經練習了 1000 次。"
+            </div>
+
+            <p>這才是"穩定性優先"的真面目：<strong>不是迴避複雜度，而是把複雜度前置消化。</strong></p>
+
+            <h2>💥 反面案例：Facebook 2021 年 6 小時全站癱瘓</h2>
+
+            <p>2021 年 10 月 4 日，Facebook 全站宕機 6 小時。原因不是黑客攻擊，也不是硬件損壞，而是一次<strong>看起來無害的 BGP 路由變更</strong>。</p>
+
+            <p>更諷刺的是：這次變更本身是為了做"穩定性演練"。但因為它意外地把 Facebook 的 DNS 也從公網撤下了，導致工程師<strong>連自己的內部工具都進不去</strong>，只能派人手動跑到機房裡現場恢復。</p>
+
+            <p>這個故事教給我們兩件事：</p>
+
+            <ol>
+                <li><strong>再穩的系統都會掛</strong>——所以你需要預案，不是幸運；</li>
+                <li><strong>「炫技式變更」哪怕是穩定性變更，也可能反噬</strong>——變更本身就是最大的穩定性敵人。</li>
+            </ol>
+
+            <div class="callout callout--warning">
+                <strong>破除迷思："穩定性好"不等於"不改變"。</strong>真正的穩定性是"我知道變更的風險，我用最小的爆炸半徑去做，我隨時能回滾"。<strong>不敢變更的系統，恰恰是最不穩定的系統</strong>——因為技術債只會越滾越大，直到某天徹底崩塌。
+            </div>
+
+            <h2>🧭 穩定性優先的思維習慣</h2>
+
+            <div class="code-block">寫代碼前，多問幾個問題：
+
+1. 這段代碼上線後，如果壞了怎麼處理？
+   → 有監控嗎？有告警嗎？有降級嗎？
+
+2. 這個改動，最壞情況是什麼？
+   → 影響多少用戶？多久能恢復？
+
+3. 這個新技術，團隊裡有幾個人會救它？
+   → 少於 3 個，就不要引入
+
+4. 這次變更能不能灰度？能不能回滾？
+   → 不能的話，先加上再說
+
+5. 半年後半夜出問題，值班的人怎麼定位？
+   → 想不出來，就別上
+
+只要養成這 5 個提問的習慣，你的代碼就已經比 90% 的同事更"資深"了。</div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>做一次"穩定性 vs 炫技"體檢</h3>
+                <p>對你團隊最近半年做的技術決策，回答：</p>
+                <ol>
+                    <li>過去半年，我們引入的"新技術"有幾個？</li>
+                    <li>其中有幾個是"業務真的需要"，幾個是"團隊想學"？</li>
+                    <li>每個新技術，團隊裡能救場的人有幾個？</li>
+                    <li>因為新技術引發過幾次事故？</li>
+                    <li>如果重來一次，哪些技術其實不用引？</li>
+                </ol>
+                <p>誠實回答後你會發現：<strong>大部分"炫技式引入"都不是業務需要，而是工程師想玩</strong>。這不是錯，但要有代價意識。</p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=24">Q24: 高併發系統怎麼撐住？</a>
+                <a href="question.html?q=25">Q25: 如何保障系統的高可用？</a>
+                <a href="question.html?q=26">Q26: 為什麼系統設計裡沒有銀彈？</a>
+                <a href="question.html?q=30">Q30: 白板上很好看，線上未必值得</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>真正的高級工程師，不比誰寫得酷，比誰少出事故</h3>
+                <p>初級工程師的成就感來自"寫出了漂亮的代碼"；中級工程師的成就感來自"用了很多牛的技術"；<strong>高級工程師的成就感來自"這一年沒出事故"</strong>。</p>
+                <p>這個轉變很難，因為"沒出事故"是一種<em>缺席的成就</em>——你看不見，也沒人誇。老闆不會頒獎給"半年 0 故障"的團隊，用戶不會為"穩定"發朋友圈。穩定性是一種<strong>沉默的價值</strong>。</p>
+                <p>但恰恰是這種沉默，最考驗人的成熟度。會寫炫技代碼的人很多，但能忍住不寫、耐心做無聊事、把系統跑得穩穩當當的人——那才是真正把工程當成職業、而不是當成表演的人。</p>
+                <p>大帝視角是：<strong>技術圈的光鮮敘事永遠偏愛"新"和"酷"，但真正讓互聯網跑起來的，是那些願意在暗處做"無聊卻正確"的事的人。穩定不是保守，是對用戶、對同事、對未來的自己負責。</strong></p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>為什麼穩定性往往比"炫技式設計"更重要？</p>
+
+            <div class="highlight-box">
+                <strong>因為技術的最終價值，不在於它多先進，而在於它能不能被信任。</strong><br><br>
+                用戶信任你的產品能用；同事信任你的代碼能改；老闆信任你的服務不會掛——這些"信任"都是穩定性一點一滴累積出來的。<br><br>
+                炫技可以帶來一時的讚歎，但只有穩定能帶來長期的信任。而這個行業的所有大玩家，最終拼的都是<strong>信任</strong>。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=32" class="btn">繼續探索 Q32 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

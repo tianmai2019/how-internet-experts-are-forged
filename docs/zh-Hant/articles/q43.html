@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q43：為什麼AI系統的輸出帶有概率性，而不是傳統系統那樣的確定性？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q43.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q43.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q43.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q43.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-6">
+            <div class="level-badge">🤖 第6層認知 · AI 時代視角</div>
+            <h1>為什麼AI系統的輸出帶有概率性，而不是傳統系統那樣的確定性？</h1>
+            <p class="subtitle">AI 的可靠，不是"每次一樣"，而是"分佈上夠好"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你有沒有過這種體驗：
+            </p>
+
+            <div class="highlight-box">
+                同一個問題問 ChatGPT 兩遍，答案居然不一樣。<br>
+                第一次它說"是的"，第二次它說"不完全是"。<br>
+                你頓時懷疑：<strong>這東西到底靠不靠譜？</strong>
+            </div>
+
+            <p>
+                這個疑問的背後，其實是一個很深的問題：<strong>為什麼 AI 不像 ATM 一樣，每次輸入密碼都給你同樣確定的結果？</strong>
+            </p>
+
+            <p>
+                如果理解不了這一點，你要麼會過度信任它（因為它有時候答得特別好），
+                要麼會徹底放棄它（因為它偶爾胡說八道）。<strong>真正靠譜的姿勢是理解它的"概率性"</strong>——
+                它的可靠不在"每次一樣"，而在"分佈上夠好"。
+            </p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>"確定性" vs "概率性"是什麼意思？</strong></li>
+                <li><strong>為什麼模型必須做概率採樣，不能直接輸出？</strong></li>
+                <li><strong>temperature、top-p、seed 到底在控制什麼？</strong></li>
+                <li><strong>這對我們把 AI 用作生產系統有什麼影響？</strong></li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                作為用戶，你觀察到的現象是：
+            </p>
+
+            <ul>
+                <li>問一次 → 一個答案</li>
+                <li>再問一次 → 另一個答案（可能更好，可能更差）</li>
+                <li>把問題改一個字 → 答案可能天翻地覆</li>
+            </ul>
+
+            <p>
+                這不是 bug，也不是網絡問題——這是 AI 的<strong>本來面目</strong>。
+                傳統系統輸出的是"答案"；AI 輸出的是"從答案的分佈裡抽一個樣本"。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                在實現層，讓我們直面那個關鍵動作——<strong>採樣</strong>（sampling）。
+            </p>
+
+            <p>
+                模型每一步做的事，都是從一個概率分佈裡"挑一個 token"。假設它算出下一個 token 的分佈是：
+            </p>
+
+            <div class="code-block">Prompt: "今天天氣很"
+
+  下一個 token 的概率分佈：
+    "好"       → 0.42
+    "熱"       → 0.18
+    "冷"       → 0.12
+    "悶"       → 0.09
+    "潮溼"     → 0.06
+    "適合"     → 0.05
+    ...
+
+採樣策略決定"怎麼選"：
+  ┌─ greedy（貪心）        → 永遠選最高概率 → "好"
+  ├─ temperature = 0       → 等同 greedy，幾乎確定性
+  ├─ temperature = 0.7     → 按概率隨機採樣，"好"佔多數但會出現別的
+  ├─ temperature = 1.5     → 分佈被"拉平"，"悶/潮溼"也可能被選中
+  └─ top-p = 0.9           → 只在累計概率 90% 的候選裡採樣，避免尾巴上的怪詞</div>
+
+            <p>
+                這裡的關鍵概念：
+            </p>
+
+            <ul>
+                <li><strong>temperature（溫度）</strong>：控制分佈的"陡峭度"。溫度低 → 越傾向最高概率；溫度高 → 越"發散"。</li>
+                <li><strong>top-p（核採樣）</strong>：只在累積概率超過 p 的那部分候選裡採樣，把"低概率的怪詞"排除掉。</li>
+                <li><strong>seed（隨機種子）</strong>：偽隨機數生成器的起點。同 seed + 同參數 + 同模型 → 理論上同結果。</li>
+            </ul>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"把 temperature 設為 0，AI 就變確定了。"<br>
+                部分對，部分不對。temperature = 0 讓採樣變確定，
+                但 <em>batch 大小、併發調度、浮點算子實現、硬件、tokenizer 版本</em> 都會引入細微差別，
+                真實生產裡幾乎不可能做到位對位一致。這也是為什麼 OpenAI 的 seed 參數被官方標註為 "best-effort"。
+            </div>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                把視野拉大到系統層，你會看到"概率性"其實來自多個源頭：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box step-box--level-6">1. 模型本身：分佈式輸出</div>
+                <div class="arrow">↓</div>
+                <div class="step-box step-box--level-6">2. 採樣策略：temperature/top-p 引入隨機</div>
+                <div class="arrow">↓</div>
+                <div class="step-box step-box--level-6">3. 硬件/併發：浮點非確定性</div>
+                <div class="arrow">↓</div>
+                <div class="step-box step-box--level-6">4. 系統提示詞、上下文、時間：外層擾動</div>
+                <div class="arrow">↓</div>
+                <div class="step-box step-box--level-6">最終輸出：一次"抽樣"</div>
+            </div>
+
+            <p>
+                這跟傳統 API 有一個根本區別——傳統 API 的核心屬性是<strong>冪等性</strong>（idempotency）：
+                你把同樣的請求發 100 次，結果一樣。而 LLM API<strong>天然不是冪等的</strong>。
+                這意味著所有依賴冪等的中間件（緩存、重試、去重）都得重新想。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                你會問：既然確定性這麼好，為什麼不做成 greedy（永遠選最大概率）呢？
+                答案是——<strong>永遠選最大概率，效果反而更差</strong>。
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>😐 Greedy（溫度 0）</h4>
+                    <p>
+                        每步都選最大概率的 token。<br>
+                        結果：<em>安全、無聊、重複</em>。<br>
+                        寫代碼合適（要正確），<br>
+                        寫故事就變白開水。
+                    </p>
+                </div>
+                <div class="compare-card">
+                    <h4>🎲 Sampling（溫度 &gt; 0）</h4>
+                    <p>
+                        允許偶爾選次優 token。<br>
+                        結果：<em>更多樣、更有創意</em>。<br>
+                        寫作、頭腦風暴合適，<br>
+                        但也更容易跑偏。
+                    </p>
+                </div>
+            </div>
+
+            <p>
+                所以"概率性"其實是一個<strong>可調節的旋鈕</strong>：
+            </p>
+
+            <ul>
+                <li>做代碼補全、翻譯、事實問答 → 調低溫度，靠近確定性</li>
+                <li>做創意寫作、頭腦風暴、命名生成 → 調高溫度，歡迎不確定</li>
+                <li>做 Agent 決策鏈 → 常常溫度 0，減少累積誤差</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>換個視角：</strong>傳統系統追求"每次結果一樣"，
+                因為它們是<em>確定性問題的確定性求解</em>；<br>
+                AI 系統追求"平均結果好"，
+                因為它們面對的是<em>本身沒有唯一答案的問題</em>（寫作、總結、推理）。<br><br>
+                <em>"這封郵件寫得好不好？"</em> ——這問題根本沒有唯一答案。
+                所以 AI 的輸出方式，是與問題的性質匹配的。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>親自看"同題不同答"</h3>
+                <p>
+                    在 OpenAI Playground 或任何提供 API 的 AI 平臺上：
+                </p>
+                <ol>
+                    <li>寫一個 prompt："用一句話描述海邊的日落。"</li>
+                    <li>把 temperature 設為 0，跑 3 次 → 3 次幾乎相同。</li>
+                    <li>把 temperature 設為 1.2，再跑 3 次 → 明顯不同。</li>
+                    <li>把 temperature 拉到 2.0 試試 → 可能開始"胡言亂語"。</li>
+                </ol>
+                <p>
+                    這個實驗會給你一個手感：溫度不是"AI 有多聰明"的旋鈕，
+                    而是"AI 允許自己走多遠"的旋鈕。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=40">Q40: 為什麼AI看起來像在理解你？</a>
+                <a href="question.html?q=41">Q41: 為什麼AI能說得流暢卻不一定正確？</a>
+                <a href="question.html?q=42">Q42: 生成式AI和傳統軟件為什麼本質不同？</a>
+                <a href="question.html?q=45">Q45: 為什麼AI沒讓互聯網變簡單？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>可靠性的定義正在被重寫</h3>
+                <p>
+                    我們過去評估軟件的方式，是<strong>斷言等價</strong>：
+                    <em>"輸入 X → 輸出必須是 Y"</em>。CI 裡跑 assert，紅了就是壞了。
+                </p>
+                <p>
+                    但當你把 LLM 放進生產系統，這套方法完全失效——
+                    因為答案本來就是一個"分佈"，你要評估的是"分佈好不好"，不是"某次抽樣等不等於某個字符串"。
+                </p>
+                <p>
+                    這催生了一個新的工程學科：<strong>Evals（評估）</strong>。
+                </p>
+                <ul>
+                    <li>不再問"輸出等於什麼"，而問"輸出的分佈，在我關心的維度上分數如何"。</li>
+                    <li>不再靠 CI 一次通過，而靠<em>大樣本統計</em>決定要不要發佈。</li>
+                    <li>不再期待"零 bug"，而接受"錯誤率 5%，且可監控可回滾"。</li>
+                </ul>
+                <p>
+                    在第 6 層認知裡，你要學會一件反直覺的事：
+                    <strong>接受一個 90% 靠譜的系統，比追求一個 100% 但做不出來的系統更工程</strong>。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                為什麼 AI 系統的輸出帶有概率性，而不是傳統系統那樣的確定性？
+            </p>
+
+            <p>
+                <strong>因為 AI 處理的問題本身就沒有唯一答案，它的機制是"從分佈裡採樣"，而不是"按規則求解"。</strong>
+                概率性不是它的缺陷，而是它能處理開放問題（寫作、推理、生成）的代價與前提。
+            </p>
+
+            <div class="highlight-box">
+                <strong>換一種衡量的標尺：</strong><br>
+                傳統系統的可靠 = 每次都對。<br>
+                AI 系統的可靠 = 分佈上足夠好，且失敗可監控可回滾。<br><br>
+                當你換掉這把尺子，你才真正進入了 AI 時代的思維方式。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=44" class="btn">繼續探索 Q44 → </a>
+            </div>
+        </div>
+
+        <footer><p>&copy; 2024 互聯網大帝是如何煉成的</p></footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

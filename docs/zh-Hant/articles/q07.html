@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q7：一個網頁到底是怎麼做出來的？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #059669;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .diagram-box {
+            background: #F9FAFB;
+            border: 2px dashed #D1D5DB;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .step-box {
+            display: inline-block;
+            background: #10B981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin: 10px;
+            font-weight: 600;
+        }
+
+        .arrow {
+            display: block;
+            font-size: 1.5rem;
+            color: #9CA3AF;
+            margin: 10px 0;
+        }
+
+        .highlight-box {
+            background: #ECFDF5;
+            border-left: 4px solid #10B981;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #059669;
+        }
+
+        .code-block {
+            background: #1F2937;
+            color: #E5E7EB;
+            padding: 25px;
+            border-radius: 12px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        .code-comment {
+            color: #6B7280;
+        }
+
+        .code-tag {
+            color: #60A5FA;
+        }
+
+        .code-attr {
+            color: #FBBF24;
+        }
+
+        .code-string {
+            color: #34D399;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box {
+            background: #10B981;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .try-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box a {
+            color: #ECFDF5;
+            text-decoration: underline;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .three-pillars {
+            margin: 30px 0;
+        }
+
+        /* SVG 三层堆叠图 */
+        .diagram-svg-wrap {
+            background: var(--bg-secondary, #F9FAFB);
+            border: 2px dashed var(--border-color, #D1D5DB);
+            border-radius: 12px;
+            padding: 24px 20px 20px;
+            text-align: center;
+        }
+        .stack-svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+        }
+        .stack-layer {
+            transition: transform 0.25s ease;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .stack-layer:hover {
+            transform: translate(-6px, -6px);
+        }
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            font-style: italic;
+        }
+        [data-theme="dark"] .diagram-svg-wrap {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* 保留旧的 pillar 类以防其它页面复用 */
+        .pillar {
+            background: #F9FAFB;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            border-top: 4px solid;
+        }
+
+        .pillar-html { border-color: #E34C26; }
+        .pillar-css { border-color: #264DE4; }
+        .pillar-js { border-color: #F7DF1E; }
+
+        .pillar-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        /* 移动端：切换到 4 张垂直卡片 */
+        .stack-mobile { display: none; }
+        @media (max-width: 640px) {
+            .stack-svg { display: none; }
+            .stack-mobile {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+            }
+            .stack-mobile li {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 14px 16px;
+                margin-bottom: 10px;
+                border-radius: 12px;
+                color: #fff;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+                position: relative;
+            }
+            .stack-mobile li[data-color="html"]   { background: linear-gradient(135deg, #F97316 0%, #E34C26 100%); }
+            .stack-mobile li[data-color="css"]    { background: linear-gradient(135deg, #3B82F6 0%, #264DE4 100%); }
+            .stack-mobile li[data-color="js"]     { background: linear-gradient(135deg, #FCD34D 0%, #F7DF1E 100%); color: #1F2937; }
+            .stack-mobile li[data-color="js"] span:not(.stack-mobile-icon) { color: rgba(31,41,55,0.85); }
+            .stack-mobile li[data-color="result"] { background: linear-gradient(135deg, #10B981 0%, #059669 100%); }
+            .stack-mobile li:not(:last-child)::after {
+                content: "+";
+                position: absolute;
+                left: 50%;
+                bottom: -14px;
+                transform: translateX(-50%);
+                color: var(--text-muted, #9CA3AF);
+                font-size: 1rem;
+                z-index: 1;
+                font-weight: 700;
+            }
+            .stack-mobile li:nth-last-child(2)::after {
+                content: "=";
+            }
+            .stack-mobile-icon {
+                font-size: 1.6rem;
+                flex-shrink: 0;
+            }
+            .stack-mobile li strong {
+                display: block;
+                font-size: 0.98rem;
+                margin-bottom: 2px;
+            }
+            .stack-mobile li span:not(.stack-mobile-icon) {
+                display: block;
+                font-size: 0.78rem;
+                color: rgba(255, 255, 255, 0.9);
+            }
+        }
+
+        .live-demo {
+            border: 2px dashed #10B981;
+            background: #ECFDF5;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .live-demo-box {
+            background: white;
+            border: 1px solid #A7F3D0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q07.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q07.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q07.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q07.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header">
+            <div class="level-badge">🔨 第2層認知 · 程序員入門視角</div>
+            <h1>一個網頁到底是怎麼做出來的？</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">恭喜！你準備好成為創作者了</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你每天都在看網頁，但你有沒有想過：<strong>這些網頁是怎麼被創造出來的？</strong>
+            </p>
+
+            <p>
+                這個問題之所以重要，是因為它標誌著一個轉變：
+                <strong>從"使用者"到"創造者"。</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>第2層認知的覺醒：</strong><br><br>
+                原來網頁不是"長在網上"的，<br>
+                而是有人一行一行寫出來的！<br><br>
+                既然別人能寫出來，那我也能！
+            </div>
+
+            <p>
+                一旦你理解了這一點，整個互聯網在你眼裡就不一樣了。
+                你看到的不再是"現成的東西"，而是"我也能做的東西"。
+            </p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <p>要做出一個網頁，你其實只需要理解三件事：</p>
+
+            <ol style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>結構：</strong> 網頁上有什麼？（標題、圖片、按鈕...）</li>
+                <li><strong>樣式：</strong> 它們長什麼樣？（顏色、大小、位置...）</li>
+                <li><strong>行為：</strong> 它們會做什麼？（點擊有反應、數據變化...）</li>
+            </ol>
+
+            <p>
+                剛好，這三件事分別對應三種技術。
+            </p>
+
+            <h2>🔨 一層一層看</h2>
+
+            <h3>用戶層：只看結果</h3>
+
+            <p>
+                在普通用戶眼裡，網頁就是網頁。
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">🌐 打開瀏覽器</div>
+                <div class="arrow">→</div>
+                <div class="step-box">📄 看到頁面</div>
+                <div class="arrow">→</div>
+                <div class="step-box">👆 點擊交互</div>
+            </div>
+
+            <p>
+                至於背後是什麼，用戶不關心，也不需要關心。
+            </p>
+
+            <h3>實現層：三劍客合體！</h3>
+
+            <p>
+                歡迎來到程序員的世界！這裡有三個好朋友：
+            </p>
+
+            <div class="three-pillars diagram-svg-wrap">
+                <svg viewBox="0 0 720 360" class="stack-svg" role="img"
+                     aria-label="HTML / CSS / JS 三層堆疊圖：HTML 骨架、CSS 樣式、JS 行為疊在一起才是完整網頁">
+                    <defs>
+                        <linearGradient id="html-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#F97316"/>
+                            <stop offset="100%" stop-color="#E34C26"/>
+                        </linearGradient>
+                        <linearGradient id="css-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#3B82F6"/>
+                            <stop offset="100%" stop-color="#264DE4"/>
+                        </linearGradient>
+                        <linearGradient id="js-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#FCD34D"/>
+                            <stop offset="100%" stop-color="#F7DF1E"/>
+                        </linearGradient>
+                        <filter id="stack-shadow" x="-10%" y="-10%" width="120%" height="130%">
+                            <feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity="0.25"/>
+                        </filter>
+                    </defs>
+
+                    <!-- 三层胶片：底 HTML, 中 CSS, 顶 JS。用 skew 制造斜投影 -->
+                    <!-- HTML 底层：结构 -->
+                    <g class="stack-layer" filter="url(#stack-shadow)">
+                        <path d="M 40 200 L 300 200 L 260 300 L 0 300 Z"
+                              fill="url(#html-grad)" opacity="0.92"/>
+                        <text x="150" y="240" text-anchor="middle" font-size="34" fill="#fff">📄</text>
+                        <text x="150" y="272" text-anchor="middle" font-size="18"
+                              font-weight="700" fill="#fff">HTML</text>
+                        <text x="150" y="292" text-anchor="middle" font-size="12"
+                              fill="rgba(255,255,255,0.9)">結構 · 有什麼</text>
+                    </g>
+
+                    <!-- CSS 中间层：样式 -->
+                    <g class="stack-layer" filter="url(#stack-shadow)">
+                        <path d="M 80 120 L 340 120 L 300 220 L 40 220 Z"
+                              fill="url(#css-grad)" opacity="0.92"/>
+                        <text x="190" y="160" text-anchor="middle" font-size="34" fill="#fff">🎨</text>
+                        <text x="190" y="192" text-anchor="middle" font-size="18"
+                              font-weight="700" fill="#fff">CSS</text>
+                        <text x="190" y="212" text-anchor="middle" font-size="12"
+                              fill="rgba(255,255,255,0.9)">樣式 · 長什麼樣</text>
+                    </g>
+
+                    <!-- JS 顶层：行为 -->
+                    <g class="stack-layer" filter="url(#stack-shadow)">
+                        <path d="M 120 40 L 380 40 L 340 140 L 80 140 Z"
+                              fill="url(#js-grad)" opacity="0.95"/>
+                        <text x="230" y="80" text-anchor="middle" font-size="34" fill="#1F2937">⚡</text>
+                        <text x="230" y="112" text-anchor="middle" font-size="18"
+                              font-weight="700" fill="#1F2937">JavaScript</text>
+                        <text x="230" y="132" text-anchor="middle" font-size="12"
+                              fill="rgba(31,41,55,0.85)">行為 · 做什麼</text>
+                    </g>
+
+                    <!-- = 合成箭头 -->
+                    <text x="425" y="180" text-anchor="middle" font-size="42"
+                          fill="var(--text-muted, #9CA3AF)" font-weight="300">＝</text>
+
+                    <!-- 合成结果：一张迷你"网页"预览 -->
+                    <g transform="translate(490 60)" filter="url(#stack-shadow)">
+                        <rect width="200" height="240" rx="12" fill="#fff" stroke="#E5E7EB" stroke-width="1.5"/>
+                        <!-- 顶部浏览器 tab -->
+                        <rect width="200" height="26" rx="12" fill="#F3F4F6"/>
+                        <rect y="14" width="200" height="12" fill="#F3F4F6"/>
+                        <circle cx="12" cy="13" r="3.5" fill="#EF4444"/>
+                        <circle cx="24" cy="13" r="3.5" fill="#F59E0B"/>
+                        <circle cx="36" cy="13" r="3.5" fill="#10B981"/>
+                        <!-- 页面内容：标题 + 段落 + 按钮 -->
+                        <rect x="16" y="46" width="120" height="14" rx="3" fill="#E34C26"/>
+                        <rect x="16" y="70" width="168" height="6" rx="2" fill="#CBD5E1"/>
+                        <rect x="16" y="82" width="150" height="6" rx="2" fill="#CBD5E1"/>
+                        <rect x="16" y="94" width="140" height="6" rx="2" fill="#CBD5E1"/>
+                        <rect x="16" y="120" width="70" height="18" rx="4" fill="#264DE4"/>
+                        <text x="51" y="133" text-anchor="middle" font-size="9"
+                              fill="#fff" font-weight="600">點擊我</text>
+                        <rect x="16" y="152" width="168" height="6" rx="2" fill="#CBD5E1"/>
+                        <rect x="16" y="164" width="130" height="6" rx="2" fill="#CBD5E1"/>
+                        <!-- JS 动效标记：一个小闪电，暗示交互 -->
+                        <text x="176" y="140" font-size="14" fill="#F7DF1E">⚡</text>
+                        <!-- 底部图标：CSS 装饰 -->
+                        <rect x="16" y="184" width="168" height="40" rx="6" fill="#EFF6FF"/>
+                        <text x="100" y="208" text-anchor="middle" font-size="11"
+                              fill="#264DE4">🌐 完整的網頁</text>
+                    </g>
+                </svg>
+
+                <!-- 移动端 fallback -->
+                <ol class="stack-mobile" aria-hidden="true">
+                    <li data-color="html">
+                        <span class="stack-mobile-icon">📄</span>
+                        <div><strong>HTML</strong><span>結構 · 有什麼</span></div>
+                    </li>
+                    <li data-color="css">
+                        <span class="stack-mobile-icon">🎨</span>
+                        <div><strong>CSS</strong><span>樣式 · 長什麼樣</span></div>
+                    </li>
+                    <li data-color="js">
+                        <span class="stack-mobile-icon">⚡</span>
+                        <div><strong>JavaScript</strong><span>行為 · 做什麼</span></div>
+                    </li>
+                    <li data-color="result">
+                        <span class="stack-mobile-icon">🌐</span>
+                        <div><strong>= 完整的網頁</strong><span>三層疊加後你看到的東西</span></div>
+                    </li>
+                </ol>
+
+                <p class="diagram-caption">圖：HTML / CSS / JS 三層疊加，才是我們看到的網頁</p>
+            </div>
+
+            <p>
+                讓我們一個一個來看：
+            </p>
+
+            <div class="highlight-box">
+                <strong>📄 HTML：內容骨架</strong><br><br>
+                HTML就像文章的大綱——告訴你這是標題、那是段落、那裡有張圖。
+            </div>
+
+            <p>
+                一個最簡單的HTML長這樣：
+            </p>
+
+            <div class="code-block">
+<span class="code-comment">&lt;!-- 這是註釋 --&gt;</span><br>
+<span class="code-tag">&lt;html</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;head</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">&lt;title</span><span class="code-tag">&gt;</span>我的第一個網頁<span class="code-tag">&lt;/title</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;/head</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;body</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">&lt;h1</span><span class="code-tag">&gt;</span>Hello World!<span class="code-tag">&lt;/h1</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">&lt;p</span><span class="code-tag">&gt;</span>這是一個段落。<span class="code-tag">&lt;/p</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;/body</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/html</span><span class="code-tag">&gt;</span>
+            </div>
+
+            <p>
+                看到了嗎？HTML用"標籤"來定義內容。
+                就像寫作時用"標題"、"段落"來組織內容一樣。
+            </p>
+
+            <div class="highlight-box">
+                <strong>🎨 CSS：樣式和顏值</strong><br><br>
+                光有內容還不夠，我們需要讓它好看！CSS就是來做這個的。
+            </div>
+
+            <p>
+                假設我們有個標題，CSS可以決定：
+            </p>
+
+            <div class="code-block">
+<span class="code-tag">h1</span> {<br>
+  <span class="code-attr">color</span>: <span class="code-string">#10B981</span>;      <span class="code-comment">/* 綠色 */</span><br>
+  <span class="code-attr">font-size</span>: <span class="code-string">32px</span>;  <span class="code-comment">/* 字號 */</span><br>
+  <span class="code-attr">text-align</span>: <span class="code-string">center</span>; <span class="code-comment">/* 居中 */</span><br>
+}
+            </div>
+
+            <p>
+                CSS的強大之處在於：它是<strong>描述性</strong>的。
+                你只需要說"我要這樣"，瀏覽器就會幫你做到。
+            </p>
+
+            <div class="highlight-box">
+                <strong>⚡ JavaScript：讓網頁活起來</strong><br><br>
+                最後，我們需要交互。用戶點擊了要反應，輸入了要回應——這就是JavaScript的工作。
+            </div>
+
+            <div class="code-block">
+<span class="code-comment">// 當按鈕被點擊時...</span><br>
+button.addEventListener(<span class="code-string">'click'</span>, function() {<br>
+  alert(<span class="code-string">'你好！'</span>);  <span class="code-comment">// 彈個窗</span><br>
+});
+            </div>
+
+            <p>
+                好！現在讓我們把三劍客合體，做一個真正的網頁！
+            </p>
+
+            <div class="live-demo">
+                <h3>✋ 現場演示：你的第一個網頁！</h3>
+                <p>讓我們把HTML、CSS、JavaScript放在一起：</p>
+                <div class="code-block">
+<span class="code-tag">&lt;!DOCTYPE html&gt;</span><br>
+<span class="code-tag">&lt;html</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;head</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;style</span><span class="code-tag">&gt;</span><br>
+    <span class="code-tag">body</span> { background: #F9FAFB; text-align: center; padding: 50px; }<br>
+    <span class="code-tag">button</span> { background: #10B981; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }<br>
+  <span class="code-tag">&lt;/style</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/head</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;body</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;h1</span><span class="code-tag">&gt;</span>🎉 我的第一個網頁！<span class="code-tag">&lt;/h1</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;p</span><span class="code-tag">&gt;</span>點擊下面的按鈕試試看~<span class="code-tag">&lt;/p</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;button</span> id=<span class="code-string">"magic-btn"</span><span class="code-tag">&gt;</span>✨ 點我試試 ✨<span class="code-tag">&lt;/button</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;p</span> id=<span class="code-string">"result"</span><span class="code-tag">&gt;</span><span class="code-tag">&lt;/p</span><span class="code-tag">&gt;</span><br>
+  <span class="code-tag">&lt;script</span><span class="code-tag">&gt;</span><br>
+    let count = 0;<br>
+    document.getElementById('magic-btn').addEventListener('click', function() {<br>
+      count++;<br>
+      document.getElementById('result').innerText = `你已經點了 ${count} 次！`;<br>
+    });<br>
+  <span class="code-tag">&lt;/script</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/body</span><span class="code-tag">&gt;</span><br>
+<span class="code-tag">&lt;/html</span><span class="code-tag">&gt;</span>
+                </div>
+            </div>
+
+            <p>
+                恭喜！你剛才看到的就是一個完整的現代網頁的全部代碼！
+            </p>
+
+            <h3>🌊 系統層：從代碼到屏幕</h3>
+
+            <p>
+                當你把這三個文件寫好後，瀏覽器是怎麼把它變成屏幕上的畫面的？
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">1️⃣ 解析 HTML</div>
+                <div class="arrow">→</div>
+                <div class="step-box">2️⃣ 構建 DOM 樹</div>
+                <div class="arrow">→</div>
+                <div class="step-box">3️⃣ 解析 CSS</div>
+                <div class="arrow">→</div>
+                <div class="step-box">4️⃣ 佈局計算</div>
+                <div class="arrow">→</div>
+                <div class="step-box">5️⃣ 繪製畫面！</div>
+            </div>
+
+            <p>
+                這個過程在你每次打開網頁、甚至每次滾動頁面時都在發生。
+                而瀏覽器，就是一個不知疲倦的畫家。
+            </p>
+
+            <h3>⚖️ 權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                現在你可能會問：為什麼要分成三種語言？
+                為什麼不把它們合併成一個？
+            </p>
+
+            <div class="highlight-box">
+                <strong>關注點分離原則！</strong><br><br>
+                <ul style="text-align: left;">
+                    <li>HTML：這東西是什麼？</li>
+                    <li>CSS：這東西長什麼樣？</li>
+                    <li>JS：這東西做什麼？</li>
+                </ul><br>
+                這樣分開後，修改其中一個不會影響另外兩個。
+            </div>
+
+            <p>
+                這就是軟件設計的智慧：<strong>把不同的東西分開來管。</strong>
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>來！現在就做一個網頁！</h3>
+                <p>
+                    1. 在電腦上新建一個文件，叫 <code>index.html</code><br>
+                    2. 用記事本（或任何編輯器）打開它<br>
+                    3. 把剛才的代碼複製進去<br>
+                    4. 保存，雙擊打開！
+                </p>
+                <p>
+                    你會看到你的第一個網頁在瀏覽器裡運行！
+                </p>
+            </div>
+
+            <p>
+                想玩得更嗨一點？試試修改代碼！
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li>把標題文字改成你的名字</li>
+                <li>把按鈕顏色換成你喜歡的顏色（比如 #667eea）</li>
+                <li>修改點擊後的提示文字</li>
+            </ul>
+
+            <p>
+                每次修改後刷新一下頁面——看！你在改變這個網頁！
+            </p>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=1">Q1: 網址怎麼變成頁面？</a>
+                <a href="question.html?q=8">Q8: 前後端在做什麼？</a>
+                <a href="question.html?q=9">Q9: 瀏覽器如何顯示頁面？</a>
+                <a href="question.html?q=10">Q10: 點擊按鈕後數據去哪了？</a>
+                <a href="question.html?q=11">Q11: 註冊登錄如何實現？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>從代碼到權力</h3>
+                <p>
+                    一旦你理解了"網頁是寫出來的"，你就開始意識到：
+                </p>
+                <p>
+                    <strong>所有你在網上看到的東西，都是某些人決定給你看到的。</strong><br>
+                    而這些決定的背後，有價值觀、有商業、有政治、有偏見。
+                </p>
+            </div>
+
+            <p>
+                想想這些問題：
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>為什麼這個按鈕這麼大？</strong> 是為了讓你更容易點擊嗎？</li>
+                <li><strong>為什麼這個選項藏在這麼深的地方？</strong> 是想讓你找不到嗎？</li>
+                <li><strong>為什麼這個顏色讓我感覺很緊迫？</strong> 是故意設計的嗎？</li>
+                <li><strong>為什麼這個App讓我停不下來？</strong> 是用了什麼心理學技巧嗎？</li>
+            </ul>
+
+            <p>
+                這就是從"只會用"到"看透"的轉變。
+                你看到的不再是"理所當然"，而是"有人這樣設計"。
+            </p>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，一個網頁到底是怎麼做出來的？
+            </p>
+
+            <p>
+                <strong>答案是：</strong><br>
+                用HTML定義結構，用CSS定義樣式，用JavaScript定義行為，
+                然後用瀏覽器把它們變成屏幕上的畫面。
+            </p>
+
+            <div class="highlight-box">
+                <strong>但這還不是全部的真相。</strong><br><br>
+                更深層的真相是：<br><br>
+                <strong>你也可以做網頁！</strong><br>
+                你也可以成為這個世界的創造者之一！
+            </div>
+
+            <p>
+                恭喜你，從今天開始，你看互聯網的眼光不一樣了！
+            </p>
+
+            <div class="nav-footer">
+                <a href="q01.html" class="btn btn-outline">← 前一篇：Q1</a>
+                <a href="../questions/00-question-map.html" class="btn btn-outline">🗺️ 知識地圖</a>
+                <a href="question.html?q=8" class="btn">下一篇：Q8 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

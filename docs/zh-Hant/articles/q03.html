@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q3：為什麼平臺會越來越懂你喜歡看什麼？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q03.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q03.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q03.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q03.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-1">
+            <div class="level-badge">🎯 第1層認知 · 用戶視角</div>
+            <h1>為什麼平臺會越來越懂你喜歡看什麼？</h1>
+            <p class="subtitle">你沒告訴它你喜歡什麼，但它就是知道</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                打開抖音，前 5 個視頻還挺無聊；再刷 10 個，突然全是你感興趣的。用一週之後，你會發現它推的東西"精準得可怕"——
+                你甚至沒搜過、沒點過贊，它就<em>猜到了</em>。
+            </p>
+
+            <p>
+                YouTube 會推給你下一個剛好想看的視頻，網易雲會做出一張讓你循環一整天的私人歌單，
+                淘寶在你還沒意識到自己想買什麼之前，就把它擺到了首頁。
+            </p>
+
+            <p>
+                這不是巧合，也不是"讀心術"。這背後是一整套<strong>推薦系統</strong>在你每次滑動、停留、跳過之間悄悄學習。
+            </p>
+
+            <div class="highlight-box">
+                <strong>為什麼這個問題重要？</strong><br>
+                今天你看到什麼內容、買什麼東西、聽什麼歌、約會什麼人，越來越多是<em>算法在替你篩選</em>。
+                理解它的工作方式，就是理解為什麼"世界"呈現在你面前的樣子和別人不同。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>平臺怎麼知道你喜歡什麼？</strong>它從哪些行為裡讀出你的偏好？</li>
+                <li><strong>為什麼它"越來越"懂？</strong>它是怎麼"學"的？</li>
+                <li><strong>它推的是你真的喜歡的，還是你會點開的？</strong>這兩者其實不一樣。</li>
+                <li><strong>為什麼兩個人打開同一個 App，看到的完全不同？</strong></li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                你只感受到兩件事：刷到喜歡的——愉悅；刷到不喜歡的——快速划走。
+            </p>
+
+            <p>
+                但你不知道的是：<strong>划走這個動作本身，就是最強的信號</strong>。你花在一個視頻上的每一毫秒，都在被記錄。
+                停留 3 秒 vs 停留 10 秒 vs 完播 vs 點贊 vs 轉發，每一個都是一票，一起決定"下一個推什麼"。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                最經典的思路叫<strong>協同過濾（Collaborative Filtering）</strong>：找到和你行為相似的人，看他們喜歡什麼，你大概率也喜歡。
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">🧍 你看過 A、B、C</div>
+                <div class="arrow">↓ 找到"很像你"的人</div>
+                <div class="step-box">🧍 他也看過 A、B、C，還看了 D</div>
+                <div class="arrow">↓ 推理</div>
+                <div class="step-box">🎯 那 D 也推給你</div>
+            </div>
+
+            <p>
+                更現代的做法是把每個用戶和每個內容都變成一串數字（叫 <strong>embedding 向量</strong>），
+                然後用"兩串數字有多接近"來衡量"你有多可能喜歡它"。
+            </p>
+
+            <div class="code-block"># 極簡偽代碼：一次推薦是怎麼算出來的
+user_vec   = embed_user(user_id)           # [0.12, -0.34, 0.88, ...] 256 維
+candidates = recall(user_vec, top=5000)    # 從千萬條裡粗篩 5000 條
+
+# 精排：為每一條打一個"你會喜歡的概率"
+scores = []
+for item in candidates:
+    item_vec = embed_item(item.id)
+    p_click   = model_ctr(user_vec, item_vec, context)   # 會點嗎
+    p_finish  = model_finish(user_vec, item_vec)         # 會看完嗎
+    p_like    = model_like(user_vec, item_vec)           # 會點贊嗎
+    # 多目標融合：不同產品權重不同
+    score = 0.4 * p_click + 0.3 * p_finish + 0.3 * p_like
+    scores.append((item, score))
+
+feed = sorted(scores, key=lambda x: -x[1])[:20]   # 你下拉刷出的 20 條</div>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                從"你劃一下"到"推給你下一條"，其實是一個每秒運轉百萬次的巨大流水線：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">📱 你的每一個動作</div>
+                <div class="arrow">↓ 日誌上報</div>
+                <div class="step-box">📊 行為日誌系統</div>
+                <div class="arrow">↓ 特徵工程</div>
+                <div class="step-box">🧠 模型訓練（離線 + 實時）</div>
+                <div class="arrow">↓ 部署</div>
+                <div class="step-box">🎯 推薦服務：召回 → 粗排 → 精排 → 重排</div>
+                <div class="arrow">↓ 返回</div>
+                <div class="step-box">📱 你的下一屏</div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>整個鏈路裡有一個隱藏武器：A/B 測試。</strong>
+                平臺會同時跑幾十上百個"實驗版本"，隨機把 1% 的用戶扔進版本 A、另 1% 扔進版本 B，
+                看誰的完播率高、留存好，贏的那一版擴量。這才是"越來越懂你"的真正引擎——不是某個天才算法一次到位，
+                而是每天成千上萬次的<em>小小勝出</em>累積起來。
+            </div>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                這裡藏著一個讓工程師和產品經理夜裡睡不著的問題：<strong>"你喜歡的"和"你會點的"，其實是兩回事。</strong>
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>優化"點擊率"</h4>
+                    <p>短期指標飆升，你會一直刷。但內容越來越標題黨、情緒化、極端化——因為這些"最能騙你點一下"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>優化"長期滿意"</h4>
+                    <p>看似正確，但很難衡量：什麼算"滿意"？留存？回訪？還是"半年後你還會推薦給朋友嗎"？信號弱，訓練慢。</p>
+                </div>
+            </div>
+
+            <p>
+                所以每一家平臺都在偷偷權衡：多讓你留一秒 vs 讓你幾年後還回來；給你新鮮感 vs 給你熟悉感；
+                推流量大的爆款 vs 推冷門優質。<strong>推薦系統的每一個參數背後，都是價值觀的選擇</strong>——
+                只是這些選擇被藏在了工程師的表格和 A/B 實驗的勝率裡。
+            </p>
+
+            <p>
+                還有一個不得不面對的副作用：<strong>信息繭房</strong>。系統越懂你，就越傾向於給你"你會喜歡的"，
+                你就越少看到"你不會喜歡但可能重要的"。久而久之，你以為"世界就是這樣"，其實是"算法眼裡你以為的世界"。
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>試試看：給自己開一個"小號"</h3>
+                <p>
+                    註冊一個全新的抖音/YouTube 賬號，前 30 分鐘只看某一類內容（比如只看貓）。然後再隨便刷 10 分鐘，
+                    觀察它給你推的內容佔比是怎麼變化的。
+                </p>
+                <p>
+                    換個身份再試一次：這次只看某個完全不同的領域（比如烹飪）。
+                    對比兩個小號看到的世界，你會親眼看到<strong>"算法眼中的你"是如何被塑造出來</strong>的。
+                </p>
+            </div>
+
+            <p>
+                想更工程一點，可以觀察這段 URL 參數：
+            </p>
+
+            <div class="code-block">GET /feed?user_id=xxx&amp;last_seen=1690000000&amp;session=abc
+    &amp;ab_bucket=exp_v3_variant_b     ← 你被分到了 B 組
+    &amp;refresh_reason=pull_down       ← 你是下拉刷新的（不同來源，推的策略不同）</div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=33">Q33: 為什麼平臺知道你想看什麼？</a>
+                <a href="question.html?q=35">Q35: 推薦算法是如何工作的？</a>
+                <a href="question.html?q=36">Q36: 什麼是機器學習？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>從技術到世界</h3>
+                <p>
+                    過去我們以為"品味是自己養出來的"——你聽什麼歌、愛哪個電影、支持哪個球隊，都是你自由選擇的結果。
+                    現在越來越多的證據表明：<strong>你的品味有一半是被推薦系統塑造出來的</strong>。
+                    它先猜你會喜歡什麼，你被推得多了，就真的開始喜歡，反過來又變成它下一次訓練的正樣本。
+                </p>
+                <p>
+                    這是一種非常安靜的權力。它不告訴你不能看什麼，它只是不給你看某些東西；
+                    它不告訴你必須相信什麼，它只是讓某些觀點每天出現三次，讓另一些永遠不出現。
+                </p>
+            </div>
+
+            <p>
+                更讓人不安的是：這些系統的目標函數（optimize target）是它的商業目標，不是你的人生目標。
+                它想讓你多刷 3 分鐘，而不是讓你更幸福、更博學、或者更有勇氣。
+                兩者有時候重疊，但常常不重疊。
+            </p>
+
+            <p>
+                所以理解推薦系統，本質上是理解一件事：<strong>你面前的信息流，不是"世界"，而是"世界的一份為你定製的版本"</strong>。
+                而定製它的人，不是你自己。
+            </p>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                為什麼平臺會越來越懂你喜歡看什麼？
+            </p>
+
+            <p>
+                <strong>答案是：</strong>因為你每一次滑動、停留、點贊、跳過，都被變成一個數字，
+                喂進一個每天都在自我更新的模型。它不是"懂你"，它是<em>用你過去的行為預測你下一秒的行為</em>，
+                然後把預測最準的那條推到你眼前。
+                久而久之，它塑造的不只是你的信息流，還有你的品味、你的情緒、你以為的自己。
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=4" class="btn">繼續探索 Q4 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

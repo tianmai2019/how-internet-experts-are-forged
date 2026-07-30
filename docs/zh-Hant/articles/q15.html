@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q15：為什麼訪問量一大，原本正常的系統就會開始超時、報錯甚至崩潰？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q15.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q15.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q15.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q15.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>為什麼訪問量一大，原本正常的系統就會開始超時、報錯甚至崩潰？</h1>
+            <p class="subtitle">穩定性，是"日常假設"在壓力下的一次次崩塌</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                每年雙 11 零點，你幾乎能看到"淘寶崩了"上熱搜；春運搶票時，12306 一度成為程序員集體嘲諷對象；世界盃的時候，直播平臺一起變卡；某個明星突然官宣結婚，微博就掛了。
+            </p>
+
+            <p>
+                奇怪的是：這些系統平時都跑得好好的。憑什麼用戶一多，就翻車？
+            </p>
+
+            <div class="highlight-box">
+                <strong>因為系統的"正常"，其實是一堆假設——只是這些假設平時沒被拆穿。</strong><br><br>
+                流量一大，所有假設一起崩塌。這就是所謂的<strong>雪崩</strong>。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>併發是什麼？</strong>為什麼"很多人同時來"和"一個人來 100 次"完全不同？</li>
+                <li><strong>資源是有限的：</strong>連接、線程、內存、數據庫連接池，都有天花板。</li>
+                <li><strong>慢會傳染：</strong>為什麼一個環節變慢，會拖垮整個系統？</li>
+                <li><strong>雪崩效應：</strong>崩潰是怎麼從"局部"擴散到"全局"的？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                用戶會看到：轉圈、白屏、"網絡不穩定，請稍後再試"、"服務器繁忙"、直接 502 頁面。
+            </p>
+
+            <p>
+                用戶不會知道：這背後是幾百萬人同時擠進來，把某個原本能容納 1 萬連接的組件擠爆了。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                我們平時寫的服務大概長這樣：
+            </p>
+
+            <div class="code-block">// 一個再普通不過的接口
+app.get('/order/:id', async (req, res) =&gt; {
+    const order = await db.query(
+        'SELECT * FROM orders WHERE id = ?', [req.params.id]
+    )
+    res.json(order)
+})</div>
+
+            <p>
+                在開發環境、在測試的時候，它一切正常。你 QPS 打到 10、100、1000，也許都還好。但當 QPS 衝到 10 萬，問題一個接一個爆出來：
+            </p>
+
+            <ul>
+                <li>數據庫連接池只有 100 個，第 101 個請求開始<strong>排隊</strong>。</li>
+                <li>每個 SQL 平時 10ms，壓力大了變成 500ms，因為磁盤 IO 擁擠 / 鎖等待。</li>
+                <li>Node 的事件循環、Java 的線程池，也在被"佔著不放"的慢請求逐漸吃滿。</li>
+                <li>調用方等不到響應，超時，重試，把請求量<strong>又放大一倍</strong>。</li>
+            </ul>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                單點看不出雪崩，我們退一步看整條鏈路：
+            </p>
+
+            <div class="diagram-box">
+[ 用戶流量 ×100 ]
+       ↓
+   接入層 (Nginx / LB)      ← 連接數暴漲，可能耗盡 FD
+       ↓
+   API 網關 / 應用服務       ← 線程被慢調用佔滿
+       ↓
+   下游微服務 A、B、C        ← 任何一個變慢都往回傳染
+       ↓
+   數據庫 / Redis            ← 連接池打滿，鎖等待激增
+       ↓
+   [ 客戶端超時 → 重試 ] ────→ 再次湧回入口（正反饋！）</div>
+
+            <p>
+                注意最後那條虛線——<strong>客戶端在重試</strong>。這是很多雪崩最致命的加速器：一次慢響應引發一次重試，把原本 10 萬 QPS 變成 20 萬、40 萬，系統更慢，更多重試，直到徹底躺平。
+            </p>
+
+            <p>
+                所以雪崩的公式大致是：
+            </p>
+
+            <div class="highlight-box">
+                <strong>雪崩 = 慢 + 有限資源 + 無節制的重試 + 無邊界的調用鏈</strong><br><br>
+                這四個因素單獨都不致命，湊在一起就是災難。
+            </div>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                你可能會問：既然會崩，為什麼不一開始就設計成"永遠不崩"？
+            </p>
+
+            <p>
+                因為"扛得住高併發"很貴：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>方案 A：按峰值備容</h4>
+                    <p>永遠保留雙 11 級別的機器數，絕大部分時間閒置，成本極高。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>方案 B：按平均備容 + 彈性擴容</h4>
+                    <p>成本低，但擴容需要時間；突發流量還沒擴上來，就已經打崩了。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>方案 C：加限流 / 排隊 / 降級</h4>
+                    <p>犧牲一部分體驗（排隊、少功能）換整體不崩，工程上最實用。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>方案 D：全異步 + 消息隊列</h4>
+                    <p>吞下所有請求慢慢消化，但對實時性要求高的場景不適用。</p>
+                </div>
+            </div>
+
+            <p>
+                所有大公司都在做的，是一個組合拳：<strong>提前擴容 + 限流 + 隊列削峰 + 熔斷降級</strong>，這些正是 Q17 裡的"六件套"。
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>以為"系統崩潰 = 硬件不夠"。事實上大多數崩潰發生時，CPU 使用率並不高——真正打滿的往往是<strong>連接數、線程數、連接池、鎖</strong>這些"資源計數"。加機器有時反而無效，因為瓶頸根本不在算力。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>親手壓一個小服務看看</h3>
+                <p>
+                    在本機跑一個最簡單的 Node/Python 服務，加一句 <code>sleep(500ms)</code> 模擬慢查詢。然後用壓測工具打它：
+                </p>
+                <div class="code-block">ab -n 10000 -c 500 http://localhost:3000/hello
+# 或者用 hey / wrk / k6</div>
+                <p>
+                    觀察：當併發 <code>-c</code> 從 10 提到 500，你的 P99 延遲、錯誤率、超時率會怎麼變化？打開 <code>ss -s</code> 看看 TCP 連接堆積。你會親眼看到——同樣的代碼，負載不同，"結果"完全不同。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=18">Q18: 為什麼數據庫常常成為系統的瓶頸？</a>
+                <a href="question.html?q=19">Q19: 為什麼一個接口超時會拖垮整條鏈路？</a>
+                <a href="question.html?q=24">Q24: 為什麼要做限流和熔斷？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>穩定性，是「假設」在壓力下的誠實性檢驗</h3>
+                <p>
+                    平時跑得好好的系統，其實建立在無數條隱含假設上：
+                    <em>"用戶不會同時都來"、"數據庫連接夠用"、"下游不會掛"、"網絡不會抖"、"沒人會瘋狂重試"</em>。
+                </p>
+                <p>
+                    大流量的意義，是<strong>把這些假設一次性攤在陽光下</strong>。哪條假設不成立，系統就在哪裡裂開一道口子。所以大廠的"雙 11 大促"，本質上不只是賣貨——那是每年一次<strong>組織級的假設審計</strong>。
+                </p>
+                <p>
+                    往大了看，這也是"擴張"的通用規律：一家小公司變成大公司，一個小國變成大國，都會經歷這一刻——原本運作良好的規矩，被規模一壓就露餡。穩定性工程，本質上是<strong>把假設寫下來、量化、加護欄</strong>。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼流量一大就崩？
+            </p>
+
+            <div class="highlight-box">
+                因為"正常"是一種<strong>低負載下才成立的錯覺</strong>。<br><br>
+                資源是有限的，慢會傳染，重試會放大，鏈路會連坐。<br>
+                當所有這些一起發生，就是雪崩。<br><br>
+                所以真正牛的系統，不是永遠不慢，而是<strong>慢的時候不會全掛</strong>。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=16" class="btn">繼續探索 Q16 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

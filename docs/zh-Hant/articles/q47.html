@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q47：為什麼一個系統越大，越不像代碼問題，而像複雜性問題？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #667eea;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .highlight-box {
+            background: #F9F6FF;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #764ba2;
+        }
+
+        .growth-stages {
+            display: grid;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stage-card {
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid;
+        }
+
+        .stage-1 { background: #EFF6FF; border-color: #3B82F6; }
+        .stage-2 { background: #ECFDF5; border-color: #10B981; }
+        .stage-3 { background: #FEF3C7; border-color: #F59E0B; }
+        .stage-4 { background: #FEE2E2; border-color: #EF4444; }
+
+        .stage-card h4 {
+            margin: 0 0 10px 0;
+            color: #374151;
+        }
+
+        .stage-scale {
+            font-size: 0.9rem;
+            color: #6B7280;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .quote-box {
+            background: #1F2937;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            font-size: 1.2rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q47.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q47.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q47.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q47.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header">
+            <div class="level-badge">🌟 總結性問題</div>
+            <h1>為什麼一個系統越大，越不像代碼問題，而像複雜性問題？</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">規模改變一切</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🌱 從一顆種子說起</h2>
+
+            <p>
+                想像你開始寫一個小工具，只有幾百行代碼。
+            </p>
+
+            <p>
+                一切都很清晰：你知道每段代碼在做什麼，出問題也很好找。
+            </p>
+
+            <p>
+                但是——如果這個"小工具"慢慢長大呢？
+            </p>
+
+            <h2>📈 系統的成長階段</h2>
+
+            <div class="growth-stages">
+                <div class="stage-card stage-1">
+                    <div class="stage-scale">🌱 階段一：小項目</div>
+                    <h4>幾百行代碼，1個人開發</h4>
+                    <p>問題都是代碼問題：這裡語法錯了，那裡邏輯不對。修一下就好。</p>
+                </div>
+                <div class="stage-card stage-2">
+                    <div class="stage-scale">🌿 階段二：中型項目</div>
+                    <h4>幾萬行代碼，3-5人開發</h4>
+                    <p>開始出現協作問題：誰改了這段代碼？他為什麼這麼改？還有：模塊之間怎麼互相影響？</p>
+                </div>
+                <div class="stage-card stage-3">
+                    <div class="stage-scale">🌳 階段三：大型項目</div>
+                    <h4>幾十萬行代碼，幾十人開發</h4>
+                    <p>已經不是"哪個代碼寫錯了"的問題，而是：<br>- 這個bug是哪個團隊的？<br>- 改這裡會影響哪些地方？<br>- 誰能看懂這段代碼？</p>
+                </div>
+                <div class="stage-card stage-4">
+                    <div class="stage-scale">🌲 階段四：超大型系統</div>
+                    <h4>數百萬行代碼，幾百上千人</h4>
+                    <p>問題已經根本不是"技術問題"了：<br>- 團隊之間怎麼溝通？<br>- 誰負責這個決定？<br>- 遺留的代碼誰敢碰？<br>- 上一任工程師留下的坑在哪？</p>
+                </div>
+            </div>
+
+            <h2>🤔 為什麼會這樣？</h2>
+
+            <p>
+                這不是"代碼寫得不好"造成的——即使每段代碼都很優秀，
+                當規模足夠大時，<strong>系統整體的複雜性會自我湧現。</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>關鍵洞察：複雜性不是加法，而是乘法。</strong><br><br>
+                10個模塊 → 10個關係<br>
+                100個模塊 → 4,950個可能的關係<br>
+                1000個模塊 → 近50萬個可能的關係<br><br>
+                規模上漲10倍，複雜性上漲100倍。
+            </div>
+
+            <h2>💡 當"代碼問題"變成"複雜性問題"</h2>
+
+            <p>
+                在大型系統裡，你會發現：
+            </p>
+
+            <div class="highlight-box">
+                <strong>bug往往不在"某段代碼"裡，而在"某些代碼之間"。</strong><br><br>
+                A模塊單獨測試沒問題。<br>
+                B模塊單獨測試沒問題。<br>
+                但A和B一起用，就出問題。<br>
+                這是"整體"的問題，不是"部分"的問題。
+            </div>
+
+            <p>
+                這就是複雜性問題的典型特徵：
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>它是湧現的</strong>：不在任何一個組件裡，只在組件之間</li>
+                <li><strong>它是非線性的</strong>：改一個小地方，可能引發大問題</li>
+                <li><strong>它是不可預測的</strong>：即使你懂每個部分，也不一定懂整體</li>
+                <li><strong>它需要新的工具</strong>：編譯器、Debugger都不夠用了</li>
+            </ul>
+
+            <h2>🧠 應對複雜性的智慧</h2>
+
+            <p>
+                當你意識到系統的核心問題是複雜性時，你的應對方式也會變：
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>不再追求"寫出完美代碼"</strong>，而是"控制複雜性"</li>
+                <li><strong>不再指望"記住所有細節"</strong>，而是"建立結構"</li>
+                <li><strong>不再追求"沒有bug"</strong>，而是"快速發現和恢復"</li>
+                <li><strong>不再看"局部最優"</strong>，而是"整體健康"</li>
+            </ul>
+
+            <div class="quote-box">
+                "簡單的代碼不難寫，<br>
+                難的是讓複雜的系統看起來簡單。"
+            </div>
+
+            <h2>👑 大帝視角：複雜性是所有大系統的宿命</h2>
+
+            <div class="emperor-box">
+                <h3>不只是軟件——所有大系統都是這樣</h3>
+                <p>
+                    這個洞察不侷限於軟件：
+                </p>
+                <ul style="text-align:left;">
+                    <li><strong>大公司</strong>：不是"人不好"的問題，是"組織複雜"的問題</li>
+                    <li><strong>大城市</strong>：不是"規劃不好"的問題，是"人和空間的複雜互動"</li>
+                    <li><strong>大國家</strong>：不是"政策不好"的問題，是"利益的複雜博弈"</li>
+                </ul>
+                <p>
+                    當你理解了"複雜性問題"是所有大系統共同的挑戰，
+                    你就不會再天真地問：<br>
+                    <strong>"為什麼他們不能把事情做得更好？"</strong>
+                </p>
+                <p>
+                    而是會問：<br>
+                    <strong>"他們在如何管理複雜性？"</strong>
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>繼續探索：</h3>
+                <a href="question.html?q=23">Q23: 分佈式系統為什麼這麼複雜？</a>
+                <a href="question.html?q=26">Q26: 為什麼系統設計沒有銀彈？</a>
+                <a href="q46.html">Q46: 一個按鈕背後的系統鏈路</a>
+                <a href="question.html?q=48">Q48: 技術深入通向對人和社會的理解</a>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼一個系統越大，越不像代碼問題，而像複雜性問題？
+            </p>
+
+            <p>
+                <strong>因為規模改變了本質。</strong>
+            </p>
+
+            <p>
+                在小規模時，你在解決"這段代碼"的問題。<br>
+                在大規模時，你在解決"這個系統"的問題。<br>
+                而"系統"比"代碼"複雜得多——它涉及人、組織、時間、依賴...
+            </p>
+
+            <div class="highlight-box">
+                <strong>真正的高手，不是最會寫代碼的人，<br>
+                而是最懂如何管理複雜性的人。</strong>
+            </div>
+
+            <div class="nav-footer">
+                <a href="q46.html" class="btn btn-outline">← Q46</a>
+                <a href="../questions/00-question-map.html" class="btn btn-outline">🗺️ 知識地圖</a>
+                <a href="q48.html" class="btn">下一篇：Q48 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

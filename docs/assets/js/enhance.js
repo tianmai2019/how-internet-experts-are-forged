@@ -466,15 +466,16 @@
         },
 
         // 计算 search-index 的相对路径
-        // 路径深度：docs/ 根 = 0，articles/ | questions/ = 1，en/ = +1
-        // 英文页加载 search-index-en.json；中文页加载 search-index.json
+        // 路径深度：docs/ 根 = 0，articles/ | questions/ = 1，en/ | zh-Hant/ = +1
+        // 索引选择：/en/ → search-index-en.json；/zh-Hant/ → search-index-zh-Hant.json；否则简体
         resolveIndexUrl: function() {
             const path = window.location.pathname;
             let depth = 0;
-            if (/\/en\//.test(path)) depth++;
+            if (/\/en\//.test(path) || /\/zh-Hant\//.test(path)) depth++;
             if (/\/articles\//.test(path) || /\/questions\//.test(path)) depth++;
-            const isEn = (document.documentElement.getAttribute('lang') || '').toLowerCase().startsWith('en');
-            const filename = isEn ? 'search-index-en.json' : 'search-index.json';
+            let filename = 'search-index.json';
+            if (/\/en\//.test(path)) filename = 'search-index-en.json';
+            else if (/\/zh-Hant\//.test(path)) filename = 'search-index-zh-Hant.json';
             return '../'.repeat(depth) + 'assets/data/' + filename;
         },
 
@@ -826,89 +827,115 @@
     };
 
     // ==========================================
-    // 9. 语言切换（EN / 中）
+    // 9. 语言切换（简 · 繁 · EN，三语胶囊组）
     // ==========================================
     const LanguageSwitcher = {
-        LANG_KEY: 'ihef-lang',
-        HINT_KEY: 'ihef-lang-hint-shown',
+        LANG_KEY: 'ihef-lang',            // 用户显式选择过的语言（'zh-Hans' | 'zh-Hant' | 'en'）
+        HINT_KEY: 'ihef-lang-hint-shown', // 是否已经给过跨语言 banner 提示
 
-        // 检测当前页面语言
+        // 三种语言的展示配置
+        LANGS: [
+            { code: 'zh-Hans', label: '简', title: '切换到简体中文' },
+            { code: 'zh-Hant', label: '繁', title: '切換到繁體中文' },
+            { code: 'en',      label: 'EN', title: 'Switch to English' },
+        ],
+
+        // 从 URL 路径判定当前语言（比 <html lang> 更可靠，因为路径决定资源加载）
         currentLang: function() {
-            return window.location.pathname.indexOf('/en/') !== -1 ? 'en' : 'zh';
+            const p = window.location.pathname;
+            if (p.indexOf('/en/') !== -1 || p === '/en' || p.endsWith('/en')) return 'en';
+            if (p.indexOf('/zh-Hant/') !== -1 || p === '/zh-Hant' || p.endsWith('/zh-Hant')) return 'zh-Hant';
+            return 'zh-Hans';
         },
 
-        // 计算对应另一语言的 URL
-        // /articles/q13.html  <->  /en/articles/q13.html
-        // /index.html         <->  /en/index.html
-        // /                   <->  /en/
-        targetUrl: function() {
+        // 计算目标语言对应的 URL
+        // /articles/q13.html         →  target=en      →  /en/articles/q13.html
+        // /zh-Hant/articles/q13.html →  target=zh-Hans →  /articles/q13.html
+        // /en/index.html             →  target=zh-Hant →  /zh-Hant/index.html
+        targetUrl: function(target) {
             const cur = this.currentLang();
+            if (cur === target) return window.location.pathname + window.location.search + window.location.hash;
+
             let pathname = window.location.pathname;
 
+            // 先把当前路径规范化到"逻辑路径"（去掉语言前缀）
+            let logical = pathname;
             if (cur === 'en') {
-                // 去掉 /en 前缀
-                pathname = pathname.replace(/^\/en(\/|$)/, '/');
-                if (pathname === '') pathname = '/';
-            } else {
-                // 插入 /en 前缀
-                // /index.html -> /en/index.html
-                // /articles/q13.html -> /en/articles/q13.html
-                // /  -> /en/
-                if (pathname === '/' || pathname === '') {
-                    pathname = '/en/';
-                } else if (pathname.charAt(0) === '/') {
-                    pathname = '/en' + pathname;
-                } else {
-                    pathname = 'en/' + pathname;
-                }
+                logical = logical.replace(/^\/en(\/|$)/, '/');
+            } else if (cur === 'zh-Hant') {
+                logical = logical.replace(/^\/zh-Hant(\/|$)/, '/');
             }
-            return pathname + window.location.search + window.location.hash;
+            if (logical === '' || logical === '/') logical = '/';
+
+            // 再叠加目标语言前缀
+            let out;
+            if (target === 'zh-Hans') {
+                out = logical;
+            } else if (target === 'zh-Hant') {
+                out = logical === '/' ? '/zh-Hant/' : '/zh-Hant' + logical;
+            } else {
+                out = logical === '/' ? '/en/' : '/en' + logical;
+            }
+
+            return out + window.location.search + window.location.hash;
         },
 
         init: function() {
-            this.injectButton();
+            this.injectGroup();
             this.maybeSuggest();
         },
 
-        injectButton: function() {
+        injectGroup: function() {
             const cur = this.currentLang();
-            const label = cur === 'zh' ? 'EN' : '中';
-            const title = cur === 'zh' ? 'Switch to English' : '切换到中文';
 
-            const btn = document.createElement('a');
-            btn.className = 'lang-switcher';
-            btn.href = this.targetUrl();
-            btn.textContent = label;
-            btn.title = title;
-            btn.setAttribute('aria-label', title);
-            btn.setAttribute('data-lang-target', cur === 'zh' ? 'en' : 'zh');
+            const group = document.createElement('div');
+            group.className = 'lang-switcher-group';
+            group.setAttribute('role', 'group');
+            group.setAttribute('aria-label', 'Language / 语言 / 語言');
+
             const self = this;
-            btn.addEventListener('click', function() {
-                localStorage.setItem(self.LANG_KEY, cur === 'zh' ? 'en' : 'zh');
-                // 走默认跳转
+            this.LANGS.forEach(function(l) {
+                const isCurrent = l.code === cur;
+                const el = document.createElement(isCurrent ? 'span' : 'a');
+                el.className = 'lang-switcher lang-pill' + (isCurrent ? ' is-active' : '');
+                el.textContent = l.label;
+                el.title = l.title;
+                el.setAttribute('aria-label', l.title);
+                if (isCurrent) {
+                    el.setAttribute('aria-current', 'true');
+                } else {
+                    el.href = self.targetUrl(l.code);
+                    el.setAttribute('data-lang-target', l.code);
+                    el.addEventListener('click', function() {
+                        localStorage.setItem(self.LANG_KEY, l.code);
+                    });
+                }
+                group.appendChild(el);
             });
 
-            // 优先尝试 .nav-header（NavHeader.init() 已跑）
+            // 优先塞进 .nav-header（文章页 / questions 页），否则右上角浮动（首页）
             const navHeader = document.querySelector('.nav-header');
             if (navHeader) {
                 const home = navHeader.querySelector('.nav-back-home');
                 if (home && home.nextSibling) {
-                    navHeader.insertBefore(btn, home.nextSibling);
+                    navHeader.insertBefore(group, home.nextSibling);
                 } else {
-                    navHeader.appendChild(btn);
+                    navHeader.appendChild(group);
                 }
                 return;
             }
-
-            // 独立浮动放置（首页 / 没有 nav-header 的页面）
-            btn.classList.add('lang-switcher-floating');
-            document.body.appendChild(btn);
+            group.classList.add('lang-switcher-floating');
+            document.body.appendChild(group);
         },
 
         // 首次访问在首页给一次跨语言提示
         maybeSuggest: function() {
             const path = window.location.pathname;
-            const isHome = /(^|\/)index\.html?$/.test(path) || path === '/' || path === '/en/' || path === '/en';
+            const isHome =
+                /(^|\/)index\.html?$/.test(path) ||
+                path === '/' ||
+                path === '/en/' || path === '/en' ||
+                path === '/zh-Hant/' || path === '/zh-Hant';
             if (!isHome) return;
 
             if (localStorage.getItem(this.HINT_KEY)) return;
@@ -916,26 +943,29 @@
 
             const cur = this.currentLang();
             const nav = (navigator.language || 'zh').toLowerCase();
-            const wantEn = nav.indexOf('en') === 0;
-            const wantZh = nav.indexOf('zh') === 0;
 
-            let show = false;
-            let text = '';
-            if (cur === 'zh' && wantEn) {
-                show = true;
-                text = '🌐 Read this in English?';
-            } else if (cur === 'en' && wantZh) {
-                show = true;
-                text = '🌐 切换到中文阅读？';
-            }
-            if (!show) return;
+            // 简单启发：nav 是 en → 想看英文；nav 是 zh-tw/zh-hk/zh-hant → 想看繁体；否则默认简体
+            let want;
+            if (nav.indexOf('en') === 0) want = 'en';
+            else if (nav.indexOf('zh-tw') === 0 || nav.indexOf('zh-hk') === 0 || nav.indexOf('zh-hant') === 0) want = 'zh-Hant';
+            else if (nav.indexOf('zh') === 0) want = 'zh-Hans';
+            else want = null;
+
+            if (!want || want === cur) return;
+
+            const TEXT = {
+                'en':      '🌐 Read this in English?',
+                'zh-Hant': '🌐 切換到繁體中文閱讀？',
+                'zh-Hans': '🌐 切换到简体中文阅读？',
+            };
+            const text = TEXT[want];
 
             const banner = document.createElement('div');
             banner.className = 'lang-suggest-banner';
-            banner.innerHTML = `
-                <a class="lang-suggest-link" href="${this.targetUrl()}">${text}</a>
-                <button class="lang-suggest-close" aria-label="dismiss">✕</button>
-            `;
+            banner.innerHTML =
+                '<a class="lang-suggest-link" href="' + this.targetUrl(want) + '">' + text + '</a>' +
+                '<button class="lang-suggest-close" aria-label="dismiss">✕</button>';
+
             const self = this;
             banner.querySelector('.lang-suggest-close').addEventListener('click', function() {
                 localStorage.setItem(self.HINT_KEY, '1');
@@ -943,7 +973,7 @@
             });
             banner.querySelector('.lang-suggest-link').addEventListener('click', function() {
                 localStorage.setItem(self.HINT_KEY, '1');
-                localStorage.setItem(self.LANG_KEY, cur === 'zh' ? 'en' : 'zh');
+                localStorage.setItem(self.LANG_KEY, want);
             });
 
             document.body.appendChild(banner);

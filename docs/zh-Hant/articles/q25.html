@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q25：為什麼大型網站總是在做監控、日誌、鏈路追蹤和故障演練？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q25.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q25.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q25.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q25.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>為什麼大型網站總是在做監控、日誌、鏈路追蹤和故障演練？</h1>
+            <p class="subtitle">看不見的系統 = 失控的系統；故障演練是給系統打疫苗</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你可能聽過程序員這樣說："今天不上線，我們要壓測。""週末做一次全鏈路故障演練。""這個 bug 我們看鏈路 traceId 排查。"
+                外行聽起來像天書，但這些其實是大廠運轉的"心跳"。
+            </p>
+
+            <p>
+                在 100 臺機器、幾千個服務的系統裡，出了問題，你怎麼<strong>知道</strong>是哪出問題？靠猜？靠命？
+                答案是——大公司花了海量精力，就為了做一件事：<strong>讓系統"看得見"</strong>。
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心觀點：</strong><br><br>
+                <strong>看不見的系統，等於失控的系統。</strong><br>
+                你如果不能"觀察到"系統的狀態，你就沒法維護它。<br>
+                你如果沒有"預演過"故障，它真來了你就是瞎子摸象。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>系統裡到底有什麼東西"看不見"？</strong></li>
+                <li><strong>監控、日誌、追蹤——到底有什麼區別？</strong></li>
+                <li><strong>一次故障到底怎麼排查？</strong></li>
+                <li><strong>為什麼要"故意搞壞"自己的系統？</strong></li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                用戶對可觀測性的感知是：<strong>什麼都感覺不到，但結果就是"這家的服務真穩"</strong>。
+            </p>
+
+            <ul>
+                <li>某天 10 點開始，抖音開屏偶爾白屏——你不會看到，但工程師的告警已經響了 100 次</li>
+                <li>某個地方支付有延遲——工程師從鏈路追蹤看到"支付 → 風控"那一步 P99 從 100ms 漲到了 2000ms</li>
+                <li>某次微博服務器出問題——熱搜可能"扛住"了，因為演練過 47 次類似場景</li>
+            </ul>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                最原始的"觀察"就是——<code>print</code>。
+            </p>
+
+            <div class="code-block">
+def buy(item_id):
+    print(f"[INFO] user buying item {item_id}")
+    try:
+        result = do_buy(item_id)
+        print(f"[INFO] success: {result}")
+    except Exception as e:
+        print(f"[ERROR] failed: {e}")
+            </div>
+
+            <p>
+                這就是<strong>日誌（Log）</strong>最樸素的樣子。
+                但當你有 1000 臺機器、每臺 QPS 上萬時，幾十億行日誌散落各處——
+                你怎麼知道"哪一行是問題？"、"哪一個用戶的請求走過哪些機器？"、"這一秒系統整體是什麼狀態？"
+            </p>
+
+            <p>
+                於是，可觀測性演化出了三個不同"維度"：
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                業界公認的<strong>可觀測性三支柱</strong>（Three Pillars of Observability）：
+            </p>
+
+            <div class="diagram-box">
+                【Metrics 指標】<br>
+                → 時序數字，回答"現狀"<br>
+                → 例：QPS、CPU、錯誤率、P99 延遲<br>
+                → 工具：Prometheus + Grafana<br>
+                <br>
+                【Logs 日誌】<br>
+                → 結構化文本，回答"發生了什麼"<br>
+                → 例：某個請求打印的詳細信息、報錯堆棧<br>
+                → 工具：ELK（Elasticsearch + Logstash + Kibana）、Loki<br>
+                <br>
+                【Traces 鏈路追蹤】<br>
+                → 一次請求的全流程，回答"跨服務的問題在哪一段"<br>
+                → 例：一個下單請求：網關 3ms → 用戶 5ms → 庫存 200ms(⚠️) → 支付 20ms<br>
+                → 工具：Jaeger、SkyWalking、OpenTelemetry
+            </div>
+
+            <p>
+                三者是<strong>互補的</strong>，不是替代關係：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Metrics（指標）</h4>
+                    <p>看<strong>整體健康度</strong>：CPU 是不是 100%？錯誤率有沒有漲？<br>特點：輕量、能長期存、適合告警。<br>缺點：只能告訴你"有問題"，不告訴你"為什麼"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Logs（日誌）</h4>
+                    <p>看<strong>細節</strong>：哪一行代碼報錯？堆棧是什麼？<br>特點：信息最全、能查最深。<br>缺點：量太大、查詢貴、跨服務時難串起來。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Traces（追蹤）</h4>
+                    <p>看<strong>路徑</strong>：一次請求經過了 20 個服務，哪一段慢了？<br>特點：跨服務、跨機器可視化。<br>關鍵：需要<strong>traceId</strong> 貫穿全鏈路。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Events / Alerts</h4>
+                    <p>看<strong>變化</strong>：什麼時候發佈過？什麼時候擴容過？<br>把"人為動作"和"系統變化"關聯起來，是排查故障的第 4 支柱。</p>
+                </div>
+            </div>
+
+            <p>
+                真實排查案例：某天 <code>P99</code> 延遲從 100ms 漲到 800ms。
+            </p>
+
+            <ol>
+                <li>先看 <strong>Metrics</strong>——發現只有支付服務的延遲漲了</li>
+                <li>再看 <strong>Traces</strong>——發現是支付服務裡"調用風控"那一步慢</li>
+                <li>再看 <strong>Logs</strong>——找到風控服務的報錯："connection pool exhausted"</li>
+                <li>關聯 <strong>Events</strong>——發現半小時前風控服務發佈了新版本</li>
+                <li>結論：新版本連接池配置錯了，回滾</li>
+            </ol>
+
+            <p>
+                這就是一次"從告警到根因"的完整閉環——<strong>沒有可觀測性，這半小時你根本查不出來</strong>。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                你可能會問：既然日誌這麼好，為啥不"啥都記下來"？——因為代價驚人。
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心權衡：</strong><br>
+                <strong>觀察力</strong> ↔ <strong>成本 & 性能</strong><br>
+                記得越細越全，存儲成本越高、系統性能越差。<br>
+                真實系統會做<strong>採樣</strong>——只記錄 1% 的請求詳情。
+            </div>
+
+            <ul>
+                <li><strong>Metrics 是"預聚合"</strong>：不存原始數據，只存"每秒的 QPS 數值"。便宜、快。</li>
+                <li><strong>Logs 需要採樣和輪轉</strong>：INFO 保留 7 天，DEBUG 只保留幾小時，超時自動刪除。</li>
+                <li><strong>Traces 需要頭部採樣</strong>：不能每個請求都追蹤，通常只追 1%~10%，但"錯誤請求"和"慢請求"永遠採。</li>
+            </ul>
+
+            <h3>💥 故障演練：給系統打疫苗</h3>
+
+            <p>
+                做完了監控、日誌、追蹤，還有一件"變態"的事：<strong>故障演練（Chaos Engineering）</strong>——主動往自己的系統裡注入故障。
+            </p>
+
+            <div class="diagram-box">
+                週四下午 3 點：<br>
+                <br>
+                運維工程師："今天演練開始。"<br>
+                → 隨機殺掉 5% 的機器<br>
+                → 讓某個可用區斷網 3 分鐘<br>
+                → 讓數據庫延遲漲 500ms<br>
+                → 讓緩存擊穿 10%<br>
+                <br>
+                觀察：<br>
+                · 告警響了嗎？<br>
+                · 有沒有自動擴容？<br>
+                · 用戶端有沒有報錯？<br>
+                · 恢復用了多久？
+            </div>
+
+            <p>
+                這個方法論最早由 Netflix 提出，他們的著名工具叫 <strong>Chaos Monkey</strong>——真的會在<strong>生產環境</strong>隨機搞破壞。
+                你可能覺得瘋了，但他們的邏輯是：
+            </p>
+
+            <div class="highlight-box">
+                <strong>"故障總會發生的。<br>
+                與其等到最壞那天才發現自己沒準備好，<br>
+                不如現在主動製造小故障，看看系統能不能扛住。"</strong>
+            </div>
+
+            <p>
+                這就是"給系統打疫苗"的思想——<strong>用小劑量、可控的故障，讓系統產生對故障的免疫力</strong>。
+                阿里叫"紅藍對抗"、字節叫"混沌工程"、騰訊叫"故障演習"——名字不同，本質相同。
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"監控告警越多越好"。<br>
+                告警一多，就沒人看了——這叫"告警疲勞"。真正好的監控是：<strong>只在需要人工介入時才響，能自愈的問題讓系統自己修</strong>。
+                比如 P99 抖一下不用響，抖 5 分鐘才響；單機 CPU 100% 不用響，整個集群平均 80% 才響。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>給你自己的項目加一個 traceId</h3>
+                <p>
+                    在任意一個 Web 應用裡試試：<br>
+                    1. 請求進來時生成一個 UUID，叫 <code>traceId</code>。<br>
+                    2. 把它塞到日誌的每一行前面：<code>[trace=abc123] user login</code>。<br>
+                    3. 傳給下游服務（用 HTTP Header <code>X-Trace-Id</code>）。<br>
+                    4. 下游也把這個 <code>traceId</code> 打到自己的日誌裡。
+                </p>
+                <p>
+                    然後，當某個用戶報"這次操作有問題"時，你只需要問他要那次請求的 <code>traceId</code>，
+                    <strong>就能在 N 個服務的日誌裡搜出他這一次請求的完整路徑</strong>——
+                    這就是鏈路追蹤的雛形。
+                    一旦體會過，你就再也回不去"沒有 traceId"的日誌時代了。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=19">Q19: 為什麼部署上線這件事這麼複雜？</a>
+                <a href="question.html?q=24">Q24: 高併發下最難的是穩定性</a>
+                <a href="question.html?q=31">Q31: 為什麼穩定性比炫技更重要？</a>
+                <a href="question.html?q=23">Q23: 分佈式系統為什麼這麼複雜？</a>
+                <a href="question.html?q=22">Q22: 負載均衡怎麼承接大流量？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>看不見的系統 = 失控的系統</h3>
+                <p>
+                    一個大道至簡的真理：<strong>你無法管理你無法測量的東西。</strong><br><br>
+                    這句話不只適用於系統，也適用於——
+                </p>
+                <ul style="color:white;">
+                    <li><strong>公司管理：</strong>沒有儀表盤的 CEO，就是在盲開飛機。KPI、財報、月度復盤——都是"公司這個系統"的監控。</li>
+                    <li><strong>個人成長：</strong>沒有"復盤 + 記錄 + 反思"的人，永遠原地打轉。所謂"日誌"，其實就是你人生的可觀測性。</li>
+                    <li><strong>國家治理：</strong>普查、統計、審計——都是"社會這個系統"的 metrics 和 logs。數據造假，等於系統瞎眼。</li>
+                </ul>
+                <p>
+                    而"故障演練"更是深刻——<strong>它的哲學是"承認自己會出錯"</strong>。<br><br>
+                    一個真正強大的系統，不是"從不出問題"的系統，而是<strong>"總在故意找自己麻煩"</strong>的系統。<br><br>
+                    · 消防演習：給城市打疫苗<br>
+                    · 軍事演習：給國家打疫苗<br>
+                    · 應急預案：給組織打疫苗<br>
+                    · 復盤會：給團隊打疫苗<br><br>
+                    <strong>凡是偉大的、能穿越週期的系統，都在做一件事：主動地、廉價地失敗，來避免真實的、昂貴的失敗。</strong>
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼大型網站總是在做監控、日誌、鏈路追蹤和故障演練？
+            </p>
+
+            <p>
+                <strong>因為系統一旦複雜到某個程度，"能不能看見"比"寫沒寫對"更重要。</strong>
+                Metrics 讓你看到"發生了什麼"、Logs 讓你看到"細節是什麼"、Traces 讓你看到"路徑怎麼走的"，而演練讓你在"真實故障來臨前"就已經準備好了應對方案。
+            </p>
+
+            <div class="highlight-box">
+                <strong>成熟系統的秘密不是"從不出錯"，<br>
+                而是"出錯時你早就演練過 100 遍"。</strong><br><br>
+                這也是為什麼工程師最貴的能力，從來不是"寫代碼"，<br>
+                而是"在系統著火時，5 分鐘內定位問題、10 分鐘內恢復服務"。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=26" class="btn">繼續探索 Q26 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

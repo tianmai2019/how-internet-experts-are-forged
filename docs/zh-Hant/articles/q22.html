@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q22：為什麼負載均衡可以讓同一個服務同時承接大量請求？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q22.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q22.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q22.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q22.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>為什麼負載均衡可以讓同一個服務同時承接大量請求？</h1>
+            <p class="subtitle">讓"一個服務"變成"一群服務"的錯覺</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你有沒有想過一個奇怪的事：全國 10 億人都在同一個"www.taobao.com"上刷刷刷，為什麼這臺機器不會累死？
+                甚至更神奇：如果它累死了，怎麼可能還沒有一個用戶察覺到？
+            </p>
+
+            <p>
+                答案是——<strong>你以為你在訪問"一臺淘寶服務器"，其實你面對的是一整個機房、上萬臺機器。</strong>
+                中間悄悄替你把請求分配下去的那個東西，就叫<strong>負載均衡（Load Balancer，LB）</strong>。
+            </p>
+
+            <div class="highlight-box">
+                <strong>負載均衡的本質是什麼？</strong><br><br>
+                一句話：<strong>讓"一個服務"看起來是一臺機器，其實是一群機器。</strong><br>
+                外面看是單點，裡面藏著一支軍隊。
+            </div>
+
+            <p>
+                理解負載均衡，你就理解了"橫向擴展"這個互聯網架構裡最重要的概念——為什麼大廠能"加機器就撐住流量"，不需要重寫代碼。
+            </p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>用戶怎麼"以為"自己在訪問一臺機器？</strong></li>
+                <li><strong>請求怎麼被分配下去？</strong> 誰決定"這次給誰處理"？</li>
+                <li><strong>如果一臺機器壞了，用戶會不會察覺？</strong></li>
+                <li><strong>為什麼有人叫 L4，有人叫 L7？</strong></li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                普通用戶對負載均衡的感知——<strong>零</strong>。
+                他們只會覺得：
+            </p>
+            <ul>
+                <li>這個網站怎麼這麼"穩"？雙 11 那麼多人都能刷？</li>
+                <li>偶爾哪次請求慢了一下，刷新就好了（其實換了一臺機器）</li>
+                <li>他們從來不知道，同一秒裡，"淘寶"其實由幾千臺機器同時在為不同用戶服務</li>
+            </ul>
+
+            <p>
+                這就是負載均衡最偉大的地方——<strong>它讓複雜消失在用戶視野裡</strong>。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                最簡單的負載均衡就是<strong>輪詢（Round Robin）</strong>：
+                請求來了，第一個給機器 A，第二個給機器 B，第三個給機器 C，第四個再回到 A……如此循環。
+            </p>
+
+            <div class="code-block">
+# 一個極簡的"應用級"負載均衡（偽代碼）
+servers = ["10.0.0.1", "10.0.0.2", "10.0.0.3"]
+counter = 0
+
+def pick_server():
+    global counter
+    server = servers[counter % len(servers)]
+    counter += 1
+    return server
+
+def handle_request(req):
+    backend = pick_server()
+    return forward(req, backend)   # 把請求轉發過去
+            </div>
+
+            <p>
+                真實世界當然複雜得多，但精神完全一致：<strong>一個"分發者"站在最前面，把請求勻開來打到後面一堆"幹活的"</strong>。
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                真實互聯網系統裡，負載均衡不止一層，而是環環相扣的多層結構。
+            </p>
+
+            <div class="diagram-box">
+                【用戶】<br>
+                ↓ 通過域名 www.taobao.com<br>
+                <br>
+                【DNS 負載均衡】（就近返回不同機房的 IP）<br>
+                ↓<br>
+                【L4 負載均衡】（LVS / F5，按 IP 端口分流，超快）<br>
+                ↓<br>
+                【L7 負載均衡】（Nginx / Envoy，按 URL/Header 精細分流）<br>
+                ↓<br>
+                【後端服務集群】機器 A、B、C、D、E……
+            </div>
+
+            <p>
+                這一路上，每一層都在"分發"——只是分發的粒度不一樣：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>DNS 負載均衡</h4>
+                    <p>粒度最粗：<strong>按地理位置</strong>返回不同的機房 IP。<br>北京用戶去北京機房，廣州用戶去廣州機房。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>L4 負載均衡（傳輸層）</h4>
+                    <p>基於 <strong>IP + 端口</strong> 分流，不看請求內容。<br>極快，一臺 LVS 可以扛幾十萬 QPS，但沒法"看內容"做智能路由。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>L7 負載均衡（應用層）</h4>
+                    <p>能看 <strong>HTTP URL、Header、Cookie</strong>。<br>可以"把 /video 的請求打到視頻集群，/pay 的請求打到支付集群"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>服務網格（Service Mesh）</h4>
+                    <p>更細：<strong>服務內部之間的調用</strong>也做負載均衡。<br>典型代表：Istio、Envoy。這是微服務時代的必需品。</p>
+                </div>
+            </div>
+
+            <p>
+                除了"怎麼分"，負載均衡還有一個關鍵武器：<strong>健康檢查（Health Check）</strong>。
+                每隔幾秒，LB 會 ping 一下後面的機器："你還活著嗎？"
+                死了的機器會被<strong>自動從池子裡踢出去</strong>，新請求不再打過去。
+                這就是"一臺機器壞了用戶毫無察覺"的秘密。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                負載均衡看似簡單，但裡面藏著幾個非常燒腦的權衡：
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心權衡：</strong>
+                <strong>均勻分發</strong> ↔ <strong>會話粘性</strong><br>
+                想要真正均勻 → 用戶每次可能被打到不同機器 → 登錄狀態丟失。<br>
+                想要"同一用戶去同一臺機器"（Session Sticky）→ 部分機器會累一些。
+            </div>
+
+            <p>
+                幾個經典策略你遲早要選一個：
+            </p>
+
+            <ul>
+                <li><strong>輪詢（Round Robin）：</strong> 最公平，但不考慮機器性能。</li>
+                <li><strong>加權輪詢：</strong> 好機器多分點。</li>
+                <li><strong>最少連接：</strong> 誰手上活兒最少就給誰。適合請求耗時不均勻的場景。</li>
+                <li><strong>一致性哈希（Consistent Hashing）：</strong> 同一個用戶 / 同一個 Key 永遠打到同一臺機器，用於緩存親和性。加機器時只有一小部分請求需要"搬家"。</li>
+                <li><strong>IP Hash：</strong> 按客戶端 IP 分流，簡單實現"粘性會話"。</li>
+            </ul>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"負載均衡後就一定不宕機了"。<br>
+                LB 自己也是單點！如果 LB 掛了，後面幾百臺機器一起變成"孤島"。
+                所以真實系統會做<strong>多個 LB 互為主備</strong>（Keepalived + VIP、雲上的 SLB 高可用集群），甚至 DNS 層就多返回幾個 LB 地址。
+                <strong>沒有真正的單點，只有更多的備份。</strong>
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>親眼看看"你在訪問哪一臺"</h3>
+                <p>
+                    在命令行裡執行：
+                </p>
+                <div class="code-block" style="background:#111827;">
+$ nslookup www.baidu.com<br>
+Server: 8.8.8.8<br>
+Address: 8.8.8.8#53<br>
+Non-authoritative answer:<br>
+Name: www.a.shifen.com<br>
+Address: 110.242.68.66<br>
+Address: 110.242.68.4
+                </div>
+                <p>
+                    看到沒？返回了<strong>好幾個 IP 地址</strong>。這就是 DNS 負載均衡最直接的證據——同一個域名，背後是一堆 IP。
+                    你的瀏覽器會挑一個連接，其他 IP 是它的"備胎"。
+                </p>
+                <p>
+                    再來一遍，試試用 <code>curl</code>：<br>
+                    <code>curl -I https://www.taobao.com</code> —— 觀察 <code>Server</code> 或 <code>Set-Cookie</code> 頭，你可能會看到不同的機房標識。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=15">Q15: 前端和後端到底怎麼分工？</a>
+                <a href="question.html?q=17">Q17: 為什麼要談緩存、隊列、負載均衡？</a>
+                <a href="question.html?q=21">Q21: 消息隊列如何削峰填谷？</a>
+                <a href="question.html?q=23">Q23: 分佈式系統為什麼這麼複雜？</a>
+                <a href="question.html?q=20">Q20: 緩存為何能提升性能？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>負載均衡 = 可擴展性的語法糖</h3>
+                <p>
+                    在沒有負載均衡的時代，"變強"只有一種方式——<strong>把這臺機器換成更貴的</strong>。
+                    這叫"垂直擴展"，代價高、天花板明確、故障時一夜回到解放前。<br><br>
+                    負載均衡帶來了另一種"變強"的可能——<strong>橫向擴展</strong>：
+                    機器不夠？加就是了。加 10 臺，就有 10 倍處理能力。
+                    從此，"性能"這個詞不再是硬件問題，而是錢和架構問題。<br><br>
+                    這背後暗藏著一個大帝視角的洞察：<br>
+                    <strong>"一個服務" 是一種敘事，"一群服務" 才是真相。</strong><br><br>
+                    這個思路超越技術，直接影響到組織管理：<br>
+                    · 一家公司為什麼能"擴張 100 倍還不崩"？因為它把"CEO 一人決策"拆成了"多個業務群獨立決策"（組織上的負載均衡）。<br>
+                    · 一個國家的行政系統為什麼能覆蓋幾億人？因為它有"中央-省-市-縣-鄉"的分層派發（層級負載均衡）。<br>
+                    · 一個大學講座為什麼要分教室？因為一間教室裝不下所有人（會話粘性 + 分流）。<br><br>
+                    <strong>凡是"面對海量請求還能穩定輸出"的系統——不管是軟件、組織、還是社會——都在做同一件事：把"一個入口"變成"一支軍隊"。</strong>
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼負載均衡可以讓同一個服務同時承接大量請求？
+            </p>
+
+            <p>
+                <strong>因為它把"一個服務"這個概念解耦成了"一群機器 + 一個入口"。</strong>
+                入口負責路由和保活，機器負責幹活。請求變多？加機器；機器壞了？踢掉換一臺。
+                外面的世界永遠只看到一個穩穩當當的"服務"。
+            </p>
+
+            <div class="highlight-box">
+                負載均衡真正偉大的地方，不是它有多快，<br>
+                而是它讓"擴展"成為了一種<strong>加法運算</strong>——<br>
+                你不再需要重構，只需要加機器。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=23" class="btn">繼續探索 Q23 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

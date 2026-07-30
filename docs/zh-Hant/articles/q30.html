@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q30：為什麼很多技術方案在白板上很好看，到了線上卻未必值得？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q30.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q30.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q30.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q30.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-4">
+            <div class="level-badge">⚖️ 第4層認知 · 高級工程師視角</div>
+            <h1>為什麼很多技術方案在白板上很好看，到了線上卻未必值得？</h1>
+            <p class="subtitle">白板畫出來的是「意圖」，線上跑出來的是「現實」</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>技術評審會上，某工程師在白板上畫了一個漂亮的架構圖：</p>
+
+            <div class="diagram-box">
+                客戶端 → CDN → 網關 → 微服務集群 → 緩存 → 數據庫<br>
+                <em>（箭頭清晰、層次分明、看起來無懈可擊）</em>
+            </div>
+
+            <p>方案通過了，代碼寫完了，測試環境跑通了。上線那天，運維一看監控：</p>
+
+            <ul>
+                <li>網關 P99 突然飆到 3 秒</li>
+                <li>緩存命中率只有 40%（預期 95%）</li>
+                <li>數據庫 CPU 打滿</li>
+                <li>某個微服務在 GC 停頓</li>
+                <li>調用鏈上還有一個"沒畫進圖裡"的老服務在拖後腿</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>白板畫的是「設計意圖」，線上跑的是「物理現實」。</strong>兩者之間隔著 100 個你在白板上看不到的東西：真實數據分佈、真實流量形態、真實硬件、真實併發、真實故障、真實的其他系統。
+            </div>
+
+            <p>這一層認知的核心：<strong>紙上得來終覺淺，絕知此事要"上線"。</strong></p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li>白板方案漏掉了什麼？</li>
+                <li>線上和測試環境差在哪裡？</li>
+                <li>為什麼第 4 個 9 靠"運氣"？</li>
+                <li>怎麼讓方案"從紙上走到線上"？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>用戶看到的是白板方案的"翻譯版"——那個能不能打開、快不快、穩不穩的產品。白板畫得再好看，用戶遇到 5xx 一次，就會用腳投票。</p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>白板上省略掉的東西，往往在代碼裡以"細節"的形式潛伏：</p>
+
+            <div class="code-block">白板：service.call(request)
+
+現實：
+  try {
+      // 序列化耗時？
+      // 超時設置多少？
+      // 重試策略？重試是否冪等？
+      // 熔斷？降級？
+      // 限流？
+      // 上下文傳遞？TraceID？
+      // 日誌？埋點？
+      // 錯誤處理？錯誤碼規範？
+      // 緩存穿透/擊穿/雪崩？
+      // 分佈式鎖？
+      response = service.call(request);
+  } catch (TimeoutException e) {
+      // 兜底？降級？返回舊數據？直接失敗？
+  } catch (Exception e) {
+      // 未知異常怎麼處理？
+  }</div>
+
+            <p>白板一根線，代碼一百行——每一行都是一個可能出錯的地方。</p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>白板方案通常忽略的"隱藏參與者"：</p>
+
+            <div class="diagram-box">
+                <span class="step-box">網絡抖動</span>
+                <span class="step-box">DNS 波動</span>
+                <span class="step-box">JVM GC</span>
+                <br>
+                <span class="step-box">時鐘漂移</span>
+                <span class="step-box">緩存冷啟動</span>
+                <span class="step-box">磁盤 IO</span>
+                <br>
+                <span class="step-box">鄰居噪音</span>
+                <span class="step-box">證書過期</span>
+                <span class="step-box">配置漂移</span>
+            </div>
+
+            <p>這些東西沒有一個會出現在白板上，但每一個都可能是線上故障的元兇。</p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>白板方案</h4>
+                    <p>✅ 邏輯清晰<br>✅ 覆蓋主流程<br>✅ 組件職責明確<br>❌ 假設網絡永遠暢通<br>❌ 假設數據分佈均勻<br>❌ 假設組件永遠可用<br>❌ 忽略灰度、監控、回滾</p>
+                </div>
+                <div class="compare-card">
+                    <h4>線上方案</h4>
+                    <p>✅ 有超時/重試/熔斷<br>✅ 有灰度發佈<br>✅ 有監控告警<br>✅ 有回滾預案<br>✅ 有降級路徑<br>✅ 有容量評估<br>❌ 複雜度是白板的 5-10 倍</p>
+                </div>
+            </div>
+
+            <h2>📉 SLO 與「Error Budget」：第 4 個 9 靠運氣</h2>
+
+            <p>Google SRE 手冊裡有一個驚人觀察：<strong>系統從 99.9% 到 99.99%（第 4 個 9），成本翻 10 倍；從 99.99% 到 99.999%，再翻 10 倍。剩下那一點點，往往<em>不是靠架構，是靠運氣</em></strong>——因為你已經無法控制第三方、無法控制人為失誤、無法控制機房斷電、無法控制光纜被挖斷。</p>
+
+            <div class="code-block">可用性 vs 每年允許的停機時間：
+
+  99%       →   3.65 天    （容易做到）
+  99.9%     →   8.77 小時  （認真做能做到）
+  99.99%    →   52.6 分鐘  （需要專業 SRE）
+  99.999%   →   5.26 分鐘  （需要巨大工程投入）
+  99.9999%  →   31.5 秒    （幾乎不可能，靠運氣）
+
+每多一個 9：成本 ×10，複雜度 ×10，收益 ×0.1</div>
+
+            <div class="callout callout--warning">
+                <strong>破除迷思：</strong>產品經理說"我們要 100% 可用"的時候，其實是在說"我不理解這句話的成本"。你的工作不是承諾 100%，而是<strong>告訴他一個 9 大概值多少錢</strong>。
+            </div>
+
+            <h2>🛠️ 從白板到線上：4 件事讓方案落地</h2>
+
+            <h3>1. 灰度發佈</h3>
+
+            <p>永遠不要讓新方案「一夜之間」100% 生效。合理的節奏：</p>
+
+            <div class="code-block">0.1% 流量 → 觀察 30 分鐘
+1%   流量 → 觀察 2 小時
+10%  流量 → 觀察 24 小時
+50%  流量 → 觀察 3 天
+100% 流量 → 才算真正上線</div>
+
+            <h3>2. 監控 + 告警</h3>
+
+            <p>關鍵的四大類指標（Google 的"四個黃金信號"）：</p>
+
+            <ul>
+                <li><strong>延遲（Latency）</strong>：P50/P95/P99 分位</li>
+                <li><strong>流量（Traffic）</strong>：QPS/RPS</li>
+                <li><strong>錯誤（Errors）</strong>：錯誤率、錯誤碼分佈</li>
+                <li><strong>飽和度（Saturation）</strong>：CPU/內存/磁盤/連接池</li>
+            </ul>
+
+            <h3>3. 回滾預案</h3>
+
+            <p>回滾必須比上線更快、更可靠。規則：</p>
+
+            <ul>
+                <li>不可回滾的變更，需要格外謹慎（比如 DB 結構不兼容變更）</li>
+                <li>回滾按鈕必須一鍵觸發，不能有隱藏步驟</li>
+                <li>回滾過程本身也要監控——回滾也可能失敗</li>
+            </ul>
+
+            <h3>4. 事故復盤</h3>
+
+            <p>每一次線上故障都是"白板方案"漏掉的東西顯形。真正成熟的團隊做<strong>Blameless Postmortem（無追責復盤）</strong>：</p>
+
+            <ul>
+                <li>不追人的責任，追系統的漏洞</li>
+                <li>輸出的不是"XXX 下次注意"，而是"我們改哪個流程"</li>
+                <li>每個 Action Item 有 Owner、有 Deadline、有驗收標準</li>
+            </ul>
+
+            <h2>💥 真實案例：Knight Capital 的 45 分鐘</h2>
+
+            <p>2012 年 8 月 1 日，美國券商 Knight Capital 上線了一次代碼變更。白板上是完美的——一個新的高頻交易算法。</p>
+
+            <p>但在部署時，工程師忘了把新代碼部署到 8 臺服務器中的 1 臺。結果那臺服務器仍然運行著已經被廢棄的老代碼，而老代碼複用了一個新代碼啟用的舊 flag——觸發了一段"死循環下單"的邏輯。</p>
+
+            <p>45 分鐘內，Knight Capital 虧損 <strong>4.4 億美元</strong>，公司當天股價暴跌 75%，幾個月後被收購。</p>
+
+            <div class="highlight-box">
+                <strong>白板方案裡沒有"部署失敗"這三個字。</strong>但真實世界裡，幾乎每一次嚴重事故的原因，都是"我們以為它會成功"。
+            </div>
+
+            <h2>🐋 真實案例：Twitter 的 Fail Whale 時代</h2>
+
+            <p>2007-2010 年，Twitter 每天都在崩潰，那隻"失敗鯨魚"圖標成了一代人的記憶。原因：他們的白板架構（一個漂亮的 Rails 單體）在流量指數增長時徹底失效。</p>
+
+            <p>Twitter 花了整整 3 年重構：拆服務、上 JVM、重寫核心組件、引入 Kafka、上 Manhattan 分佈式存儲。這些工作沒有一個是白板上能提前想到的——全是"線上打臉打出來的"。</p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>做一次"白板 vs 線上"對照</h3>
+                <p>找你最近做的一個技術方案，回答下面 6 個問題：</p>
+                <ol>
+                    <li>如果上游超時，會發生什麼？</li>
+                    <li>如果下游返回錯誤數據，會發生什麼？</li>
+                    <li>如果流量突然漲 10 倍，會發生什麼？</li>
+                    <li>如果需要回滾，多長時間能回滾？</li>
+                    <li>上線後前 24 小時，你會盯哪 3 個監控指標？</li>
+                    <li>如果凌晨 3 點出問題，值班的人怎麼定位？</li>
+                </ol>
+                <p>如果 6 個問題裡有 3 個以上回答不出來，你的方案還只是「白板方案」，不是「線上方案」。</p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=26">Q26: 為什麼系統設計裡沒有銀彈？</a>
+                <a href="question.html?q=27">Q27: 先進架構不一定適合當前業務</a>
+                <a href="question.html?q=29">Q29: 一致性、性能、可用性怎麼取捨？</a>
+                <a href="question.html?q=31">Q31: 為什麼穩定性比炫技更重要？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>白板畫的是「意圖」，線上跑的是「現實」</h3>
+                <p>為什麼資深工程師和新手最本質的差別，不在於"設計能力"，而在於"敬畏心"？</p>
+                <p>因為新手相信白板——他覺得設計畫出來，代碼寫完就好了。資深工程師知道白板是"起點"，不是"終點"。真正讓系統跑起來的，是所有那些<strong>不在白板上、沒寫進代碼裡、只有在線上血淚教訓裡才能學到的東西</strong>：熔斷、降級、容量、灰度、監控、回滾、演練、復盤。</p>
+                <p>這不是技術，這是<strong>一種對"現實複雜度"的敬畏</strong>——承認自己不可能提前想到所有事情，承認系統會以你想不到的方式出問題，承認真實世界永遠比你的模型更粗糲、更混亂、更狡詐。</p>
+                <p>大帝視角是：<strong>不迷信設計，不輕視運維；把每一次線上故障當成宇宙送來的免費教材，你就會慢慢從"畫圖的人"變成"造系統的人"。</strong></p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>為什麼很多技術方案在白板上很好看，到了線上卻未必值得？</p>
+
+            <div class="highlight-box">
+                <strong>因為白板是二維的，現實是多維的。</strong><br><br>
+                白板只畫了"邏輯維"，而現實還有：網絡維、時序維、故障維、併發維、演化維、組織維……<br><br>
+                所以真正的技術評審不該只看白板，還要問：<strong>它上線了會怎麼樣？它壞了會怎麼樣？它漲 10 倍會怎麼樣？它跑一年後會怎麼樣？</strong><br><br>
+                答對了這些問題，白板方案才有資格變成生產方案。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=31" class="btn">繼續探索 Q31 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

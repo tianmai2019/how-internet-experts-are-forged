@@ -75,7 +75,12 @@ git push github   # 推到 GitHub，触发 Cloudflare 部署
 node scripts/build-search-index.js
 ```
 
-脚本会扫描 `docs/articles/` 下所有 `qNN.html` + 主文章，抽取标题和正文写入 `docs/assets/data/search-index.json`（约 350 KB，跟代码一起提交）。
+脚本会扫描三种语言目录下的所有 `qNN.html` + 主文章，抽取标题和正文写入：
+- `docs/assets/data/search-index.json`         (简体，约 355 KB)
+- `docs/assets/data/search-index-zh-Hant.json` (繁体，约 355 KB)
+- `docs/assets/data/search-index-en.json`      (英文，约 405 KB)
+
+只想跑一种：`node scripts/build-search-index.js zh` / `zh-Hant` / `en`。
 
 **什么时候需要跑？**
 
@@ -85,15 +90,28 @@ node scripts/build-search-index.js
 
 **忘了跑会怎样？** 网站正常运行，只是搜索里搜不到新增/新改的内容。
 
-建议在提交时把索引一起 commit：
+---
+
+## 🀄 重建繁体版（改动简体源之后）
+
+`docs/zh-Hant/` 目录**完全由脚本从 `docs/` 生成**，不要直接手改里面的 HTML —— 下次重建会被覆盖。
+
+流程：
 
 ```bash
-node scripts/build-search-index.js
-git add docs/articles/ docs/assets/data/search-index.json
-git commit -m "content: 新增 QNN + 重建搜索索引"
-git push
-git push github
+npm install --no-save opencc-js   # 首次运行前装一次
+node scripts/build-zh-hant.js     # 从简体源批量重建繁体页
+node scripts/inject-hreflang.js   # 给新增页注入三语 hreflang
+node scripts/build-search-index.js zh-Hant   # 重建繁体搜索索引
 ```
+
+**什么时候需要跑？**
+
+- ✅ 改了 `docs/articles/qNN.html`、`docs/index.html` 或 `docs/questions/*.html`
+- ✅ 新增了一篇文章（从简体源开始）
+- ❌ 只改了 CSS / JS / 图片：**不用**
+
+如果想让某个术语走"繁体地道化"（比如 `软件 → 軟體` 而不是 `軟件`），编辑 `scripts/build-zh-hant.js` 顶部注释所指的转换器，把 `to: 'tw'` 改成 `to: 'twp'`，或者维护自己的术语覆盖表。当前默认按用户选择的 s2t（仅字形）跑。
 
 ---
 

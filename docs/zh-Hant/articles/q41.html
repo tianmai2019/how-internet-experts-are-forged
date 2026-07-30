@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q41：為什麼AI能說得很流暢，卻不一定總是正確？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q41.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q41.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q41.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q41.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-6">
+            <div class="level-badge">🤖 第6層認知 · AI 時代視角</div>
+            <h1>為什麼AI能說得很流暢，卻不一定總是正確？</h1>
+            <p class="subtitle">流暢是一種模式匹配，不是一種事實核對</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你問 ChatGPT 一個問題，它答得又快又順，甚至還引用了參考文獻。你幾乎要在朋友圈轉發它了——
+                直到你去查那本"參考文獻"，發現<strong>那本書根本不存在</strong>。
+            </p>
+
+            <div class="highlight-box">
+                <strong>這就是所謂的"AI 幻覺"（hallucination）：</strong><br><br>
+                AI 一本正經地編造了看起來完全合理的內容。<br>
+                它不是在騙你，它甚至"不知道"自己在騙你。
+            </div>
+
+            <p>
+                這個問題重要，是因為在信息爆炸的時代，"看起來專業"和"真的專業"之間的界限，
+                比過去任何時候都模糊。而 AI，讓這條界限更模糊了。
+            </p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>AI 是"怎麼說話"的？</strong> 它的機制到底是什麼？</li>
+                <li><strong>為什麼"流暢"這麼容易？</strong> 而"正確"卻這麼難？</li>
+                <li><strong>什麼是幻覺？</strong> 為什麼模型會一本正經地胡說？</li>
+                <li><strong>有辦法減輕幻覺嗎？</strong> RAG、微調、事實核查有什麼用？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                作為用戶，你看到的只有兩件事：<strong>它回答得又順又快</strong>，<strong>看起來像個專家</strong>。
+                你沒有理由不相信它——它講的每個字都很像那麼回事。
+            </p>
+
+            <p>
+                但流暢和正確，是兩個完全不同維度的事。<strong>流暢是關於"怎麼說"，正確是關於"說什麼"。</strong>
+                AI 極其擅長前者，在後者上卻經常翻車。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                在實現層，我們必須直面一個事實：<strong>大語言模型本質上是"下一個 token 的概率預測器"</strong>。
+            </p>
+
+            <p>
+                這裡的 <code>token</code>（詞元）是模型處理文字的最小單位——大約是"一個詞或半個詞"。
+                模型做的事很單純：給它一段文字，它輸出"下一個 token 最有可能是什麼"的概率分佈，然後按概率挑一個，接著重複。
+            </p>
+
+            <div class="code-block">Prompt: "珠穆朗瑪峰的高度是"
+
+模型內部（簡化）：
+  下一個 token 的概率分佈：
+    "8848"     → 0.62
+    "8844"     → 0.18
+    "8849"     → 0.09
+    "一"       → 0.05
+    "非常"     → 0.03
+    ...
+
+採樣 → 輸出："8848"
+接著預測下一個 token → "米"
+接著預測下一個 token → "。"
+...</div>
+
+            <p>
+                注意一件很關鍵的事：<strong>模型在挑 token 時，看的是"這個詞後面接什麼最像人類語料"，
+                而不是"這個數字是不是真的"</strong>。它沒有一個內置的"事實數據庫"去核對。
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                把視野拉大。一個 LLM 回答問題，走的是這條鏈路：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box step-box--level-6">你的問題（Prompt）</div>
+                <div class="arrow">↓ 拆成 tokens</div>
+                <div class="step-box step-box--level-6">模型前向計算</div>
+                <div class="arrow">↓ 輸出概率分佈</div>
+                <div class="step-box step-box--level-6">採樣下一個 token</div>
+                <div class="arrow">↓ 拼回上下文，循環</div>
+                <div class="step-box step-box--level-6">流暢的回答文字</div>
+            </div>
+
+            <p>
+                在這條鏈路裡，從頭到尾<strong>沒有一步是"去查證事實"</strong>。它只是在"接最合理的下一個詞"。
+                這種機制天然擅長兩件事：
+            </p>
+
+            <ul>
+                <li><strong>語法通順</strong>——因為它見過海量通順的句子。</li>
+                <li><strong>風格擬合</strong>——因為它見過學術、口語、法律、詩歌各種風格。</li>
+            </ul>
+
+            <p>
+                它天然不擅長的事只有一件：<strong>核對具體事實</strong>。
+                當訓練數據裡對某件事的說法有多種、模糊、甚至互相矛盾時，模型只會輸出"平均下來最像"的答案——
+                這就是<strong>幻覺</strong>的溫床。
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"AI 是在檢索答案。"<br>
+                不。它不是搜索引擎。它沒有在數據庫裡查東西。
+                它是在生成——每一個字都是當下"猜"出來的。
+                看起來像"引用"，其實是"合成"。
+            </div>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                你會問：那為什麼不乾脆做一個"只說真話"的模型？答案是：<strong>沒人知道怎麼做</strong>。
+            </p>
+
+            <p>
+                當前的解決辦法都是"打補丁"，各有代價：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🔎 RAG（檢索增強生成）</h4>
+                    <p>先從真實文檔庫裡檢索片段，再讓模型基於片段回答。
+                    優點：減少幻覺。代價：需要維護知識庫，檢索質量決定回答質量。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🎯 微調 / RLHF</h4>
+                    <p>用高質量數據讓模型學會"該說不知道就說不知道"。
+                    優點：改善行為。代價：訓練貴，且模型仍會在訓練數據沒覆蓋的地方翻車。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🛠️ 工具調用（Tools / Agents）</h4>
+                    <p>讓模型學會"該查計算器就調計算器，該查數據庫就調 API"。
+                    優點：把事實核對交給專門系統。代價：鏈路變長、延遲高、錯誤傳播。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>👤 人類核查</h4>
+                    <p>最終由人來判斷答案對不對。
+                    優點：可靠。代價：慢、貴，規模化困難。</p>
+                </div>
+            </div>
+
+            <p>
+                所以，"流暢但不總是正確"不是 bug——是這一代模型架構的<strong>固有屬性</strong>。
+                你可以緩解它，但沒法從根源消除它。
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>做一次"引用測試"</h3>
+                <p>
+                    找一個你熟悉的領域，問 AI 一個偏具體的問題，比如：
+                </p>
+                <p>
+                    <em>"請引用 3 篇關於 XXX 的論文，附作者、年份和期刊。"</em>
+                </p>
+                <p>
+                    然後拿這 3 條去 Google Scholar 或期刊官網核對。
+                    你大概率會發現：作者名字對不上、期刊張冠李戴、甚至整篇論文根本不存在——
+                    但 AI 的語氣絲毫沒變，像是在唸一份真實清單。<br><br>
+                    這個體驗會永久改變你對 AI 輸出的信任方式。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=40">Q40: 為什麼AI看起來像在理解你？</a>
+                <a href="question.html?q=42">Q42: 生成式AI和傳統軟件為什麼本質不同？</a>
+                <a href="question.html?q=43">Q43: 為什麼AI的輸出帶有概率性？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>流暢感，是新時代的說服力武器</h3>
+                <p>
+                    在過去，"寫得漂亮"意味著"下過功夫"——它是能力的證明。
+                    現在不是了。任何人、任何機器，都能瞬間生成一段"看起來極其專業"的文字。
+                </p>
+                <p>
+                    這帶來兩個後果：
+                </p>
+                <ul>
+                    <li><strong>信息可信度的錨點在漂移</strong>——過去我們信"寫得好"，現在得信"能核對"。</li>
+                    <li><strong>閱讀者的責任變重了</strong>——你要學會在"看起來對"和"真的對"之間劃一條線。</li>
+                </ul>
+                <p>
+                    第 6 層認知的關鍵不是"少用 AI"，而是<strong>對"流暢"這件事本身保持懷疑</strong>。
+                    在 AI 時代，懷疑不是敵意，而是新的禮貌。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                為什麼 AI 能說得很流暢，卻不一定總是正確？
+            </p>
+
+            <p>
+                <strong>因為流暢來自模式匹配，正確來自事實核對——而當前的語言模型只做前者，不做後者。</strong>
+                它在計算"下一個詞應該是什麼"，不在計算"這句話是不是真的"。
+                流暢是它的天賦，正確是它需要外掛系統才能勉強得到的東西。
+            </p>
+
+            <div class="highlight-box">
+                <strong>記住這一句就夠了：</strong><br>
+                當你面對 AI 的輸出時，問自己一件事——<br>
+                "這句話，我能不能獨立核對？"<br>
+                能核對的，用；不能核對的，謹慎。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=42" class="btn">繼續探索 Q42 → </a>
+            </div>
+        </div>
+
+        <footer><p>&copy; 2024 互聯網大帝是如何煉成的</p></footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q16：為什麼一個看起來很簡單的點贊、評論、下單功能，背後卻要設計那麼多環節？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q16.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q16.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q16.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q16.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>為什麼一個看起來很簡單的點贊、評論、下單功能，背後卻要設計那麼多環節？</h1>
+            <p class="subtitle">用戶看到的"簡單"，是工程師用"複雜"換來的</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你刷到一條視頻，覺得不錯，點了個贊。圖標變紅，計數 +1，你繼續往下滑。
+            </p>
+
+            <p>
+                一切乾淨利落，不到 100ms。作為用戶，你會覺得："這不就是把數字 +1 存起來嗎？"
+            </p>
+
+            <div class="highlight-box">
+                <strong>但在工程師眼裡，這一個點贊至少牽動了 10 個系統。</strong><br><br>
+                冪等、去重、防刷、計數一致、推薦更新、通知觸發、審計留痕……
+                每一個"可有可無"的細節，都是無數事故換來的產物。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <p>
+                我們就以"點贊"這個最小功能為例，看看它到底躲藏了多少事：
+            </p>
+
+            <ol>
+                <li>用戶身份識別（誰在點？）</li>
+                <li>重複點擊 / 網絡重試怎麼處理？（冪等）</li>
+                <li>是不是機器刷的？（風控）</li>
+                <li>計數怎麼寫？（一致性 vs 性能）</li>
+                <li>作者要不要收到通知？</li>
+                <li>推薦系統要不要知道？（信號迴流）</li>
+                <li>要不要留一條審計日誌？</li>
+                <li>如果下游服務掛了，怎麼辦？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                用戶視角只有一句話："<strong>點一下，紅了</strong>。" 就完了。
+            </p>
+
+            <p>
+                這個"紅一下"必須在 100ms 內反饋，否則用戶會懷疑手機卡了、或者以為沒點上再點一次——這就帶來了新的問題。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                最樸素的實現是這樣：
+            </p>
+
+            <div class="code-block">// 天真版：直接 +1
+function like(userId, postId) {
+    db.execute(
+        'UPDATE post SET like_count = like_count + 1 WHERE id = ?',
+        [postId]
+    )
+}</div>
+
+            <p>
+                這段代碼在教程裡沒問題，在生產環境是"事故溫床"。它至少踩中四個雷：
+            </p>
+
+            <ul>
+                <li><strong>沒做冪等：</strong>網絡重試會連續 +2、+3。</li>
+                <li><strong>沒記錄關係：</strong>無法判斷"這個人是否已經點過"。</li>
+                <li><strong>高併發下行鎖：</strong>熱門帖每秒 10 萬人點贊，一行數據被 10 萬個事務搶鎖。</li>
+                <li><strong>沒有解耦：</strong>推薦系統、通知系統全靠這個接口同步做完，直接卡住。</li>
+            </ul>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                真實的點贊鏈路，長這樣：
+            </p>
+
+            <div class="diagram-box">
+[ 用戶點擊 ]
+     ↓
+① 身份認證 (JWT / Session)
+     ↓
+② 冪等校驗（idempotency key / 唯一索引 user_id+post_id）
+     ↓
+③ 風控 / 反作弊（頻率、設備指紋、行為特徵）
+     ↓
+④ 寫入點贊關係表（user_like: userId, postId, ts）
+     ↓
+⑤ 更新計數（Redis INCR 快速 → 異步同步回數據庫）
+     ↓
+⑥ 發送事件到消息隊列（Kafka: post.liked）
+     ↓
+   ├─→ 通知服務（提醒作者）
+   ├─→ 推薦服務（更新用戶興趣畫像）
+   ├─→ 排行榜服務（熱度更新）
+   ├─→ 數據倉庫（BI 分析）
+   └─→ 審計日誌（合規、追責）</div>
+
+            <p>
+                這裡幾乎每一步都不是"多餘"，都是過去某次事故留下的：
+            </p>
+
+            <div class="highlight-box">
+                <strong>為什麼要冪等？</strong>因為客戶端網絡抖動、按鈕誤觸。<br>
+                <strong>為什麼要風控？</strong>因為一堆機刷賬號在給營銷號點贊。<br>
+                <strong>為什麼用 Redis 計數？</strong>因為熱點數據打到 MySQL 那一行會被行鎖卡死。<br>
+                <strong>為什麼用消息隊列？</strong>因為下游多個消費者，不能同步等。<br>
+                <strong>為什麼要審計？</strong>因為哪天出訴訟、監管來問，你得說清楚"是誰在幾點幾分點了什麼"。
+            </div>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                有意思的是，同一個"點贊"，在不同產品裡可以做得完全不一樣：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>朋友圈點贊</h4>
+                    <p>強一致優先：好友必須能看到"誰點過贊"，計數不多，直接數據庫存關係即可。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>抖音點贊</h4>
+                    <p>最終一致優先：幾十萬點贊誰點的沒人在乎，重要的是"計數不要卡"。Redis 計數 + 異步落庫。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>電商下單</h4>
+                    <p>金錢事務：必須強一致、冪等、可回滾、可對賬。數據庫事務 + 分佈式鎖 + 狀態機。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>直播點贊（愛心雨）</h4>
+                    <p>純前端假動作：不上傳每一次點擊，只在客戶端做動畫，服務器採樣統計即可。</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"這不就是一張表加一列嗎？為什麼要那麼多組件？" 因為真實世界裡，一個功能不是被<strong>需求</strong>定義的，而是被<strong>規模 + 邊界條件</strong>定義的。10 個用戶和 1 億用戶的"點贊"，是兩種完全不同的系統。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>做一次"複雜度考古"</h3>
+                <p>
+                    找任意一個你熟悉的 App（比如某電商），完成一次"下單"。用抓包工具（Charles / mitmproxy / Chrome DevTools Network）觀察從"點擊下單"到"支付頁面出現"，一共發起了多少個請求。
+                </p>
+                <p>
+                    你多半會數到 <strong>10~30 個</strong>：預下單、庫存校驗、優惠券匹配、地址校驗、風控、創建訂單、生成訂單號、鎖庫存、跳支付……
+                </p>
+                <p>
+                    然後問自己：這些請求，哪個能砍？砍了會發生什麼？
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=11">Q11: 前後端到底是怎麼分工的？</a>
+                <a href="question.html?q=17">Q17: 大型系統為什麼在談緩存隊列限流？</a>
+                <a href="question.html?q=21">Q21: 為什麼要用消息隊列？</a>
+                <a href="question.html?q=46">Q46: 為什麼"簡單產品"背後往往是複雜工程？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>用戶看到的"簡單"，是工程師用"複雜"換來的</h3>
+                <p>
+                    真正好的產品，都遵循一個殘酷法則：<strong>把複雜留在自己這裡，把簡單交給用戶</strong>。
+                </p>
+                <p>
+                    你覺得點贊簡單，是因為字節的工程師幫你隱藏了冪等、風控、計數一致、異步分發；<br>
+                    你覺得下單流暢，是因為淘寶的中間件團隊幾百人在維護交易的強一致性；<br>
+                    你覺得微信秒回，是因為背後有 QQ 時代十幾年攢下來的推送架構。
+                </p>
+                <p>
+                    "簡單"從來不是免費的。它意味著組織願意投入巨量的工程複雜度去為體驗兜底。當你下次覺得某個功能"這也太糙了"的時候，你其實是在評價那家公司<strong>願意為你隱藏多少複雜度</strong>。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼一個"點贊"要設計那麼多環節？
+            </p>
+
+            <div class="highlight-box">
+                因為在大規模下，<strong>沒有小功能</strong>。<br><br>
+                每一個用戶看著簡單的動作，都要在冪等、一致性、性能、安全、審計、擴展性之間取捨。<br>
+                你看到的紅心 +1，是幾十個系統在幕後同步完成的一次協奏。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=17" class="btn">繼續探索 Q17 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q18：為什麼數據庫常常會成為系統的瓶頸？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q18.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q18.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q18.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q18.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>為什麼數據庫常常會成為系統的瓶頸？</h1>
+            <p class="subtitle">數據庫是系統裡"最後一個說真話的人"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                做過後端的人，幾乎都聽過這句話：<strong>"性能問題，80% 出在數據庫。"</strong>
+            </p>
+
+            <p>
+                你可能會想：CPU 又不貴，SSD 又不慢，為什麼數據庫老是拖後腿？換個更好的行不行？加機器行不行？
+            </p>
+
+            <div class="highlight-box">
+                <strong>數據庫天生就是慢的、有限的、易衝突的——但它又是唯一說真話的人。</strong><br><br>
+                所有的持久化、事務、一致性、可查詢，最終都要落到它那裡。這就註定它是系統裡最珍貴、也最脆弱的一環。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li>數據庫慢在哪裡？（磁盤、鎖、事務、連接）</li>
+                <li>為什麼加機器不能像 Web 服務那樣簡單？</li>
+                <li>常見的瓶頸現場有哪些？（慢查詢、鎖等待、連接打滿）</li>
+                <li>為了繞開瓶頸，工程師用了哪些手段？（緩存、讀寫分離、分庫分表）</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                用戶不會說"數據庫慢"，他們會說"這個 App 卡"、"我的訂單不見了"、"付款成功了但頁面還沒跳"。
+            </p>
+
+            <p>
+                這些症狀背後，大概率就是某條 SQL 執行了 3 秒、某張表被鎖住了、某個連接池打滿了。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                一句普通的 SQL：
+            </p>
+
+            <div class="code-block">SELECT * FROM orders
+WHERE user_id = 12345
+  AND status = 'PAID'
+ORDER BY created_at DESC
+LIMIT 20;</div>
+
+            <p>
+                它在數據庫裡發生了什麼？
+            </p>
+
+            <ol>
+                <li>解析 + 優化：數據庫要決定"用哪個索引"、"怎麼排序"。</li>
+                <li>去 B+ 樹索引裡找 <code>user_id = 12345</code> 的行。</li>
+                <li>回表讀實際數據行（如果不是覆蓋索引）。</li>
+                <li>過濾 status、排序、取前 20 條。</li>
+                <li>如果這時有其他事務在寫這些行——<strong>要等鎖</strong>。</li>
+            </ol>
+
+            <p>
+                每一步都可能變慢。少一個索引，第 2 步就變成全表掃描 100 萬行；status 不選擇性高，第 4 步排序會慢；有熱點行更新，第 5 步鎖等待可能達到秒級。
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                單機數據庫的資源天花板，比想像中低得多：
+            </p>
+
+            <div class="diagram-box">
+        單機 MySQL 的天花板（粗略估算）
+    ┌──────────────────────────────────────┐
+    │  磁盤 IOPS       ~10K–100K/s（SSD）  │
+    │  連接數上限      幾百到幾千         │
+    │  行鎖           一行同時只能一個寫者 │
+    │  單事務大小     受 undo/redo 影響    │
+    │  網絡帶寬       幾 Gbps 頂天         │
+    └──────────────────────────────────────┘
+
+而應用層可以做到：
+   Web 層：加機器就能橫向擴展到幾萬臺
+   緩存層：Redis 單機 10 萬 QPS 起</div>
+
+            <p>
+                問題來了：<strong>Web 層橫向擴展很便宜，數據庫橫向擴展很貴</strong>。因為數據庫要保證 ACID，機器之間同步數據本身就是一件難事。所以真實系統裡流量湧進來，最先撐不住的永遠是數據庫。
+            </p>
+
+            <p>
+                典型的"數據庫瓶頸現場"：
+            </p>
+
+            <ul>
+                <li><strong>N+1 查詢：</strong>一個列表頁，每一項再單獨查一次詳情。10 條數據、11 次 SQL；1000 條數據、1001 次 SQL。</li>
+                <li><strong>慢查詢：</strong>加錯了索引、或者 <code>LIKE '%xxx%'</code>、或者 <code>ORDER BY</code> 沒索引撐，一條查詢 3 秒。</li>
+                <li><strong>鎖等待：</strong>秒殺一件商品，1 萬個事務搶同一行 <code>UPDATE stock</code>。</li>
+                <li><strong>連接池爆炸：</strong>某個慢查詢把連接佔著不放，後面的請求全排隊。</li>
+                <li><strong>大事務：</strong>一個事務裡塞了 1 萬條 update，鎖範圍極大，回滾極痛。</li>
+            </ul>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                既然數據庫是瓶頸，工程師怎麼辦？答案是<strong>一整套繞開策略</strong>：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>加索引 / SQL 優化</h4>
+                    <p>成本最低，收益最快。80% 的慢查詢靠這個就能救。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>加緩存（Redis）</h4>
+                    <p>把讀打到內存，數據庫只承擔 20% 的讀流量。代價：一致性更難。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>讀寫分離（主從）</h4>
+                    <p>寫主庫、讀從庫。代價：主從有延遲，業務要能接受"讀到舊數據"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>分庫分表（ShardingSphere / Vitess）</h4>
+                    <p>數據切成 N 份分佈到 N 個庫。代價：跨庫 join、跨庫事務幾乎不能用了。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>換 NoSQL（MongoDB / HBase）</h4>
+                    <p>放棄 SQL 的強約束，換水平擴展性。代價：不再有事務、複雜查詢很痛。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>換 NewSQL（TiDB / CockroachDB）</h4>
+                    <p>兼顧橫向擴展 + SQL 語義。代價：延遲略高，運維複雜。</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"數據庫慢，就換更牛的數據庫。" 90% 的情況下，問題在<strong>SQL 寫得爛 + 索引沒建對 + 事務範圍太大</strong>——換任何數據庫都救不了你。用 <code>EXPLAIN</code> 看執行計劃、用慢日誌抓 top 慢 SQL，效果遠大於換引擎。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>親眼看到一次全表掃描的代價</h3>
+                <p>
+                    在本機 MySQL 建一個 100 萬行的表，插入一些數據。然後跑：
+                </p>
+                <div class="code-block">-- 無索引，全表掃描
+EXPLAIN SELECT * FROM users WHERE name = 'Alice';
+
+-- 加索引再看一次
+CREATE INDEX idx_name ON users(name);
+EXPLAIN SELECT * FROM users WHERE name = 'Alice';</div>
+                <p>
+                    對比兩次的 <code>rows</code> 和 <code>type</code>：一次是 <code>ALL / rows≈1000000</code>，一次是 <code>ref / rows≈1</code>。響應時間從秒級掉到毫秒級。這就是<strong>一個索引救一條業務命</strong>。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=12">Q12: 數據是怎麼存下來的？</a>
+                <a href="question.html?q=15">Q15: 為什麼流量一大系統就崩？</a>
+                <a href="question.html?q=19">Q19: 為什麼一個接口超時會拖垮整條鏈路？</a>
+                <a href="question.html?q=20">Q20: 緩存為什麼能提升性能？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>數據庫，是系統裡"最後一個說真話的人"</h3>
+                <p>
+                    整個應用架構裡，只有數據庫承諾：<strong>只要我說存了，就是真的存了</strong>——即使斷電、宕機、重啟，事務邊界之內的東西不會丟。
+                </p>
+                <p>
+                    正因為它承擔了這個"信任錨"的角色，所有的複雜都最終壓到它頭上：一致性、持久化、事務、鎖、恢復、備份、審計。這些都是"真實"的代價。
+                </p>
+                <p>
+                    所以在大廠裡，你會看到一個奇特的現象：<strong>業務邏輯可以外包，DBA 團隊永遠不會</strong>。因為一旦數據錯了，什麼都完了。數據庫是系統的良心，也是系統裡最貴的良心。
+                </p>
+                <p>
+                    從更遠的視角看，"為什麼數據庫是瓶頸"這個問題，其實揭示了一個通用規律——<em>任何試圖保存真相的機制，都註定是慢的、稀缺的、被爭搶的</em>。金融、法律、檔案、區塊鏈……本質上都在解決同一個問題。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼數據庫常常成為瓶頸？
+            </p>
+
+            <div class="highlight-box">
+                因為它承擔著系統裡最重的責任：<strong>說真話</strong>。<br><br>
+                而說真話是慢的、昂貴的、天生難以橫向擴展的。<br>
+                工程師的一半時間，都花在"如何在保住數據庫真話的前提下，讓應用不慢"上——這就是 Q17 裡那六件套存在的根本原因。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=19" class="btn">繼續探索 Q19 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

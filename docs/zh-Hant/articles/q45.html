@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q45：為什麼AI沒有讓互聯網變簡單，而只是把複雜性藏得更深？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q45.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q45.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q45.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q45.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-6">
+            <div class="level-badge">🤖 第6層認知 · AI 時代視角</div>
+            <h1>為什麼AI沒有讓互聯網變簡單，而只是把複雜性藏得更深？</h1>
+            <p class="subtitle">AI 不是新的抽象——它是新的黑盒</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                過去兩年，很多人都有一種幻覺：
+            </p>
+
+            <div class="highlight-box">
+                <em>"AI 來了，以後不用學 SQL 了。"</em><br>
+                <em>"AI 來了，以後不用寫代碼了。"</em><br>
+                <em>"AI 來了，一切都會變簡單。"</em>
+            </div>
+
+            <p>
+                可你真的開始用 AI 做事之後，會發現完全不是這樣——
+            </p>
+
+            <ul>
+                <li>你要學 <strong>Prompt 工程</strong>：怎麼問才能得到想要的答案。</li>
+                <li>你要理解 <strong>RAG</strong>：為什麼你的私有文檔還得先切成小塊、算向量、存到數據庫裡。</li>
+                <li>你要評估 <strong>Agent 工作流</strong>：一個用戶問句怎麼就調用了 40 次工具、6 個 API、3 個模型？</li>
+                <li>你要處理 <strong>幻覺、評估、監控、成本</strong>……</li>
+            </ul>
+
+            <p>
+                互聯網沒有變簡單。相反，<strong>複雜性被推到了更深的地方——用戶看不見，但工程師要面對更多</strong>。
+                這個問題重要，是因為如果你以為 AI = 簡單，你就會低估自己該學什麼、該防什麼。
+            </p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>什麼是"抽象"？為什麼每一層抽象都帶來簡化又帶來復雜？</strong></li>
+                <li><strong>用戶看到的"簡單"，背後隱藏了什麼？</strong></li>
+                <li><strong>AI 系統的"黑盒"，比過去的黑盒有什麼不同？</strong></li>
+                <li><strong>為什麼這種"隱藏"其實是問題，也是機會？</strong></li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                你打開 ChatGPT，輸入一句話，得到一段回答。整個體驗只有<em>一個輸入框和一段文本</em>——
+                比 Google 還簡單。你可能覺得這就是"未來"該有的樣子。
+            </p>
+
+            <p>
+                但你沒看到的是：<strong>這一次簡單的交互，可能在後臺調用了幾十層系統</strong>。
+                你看到的"簡單"，是精心設計的抽象層——就像水龍頭背後是整個自來水廠。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                讓我們展開一次"簡單"的 AI 問答，看看真實發生了什麼：
+            </p>
+
+            <div class="code-block">你輸入：      "幫我總結一下這份合同的關鍵條款"
+
+系統真實鏈路（簡化版）：
+
+  1. 前端攔截 → 分類："文檔任務"
+  2. 檢查用戶權限、訂閱、剩餘額度
+  3. 加載 system prompt（可能幾千字，你看不到）
+  4. 檢查安全策略（拒答規則、內容審核）
+  5. RAG 檢索：把你上傳的合同切片 → 向量化 → 相似度檢索 → 拿回 top-k 段落
+  6. 組裝最終 prompt：system + 檢索片段 + 你的問題
+  7. 路由到合適的模型（成本 / 延遲 / 能力）
+  8. 模型推理（幾百層 Transformer，幾十億參數運算）
+  9. 輸出審核：過濾敏感內容
+  10. 若模型觸發"工具調用" → 調外部 API → 結果回填 → 再推理
+  11. 若是 Agent → 循環 5-10，規劃、執行、反思，可能來回 10+ 次
+  12. 記錄 tokens、成本、延遲到監控系統
+  13. 返回給你：一段流暢的文本</div>
+
+            <p>
+                你看到的<em>一句話</em>，背後是<strong>十幾層子系統在協作</strong>。
+                Prompt engineering、Embedding、Vector DB、Retrieval、Reranking、Tool use、Agent orchestration、
+                Guardrails、Evals、Observability——這些名詞每一個都是一整個新興學科。
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                把它放進"互聯網的複雜性演化史"裡看，你會看到一個清晰的規律：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box step-box--level-6">80s：命令行 → 文件、進程</div>
+                <div class="arrow">↓ 抽象一層</div>
+                <div class="step-box step-box--level-6">90s：圖形界面 → 窗口、點擊</div>
+                <div class="arrow">↓ 抽象一層</div>
+                <div class="step-box step-box--level-6">00s：網頁 → 鏈接、搜索</div>
+                <div class="arrow">↓ 抽象一層</div>
+                <div class="step-box step-box--level-6">10s：App → 手指滑動、通知</div>
+                <div class="arrow">↓ 抽象一層</div>
+                <div class="step-box step-box--level-6">20s：AI → 對話、意圖</div>
+            </div>
+
+            <p>
+                每一次抽象，都是<strong>把複雜性向下壓一層</strong>——用戶端看起來更簡單，
+                但下面的系統越壘越高。
+                今天的一次"你好，幫我寫個郵件"背後，是過去 60 年所有基礎設施的總和，<em>再加上</em>一層全新的 AI 層。
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🖥️ 傳統抽象（如操作系統、Web 框架）</h4>
+                    <p>
+                        隱藏細節，<strong>但可打開</strong>：<br>
+                        看得到源碼、可以打斷點、可以讀文檔。<br>
+                        黑盒是"我暫時不看"，不是"我看不到"。
+                    </p>
+                </div>
+                <div class="compare-card">
+                    <h4>🤖 AI 抽象</h4>
+                    <p>
+                        隱藏細節，<strong>而且真的打不開</strong>：<br>
+                        權重不可讀、推理路徑不可解釋、失敗模式無規律。<br>
+                        黑盒是"沒人能真正看清裡面發生了什麼"。
+                    </p>
+                </div>
+            </div>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                你可能會問：既然更復雜了，為什麼大家都在推 AI？
+                因為它換來了一個前所未有的價值——<strong>意圖級交互</strong>。
+            </p>
+
+            <p>
+                以前，你要告訴計算機"怎麼做"：點這裡、拖那裡、寫這段 SQL。
+                現在，你只要說"我想要什麼"，AI 層負責翻譯成執行動作。
+                這是從<em>過程式交互</em>到<em>目標式交互</em>的一次躍遷。
+            </p>
+
+            <div class="highlight-box">
+                <strong>這帶來了新的權衡：</strong>
+                <ul>
+                    <li>用戶體驗↑，工程複雜度↑↑</li>
+                    <li>入門門檻↓，深入門檻↑</li>
+                    <li>產品能做的事↑↑，能保證的事↓</li>
+                </ul>
+                簡單和複雜在系統中<em>守恆</em>——它不會消失，只會轉移。
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"AI 讓人不用寫代碼了。"<br>
+                更準確的說法是：<em>"AI 讓寫代碼的人可以更快，讓不寫代碼的人可以做更多事——
+                但要負責一個真正生產級的 AI 系統，需要的技能反而更多，而不是更少。"</em><br>
+                能"用" ≠ 能"負責"，這是關鍵分野。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>拆解一次"AI 對話"</h3>
+                <p>
+                    找一個開源的 RAG 項目（LangChain、LlamaIndex 的 quickstart 都可以），
+                    自己搭一個"和你的 PDF 對話"的最小 demo。
+                </p>
+                <p>
+                    你會親手體驗到：
+                </p>
+                <ol>
+                    <li>切片（chunking）該切多長？</li>
+                    <li>用哪個 embedding 模型？</li>
+                    <li>向量數據庫選哪個？</li>
+                    <li>檢索出的 chunk 怎麼排序？</li>
+                    <li>Prompt 裡怎麼組合上下文？</li>
+                    <li>模型答歪了怎麼調？</li>
+                </ol>
+                <p>
+                    這個練習會讓你永久意識到：<strong>一次"簡單"的對話背後，是一整個技術棧</strong>——
+                    而這個棧的每一層都能出錯，都需要你懂它。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=40">Q40: 為什麼AI看起來像在理解你？</a>
+                <a href="question.html?q=41">Q41: 為什麼AI能說得流暢卻不一定正確？</a>
+                <a href="question.html?q=42">Q42: 生成式AI和傳統軟件為什麼本質不同？</a>
+                <a href="question.html?q=43">Q43: 為什麼AI的輸出帶有概率性？</a>
+                <a href="question.html?q=44">Q44: 為什麼AI越像人，人越容易誤判它的邊界？</a>
+                <a href="question.html?q=47">Q47: 系統的複雜性能真的被消除嗎？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>複雜性不會消失，它只會換個地方躲起來</h3>
+                <p>
+                    計算機科學裡有一條古老的定律，叫 <strong>Tesler's Law of Conservation of Complexity（複雜性守恆律）</strong>：
+                    任何系統的複雜度是固定的，你只能<em>把它從一處推到另一處</em>——通常從用戶推給工程師，從前端推給後端，
+                    從產品推給基礎設施。
+                </p>
+                <p>
+                    AI 是這條定律最戲劇化的一次演出：
+                </p>
+                <ul>
+                    <li>它把用戶面對的複雜度壓到了幾乎為零——只剩一個對話框。</li>
+                    <li>它把工程師面對的複雜度堆到了歷史新高——多模型、多工具、多 agent、多評估維度。</li>
+                    <li>它把社會面對的複雜度也放大了——版權、偏見、責任歸屬、安全、就業結構。</li>
+                </ul>
+                <p>
+                    第 6 層認知的意義在於：<strong>看穿"簡單"的表象，理解複雜的走向</strong>。
+                    當你意識到 AI 不是把互聯網變簡單，而是把複雜性藏得更深，你就會用不同的姿勢去學、去用、去做產品。
+                </p>
+                <p>
+                    真正的大帝，不追求"沒有複雜性"——因為那是幻覺。
+                    真正的大帝追求的是：<em>知道複雜性躲在哪，能在需要時把它翻出來看一眼</em>。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                為什麼 AI 沒有讓互聯網變簡單，而只是把複雜性藏得更深？
+            </p>
+
+            <p>
+                <strong>因為"簡單"從來不是一個絕對狀態，而是一個抽象層的產物。</strong>
+                AI 是互聯網歷史上最激進的一次抽象——它把複雜度整體下沉到"模型 + 工程棧"這一層，
+                讓用戶以為世界變簡單了，實際上是<em>需要理解世界的人越來越少了，但需要為世界負責的人要懂得更多了</em>。
+            </p>
+
+            <p>
+                如果你只想"用"，AI 時代很簡單；<br>
+                如果你想"做"，AI 時代前所未有地複雜；<br>
+                如果你想"理解"——歡迎來到第 6 層認知。
+            </p>
+
+            <div class="highlight-box">
+                <strong>合上這篇文章前，問自己一個問題：</strong><br>
+                <em>下一次當有人告訴你"這東西很簡單"時，你會不會本能地追問一句——<br>
+                "那複雜性去哪了？"</em><br><br>
+                如果你會，你已經不是那個只看到"對話框"的人了。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=46" class="btn">繼續探索 Q46 → </a>
+            </div>
+        </div>
+
+        <footer><p>&copy; 2024 互聯網大帝是如何煉成的</p></footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q11:註冊、登錄、評論、點贊、下單這些功能,本質上是怎麼實現的?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q11.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q11.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q11.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q11.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 第2層認知 · 程序員入門視角</div>
+            <h1>註冊、登錄、評論、點贊、下單……本質上是怎麼實現的?</h1>
+            <p class="subtitle">互聯網世界裡,幾乎所有功能都是"老磚塊的新排列"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角:這個問題為什麼重要?</h2>
+
+            <p>
+                你在淘寶下單、在微博點贊、在小紅書評論、在知乎登錄……表面上看,這些是<strong>五種完全不同的功能</strong>。
+                但如果告訴你——它們背後<strong>其實是同一套東西</strong>——你會不會有點驚訝?
+            </p>
+
+            <p>
+                這個問題重要,是因為一旦你識別出這套"底層磚塊",你會發現:
+                所謂"新產品的功能",大多都是老磚塊的<strong>重新排列</strong>。
+                這種"看穿"的能力,是從"用產品的人"變成"造產品的人"的分水嶺。
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心洞察:</strong><br><br>
+                所有這些功能,歸納起來只有四種操作:<br>
+                <strong>C</strong>reate(創建)、<strong>R</strong>ead(讀取)、<strong>U</strong>pdate(更新)、<strong>D</strong>elete(刪除)<br>
+                簡稱 <strong>CRUD</strong>——加上"知道你是誰"(認證)和"知道你能幹什麼"(授權),幾乎能拼出整個互聯網。
+            </div>
+
+            <h2>🧩 拆解:把大問題拆成小問題</h2>
+
+            <ol>
+                <li>不同功能之間,共同的抽象是什麼?</li>
+                <li>"你是誰"這件事,系統怎麼記住?</li>
+                <li>"點贊"和"評論"看起來不一樣,底層為啥說是一回事?</li>
+                <li>下單為什麼比點贊"重"很多?"重"在哪兒?</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層:只看結果</h3>
+
+            <p>
+                你覺得:
+            </p>
+
+            <ul>
+                <li><strong>註冊</strong>——填個手機號,創建了賬號</li>
+                <li><strong>登錄</strong>——輸入密碼,進入了世界</li>
+                <li><strong>評論</strong>——寫點字,發出去</li>
+                <li><strong>點贊</strong>——按一下,變紅</li>
+                <li><strong>下單</strong>——選商品、付款、等發貨</li>
+            </ul>
+
+            <p>看起來是五件不同的事。但工程師眼裡……</p>
+
+            <h3 class="section-code">實現層:開始理解構造</h3>
+
+            <p>
+                我們把這五個功能"翻譯"成 CRUD 操作,你會看到魔法:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>📝 註冊</h4>
+                    <p><strong>Create</strong> 一條 users 記錄</p>
+                    <p><code>INSERT INTO users(phone, password_hash) VALUES(?, ?)</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>🔑 登錄</h4>
+                    <p><strong>Read</strong> users 表 + 發一個 token</p>
+                    <p><code>SELECT id FROM users WHERE phone=? AND password_hash=?</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>💬 評論</h4>
+                    <p><strong>Create</strong> 一條 comments 記錄</p>
+                    <p><code>INSERT INTO comments(user_id, post_id, text) VALUES(?, ?, ?)</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>❤️ 點贊</h4>
+                    <p><strong>Create</strong> 一條 likes 記錄(取消贊就 <strong>Delete</strong>)</p>
+                    <p><code>INSERT INTO likes(user_id, post_id) VALUES(?, ?)</code></p>
+                </div>
+                <div class="compare-card">
+                    <h4>🛒 下單</h4>
+                    <p><strong>Create</strong> orders + <strong>Update</strong> inventory + <strong>Create</strong> payment……</p>
+                    <p>比較複雜,但每一步都是 CRUD。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>💡 結論</h4>
+                    <p>互聯網的絕大多數功能 = <strong>CRUD 的組合</strong> + 認證 + 一些業務規則</p>
+                </div>
+            </div>
+
+            <p>
+                驚不驚喜?讓我們看得更深一點——先看"登錄"到底是怎麼"記住你"的。
+            </p>
+
+            <h3 class="section-code">"你是誰"這件事:session vs token</h3>
+
+            <p>
+                HTTP 是一個<strong>無狀態</strong>協議——服務器每次收到你的請求,都像失憶了一樣,不知道你是誰。
+                所以,系統必須想辦法在每次請求時"證明你是誰"。目前有兩種主流做法:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🎟️ Session(會話)</h4>
+                    <p>登錄後,服務器生成一個 session id,存在<strong>它自己的數據庫</strong>裡。</p>
+                    <p>下發給你一個 cookie。每次請求,瀏覽器帶上 cookie,服務器去查。</p>
+                    <p>就像"寄存牌"——牌子在你手裡,東西在店裡。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🪪 Token(令牌,JWT)</h4>
+                    <p>登錄後,服務器簽發一個<strong>加密串</strong>(裡面藏著"你是 user_123, 有效到 xxx"),交給你。</p>
+                    <p>每次請求帶上,服務器驗籤就行,不需要查庫。</p>
+                    <p>就像"身份證"——真偽一看就知道。</p>
+                </div>
+            </div>
+
+            <p>
+                前端代碼裡,登錄後通常長這樣:
+            </p>
+
+            <div class="code-block">// 登錄成功後,把 token 存起來
+const res = await fetch('/api/login', {
+  method: 'POST',
+  body: JSON.stringify({ phone, password })
+});
+const { token } = await res.json();
+localStorage.setItem('token', token);
+
+// 之後所有請求都自動帶上
+await fetch('/api/comments', {
+  headers: { 'Authorization': `Bearer ${token}` },
+  method: 'POST',
+  body: JSON.stringify({ postId: 42, text: '好文!' })
+});</div>
+
+            <h3 class="section-system">系統層:看到完整鏈路</h3>
+
+            <p>
+                我們放大一次"下單"——因為它最能體現工程師如何把 CRUD 組合成"複雜功能":
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">① 認證 · 你是誰?</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">② 校驗 · 商品還在嗎?</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">③ 扣庫存 · Update inventory</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">④ 創建訂單 · Create orders</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">⑤ 發起支付 · 調用第三方</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">⑥ 更新訂單狀態 · Update</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">⑦ 通知商家發貨</div>
+            </div>
+
+            <p>
+                重點來了:下單和點讚的<strong>本質區別</strong>是——
+            </p>
+
+            <div class="highlight-box">
+                <strong>冪等性 · 事務性 · 一致性</strong><br><br>
+                點贊:同一個人點兩次和一次沒差別(去重就行) → <strong>冪等</strong><br>
+                下單:你重複點"支付",絕不能收兩次錢 → 必須<strong>嚴格冪等</strong><br>
+                下單:扣庫存和創建訂單必須<strong>同時成功或同時失敗</strong> → <strong>事務</strong><br>
+                下單:數據庫、庫存、支付、商家四個系統,數據要"最終對得上" → <strong>一致性</strong>
+            </div>
+
+            <p>
+                所以一個"下單"接口,可能有幾十甚至幾百行代碼,內部小心翼翼地處理各種失敗場景。
+                但它本質,還是幾個 CRUD 拼起來的。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層:為什麼這樣設計?</h3>
+
+            <p>
+                你可能會問:既然萬變不離其宗,為什麼每個功能開發起來還那麼麻煩?
+            </p>
+
+            <p>
+                因為魔鬼藏在細節裡——具體到每個功能,工程師要思考的東西完全不同:
+            </p>
+
+            <ul>
+                <li><strong>點贊</strong>:考慮"高併發"——熱門微博一秒幾萬個贊,數據庫能扛得住嗎?通常要用<strong>計數器緩存</strong>和<strong>異步寫入</strong>。</li>
+                <li><strong>評論</strong>:考慮"內容安全"——惡意刷屏、辱罵、廣告怎麼辦?需要接入<strong>敏感詞檢測</strong>和<strong>限流</strong>。</li>
+                <li><strong>登錄</strong>:考慮"賬號安全"——密碼不能明文存(要 hash + salt),要防暴力破解、防撞庫,可能還要短信驗證碼或人機驗證。</li>
+                <li><strong>下單</strong>:考慮"錢的準確性"——庫存超賣、重複扣款、訂單錯亂都是災難,一切都要有回滾方案。</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>所以,程序員的功力,不在於會寫 CRUD——CRUD 誰都會寫。<br>
+                功力在於:知道"這個場景下,需要額外考慮什麼"。</strong>
+            </div>
+
+            <p>
+                這也是為什麼"新手寫一個下單接口"和"資深工程師寫一個下單接口",代碼可能差 10 倍的行數——因為後者考慮了 10 倍的失敗場景。
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>試試看:找出你熟悉 App 裡的"CRUD 模式"</h3>
+                <p>
+                    隨便打開一個 App(微信、抖音、B 站……),挑一個你常用的功能,試著回答:
+                </p>
+                <ul style="color: white;">
+                    <li>它對應哪個表?(users? posts? follows?)</li>
+                    <li>它是在 Create、Read、Update 還是 Delete?</li>
+                    <li>它需要認證嗎?</li>
+                    <li>它需要保證冪等嗎?</li>
+                </ul>
+                <p>
+                    比如:
+                </p>
+                <ul style="color: white;">
+                    <li>關注一個人 = <strong>Create</strong> follows 記錄 (user_id, target_id)</li>
+                    <li>取關 = <strong>Delete</strong> 同一條記錄</li>
+                    <li>刷推薦流 = <strong>Read</strong> 複雜的排序 + 分頁</li>
+                    <li>發朋友圈 = <strong>Create</strong> moments 記錄</li>
+                </ul>
+                <p>
+                    做幾次這個練習,你就會有一種"看穿"App 的感覺。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索:</h3>
+                <a href="question.html?q=8">Q8: 前後端在做什麼?</a>
+                <a href="question.html?q=10">Q10: 點擊按鈕後數據去哪了?</a>
+                <a href="question.html?q=12">Q12: 數據庫到底在存什麼?</a>
+                <a href="question.html?q=16">Q16: 分佈式系統的挑戰</a>
+            </div>
+
+            <h2>👑 大帝視角:這如何塑造現實?</h2>
+
+            <div class="emperor-box">
+                <h3>產品的"新功能",大多是老磚塊的新排列</h3>
+                <p>
+                    你聽過"某某 App 上線了一個新功能",覺得很酷、很創新——但從工程師視角看,
+                    大多數所謂"新功能"其實都是<strong>已經存在的原語</strong>的重新拼裝:
+                </p>
+                <p>
+                    • 微博的"轉發" = 特殊類型的 Create<br>
+                    • 抖音的"收藏" = 類似點讚的 Create+Delete<br>
+                    • 淘寶的"購物車" = 用戶級別的臨時 Create,提交時批量轉成訂單<br>
+                    • 微信的"朋友圈" = Create post + 複雜的可見性(授權)控制<br>
+                    • 拼多多的"砍一刀" = Create + 狀態機 + 通知
+                </p>
+                <p>
+                    <strong>真正的創新,不在"磚塊本身",而在"磚塊的組合方式"。</strong>
+                </p>
+                <p>
+                    這也是為什麼優秀的產品經理和工程師,總是先問"這個功能能不能用現有的能力拼出來?"——因為拼裝的成本遠低於發明。
+                </p>
+                <p>
+                    當你能識別出磚塊的組合模式,你就能從"用戶"躍升為"設計者"。
+                    你會看到每一個流行的產品背後,都是一套精妙的"CRUD + 認證 + 業務規則"的編排。
+                </p>
+                <p>
+                    這就是互聯網世界的秘密:<em>它比看起來簡單得多,又比看起來精妙得多。</em>
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以,註冊、登錄、評論、點贊、下單……本質上是怎麼實現的?
+            </p>
+
+            <p>
+                <strong>它們幾乎都是 CRUD(創建、讀取、更新、刪除)+ 認證(你是誰)+ 授權(你能做啥)的組合。</strong>
+                只不過"下單"這類涉及錢和狀態的功能,還需要加上<strong>冪等性、事務、一致性</strong>等保命機制。
+            </p>
+
+            <p>
+                一旦你掌握了這套"磚塊清單",你會發現——世界上再複雜的產品,拆開來看,都是這些基礎塊的拼裝。
+                這種"看穿一切"的能力,是通往"造產品的人"的第一張車票。
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=12" class="btn">繼續探索 Q12 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q24：為什麼高併發場景下，最難的不是功能實現，而是穩定性保障？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q24.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q24.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q24.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q24.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>為什麼高併發場景下，最難的不是功能實現，而是穩定性保障？</h1>
+            <p class="subtitle">功能是顯性成本，穩定性是隱性資產</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你有沒有見過這種"神操作"——某個新出的抽獎小程序，功能看起來一樣簡單：點一下按鈕，抽個獎。但一到抽獎的整點，頁面直接白屏、崩潰、502、"服務器繁忙"……
+            </p>
+
+            <p>
+                同樣是"點一下按鈕"，為什麼阿里的雙 11、騰訊的紅包、12306 的搶票能扛住？
+                <strong>不是因為它們"功能更強"，而是因為它們的"穩定性投入"是新手小程序的成千上萬倍。</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心真相：</strong><br><br>
+                做出功能，可能只要 1 天。<br>
+                做出"1 億人同時用還不崩"的功能，可能要 1 年。<br>
+                <strong>功能是加法，穩定性是乘法——每加一個 9，成本翻倍。</strong>
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>"可用性"到底怎麼衡量？</strong> "4 個 9"是什麼意思？</li>
+                <li><strong>為什麼併發一上去，一切都變了？</strong> 單個請求正常，多個請求為啥就崩？</li>
+                <li><strong>穩定性靠什麼？</strong> 是靠"更好的代碼"嗎？</li>
+                <li><strong>為什麼大公司都在做"故障演練"？</strong> 主動搞事情？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                用戶對穩定性的期待，是一條<strong>非常殘酷的曲線</strong>——
+            </p>
+
+            <ul>
+                <li>系統正常 100 次，他不會誇你</li>
+                <li>系統崩了 1 次，他會罵你並且轉告 10 個人</li>
+                <li>崩在關鍵時刻（付款、搶票、領獎），他會永遠記住</li>
+            </ul>
+
+            <p>
+                這就是為什麼"看不見的穩定性"，永遠比"看得見的功能"更重要。
+                功能是加分項，穩定性是<strong>不出現就沒人誇、一齣現就是災難</strong>的底線。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                工程師最初會以為——"我把代碼寫好，測試都過了，不就穩定了嗎？"
+                然後被現實教育：
+            </p>
+
+            <div class="code-block">
+# 單個請求：完美運行
+def buy(item_id, user_id):
+    stock = db.query("SELECT stock FROM items WHERE id=?", item_id)
+    if stock > 0:
+        db.execute("UPDATE items SET stock=stock-1 WHERE id=?", item_id)
+        return "success"
+
+# 一萬個請求同時來：超賣了！
+# - 都讀到 stock = 5
+# - 都執行 stock - 1
+# - 結果賣出了 10000 件，實際只有 5 件
+            </div>
+
+            <p>
+                這就是<strong>併發</strong>把簡單問題變複雜的經典例子。
+                同樣的代碼，1 個人用是對的，10000 個人同時用就是錯的。
+                穩定性問題的第一課是——<strong>"正確"是有條件的</strong>。
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                衡量穩定性有一個業界通用的語言——<strong>可用性 SLA</strong>。它用"幾個 9"表示一年可以宕機多久：
+            </p>
+
+            <div class="diagram-box">
+                99%（2 個 9）→ 每年宕機 87.6 小時（≈ 3.65 天）<br>
+                99.9%（3 個 9）→ 每年宕機 8.76 小時<br>
+                99.99%（4 個 9）→ 每年宕機 52.6 分鐘 <span style="color:#06B6D4">⬅ 電商標配</span><br>
+                99.999%（5 個 9）→ 每年宕機 5.26 分鐘 <span style="color:#06B6D4">⬅ 金融/電信</span><br>
+                99.9999%（6 個 9）→ 每年宕機 31.5 秒 <span style="color:#06B6D4">⬅ 天價</span>
+            </div>
+
+            <p>
+                多一個 9，成本可能<strong>指數級上升</strong>。因為你不再和"代碼錯誤"鬥爭，而是要和光速、磁盤、宇宙射線、人為失誤等所有小概率事件鬥爭。
+            </p>
+
+            <p>
+                另外兩個關鍵指標：
+            </p>
+
+            <ul>
+                <li><strong>MTBF</strong>（Mean Time Between Failures）：平均無故障時間——衡量"多久出一次事"。</li>
+                <li><strong>MTTR</strong>（Mean Time To Recovery）：平均恢復時間——衡量"出事之後多久能好"。</li>
+            </ul>
+
+            <p>
+                有意思的是，現代互聯網公司大多不再幻想"MTBF 無限大"（永遠不出事），而是<strong>拼命降低 MTTR</strong>（出事了 30 秒內恢復）。這是一種成熟的哲學轉向：從"避免失敗"到"快速恢復"。
+            </p>
+
+            <p>
+                穩定性保障的完整"武器庫"大致是這樣：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>限流 + 熔斷 + 降級</h4>
+                    <p><strong>限流：</strong>每秒最多 1000 個請求進來。<br><strong>熔斷：</strong>下游 5 秒都在超時，直接不再調用。<br><strong>降級：</strong>非核心功能先關掉，保住主鏈路。<br>三件套是高併發系統的"命門"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>故障域隔離</h4>
+                    <p>把系統切成多個"故障單元"（多機房、多可用區），一個掛了其他還能跑。<br>不要把所有雞蛋放一個籃子。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>容量規劃</h4>
+                    <p>預估峰值 QPS、精確到 CPU/內存/帶寬，然後<strong>預留 3~5 倍容量</strong>。<br>雙 11 之前幾個月，阿里就在做"容量壓測"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>發佈策略</h4>
+                    <p>不要全量發佈。用<strong>灰度</strong>（先 1%，再 10%，再 100%）、<strong>金絲雀</strong>（一小撮用戶先試）、<strong>藍綠部署</strong>（兩套環境切流）來降低出事概率。</p>
+                </div>
+            </div>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                穩定性保障最反直覺的一點是——<strong>你要主動"變慢"、主動"拒絕服務"、主動"少做點事"</strong>。
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心權衡：</strong><br>
+                <strong>讓每個請求都成功</strong> ↔ <strong>讓整個系統不崩</strong><br>
+                兩者不可兼得。<br>
+                真正穩定的系統，會主動拒絕一部分請求，來保護自己不進入雪崩狀態。
+            </div>
+
+            <p>
+                典型的例子——微博熱搜爆了怎麼辦？不是"讓所有人都能刷"，而是：
+            </p>
+
+            <ul>
+                <li>先<strong>限流</strong>，多餘的請求直接返回"稍後再試"</li>
+                <li><strong>降級</strong>：熱搜列表暫時不實時更新，用緩存裡的靜態版本</li>
+                <li><strong>熔斷</strong>：如果推薦系統超時，就跳過它，只返回基礎內容</li>
+                <li><strong>擴容</strong>：緊急拉起備用機器，擴大處理能力</li>
+            </ul>
+
+            <p>
+                這些操作的哲學都是一樣的：<strong>寧可讓 10% 的人稍等，也別讓 100% 的人全掛</strong>。
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"我把代碼寫好、測試寫全，就是穩定了"。<br>
+                穩定性不是代碼質量問題，是<strong>系統性問題</strong>。它涉及：
+                網絡、硬件、依賴、部署、發佈、監控、恢復……一個環節沒考慮，全盤皆輸。
+                你可能永遠查不出"為什麼週三下午 3 點系統會抖一下"——直到有人告訴你那時候正好在批量重啟一個下游服務。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>用 wrk 壓一壓你自己的服務</h3>
+                <p>
+                    如果你有一個 Web 服務（哪怕是 Flask hello world），試試：<br>
+                    1. 安裝 wrk：<code>brew install wrk</code>（Mac）<br>
+                    2. 運行壓測：<code>wrk -t4 -c1000 -d30s http://localhost:8080/</code><br>
+                    （4 個線程，1000 個併發連接，壓 30 秒）<br>
+                    3. 觀察結果：QPS、平均延遲、P99 延遲、錯誤率<br>
+                    4. 逐步加壓：<code>-c 2000</code>、<code>-c 5000</code>……直到你看到<strong>錯誤率飆升</strong>。
+                </p>
+                <p>
+                    這一步做完，你就知道自己寫的"簡單接口"，其實<strong>在什麼併發量下會崩</strong>。
+                    這是穩定性思維的第一次覺醒——<strong>不要問"能不能跑"，要問"能扛多少"</strong>。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=15">Q15: 前後端如何分工？</a>
+                <a href="question.html?q=23">Q23: 分佈式系統為什麼這麼複雜？</a>
+                <a href="question.html?q=25">Q25: 為什麼大廠總在做監控、日誌、演練？</a>
+                <a href="question.html?q=31">Q31: 為什麼穩定性比炫技更重要？</a>
+                <a href="question.html?q=22">Q22: 負載均衡怎麼承接大流量？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>功能是顯性成本，穩定性是隱性資產</h3>
+                <p>
+                    新工程師對功能有一種<strong>迷之驕傲</strong>——
+                    "我一個下午就實現了別人一週做的東西！"
+                    然後他會發現，這個東西在真實流量下 1 分鐘就掛了。<br><br>
+                    資深工程師看待"功能"時，會不自覺多算一筆賬：<br>
+                    · 這個功能上線後，多幾倍的下游調用？<br>
+                    · 高峰期能扛多少？<br>
+                    · 出錯時如何恢復？<br>
+                    · 會不會引起雪崩？<br><br>
+                    <strong>"功能"是老闆能看見的、能吹的，是顯性成本。</strong><br>
+                    <strong>"穩定性"是沒人誇、但是命根子的，是隱性資產。</strong><br><br>
+                    這個視角推廣到現實社會同樣成立：<br>
+                    · <strong>一家餐廳</strong>——菜好吃很重要（功能），但"從不食物中毒"更重要（穩定）。<br>
+                    · <strong>一段婚姻</strong>——浪漫時刻是加分項，但"吵架不冷戰"是底線（穩定）。<br>
+                    · <strong>一個國家</strong>——GDP 增長是顯性成就，但"社會不動盪"才是根本（穩定）。<br><br>
+                    所有真正偉大的系統，都不是"能做多驚豔"，而是"<strong>能在最糟的時刻依然靠譜</strong>"。
+                    你在互聯網大廠看到的所有"看似過度設計"的東西——多機房、多副本、演練、灰度、熔斷——
+                    都不是給你炫技的，是給"最壞那天"準備的保險單。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼高併發場景下，最難的不是功能實現，而是穩定性保障？
+            </p>
+
+            <p>
+                <strong>因為功能是有限維的問題，穩定性是無窮維的問題。</strong>
+                你要防的不再是"這行代碼錯沒錯"，而是"流量突增、依賴掛掉、機器炸了、網絡抖動、發佈出錯、誤操作"等等等等無數種小概率事件的組合。
+                每多防一種，成本翻一番；每漏一種，可能全盤皆輸。
+            </p>
+
+            <div class="highlight-box">
+                成長的分水嶺在這裡：<br>
+                初級工程師問："這個功能能實現嗎？"<br>
+                資深工程師問："這個功能<strong>在最糟的一天</strong>能實現嗎？"<br>
+                <br>
+                前者做的是"功能"，後者做的是"系統"。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=25" class="btn">繼續探索 Q25 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

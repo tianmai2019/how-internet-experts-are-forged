@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q14：為什麼有的網站打開很快，有的網站卻總是很慢？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q14.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q14.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q14.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q14.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>為什麼有的網站打開很快，有的網站卻總是很慢？</h1>
+            <p class="subtitle">"慢"不是一個原因，而是一整條鏈路的暴露</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你一定經歷過：同樣是刷網頁，Google 和百度搜索幾乎瞬間出結果，某些企業官網卻要轉圈 5 秒；淘寶首頁秒開，某個不知名商城點一下要等半天。為什麼？
+            </p>
+
+            <p>
+                我們下意識會說："他們服務器不行唄。" 但真的這麼簡單嗎？
+            </p>
+
+            <div class="highlight-box">
+                <strong>"快慢"不是一個數字，而是一條鏈路。</strong><br><br>
+                當你按下回車到看到首屏畫面，中間發生了幾十甚至上百件事。
+                任何一環慢，你看到的都是"這個網站好慢"。
+            </div>
+
+            <p>
+                理解"為什麼慢"，就是理解"網站到底是怎麼被組裝出來的"。這是從"用戶視角"邁向"工程師視角"的第一課。
+            </p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>找到服務器：</strong>DNS 查了多久？</li>
+                <li><strong>建立連接：</strong>TCP + TLS 花了多久？</li>
+                <li><strong>請求路徑：</strong>你離服務器多遠？</li>
+                <li><strong>後端處理：</strong>服務器算出答案花了多久？</li>
+                <li><strong>資源體積：</strong>HTML、JS、CSS、圖片、字體多大？</li>
+                <li><strong>瀏覽器渲染：</strong>拿到東西之後，畫出來又花了多久？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                普通用戶只有一個感受："快"或"慢"。他不會區分"是 DNS 慢還是渲染慢"，他只知道白屏時間超過 3 秒，他就走了。
+            </p>
+
+            <p>
+                Google 早在 2009 年就發現：<strong>頁面加載多 400ms，用戶流失 0.6%</strong>。亞馬遜估算過：延遲每多 100ms，銷售額損失 1%。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                打開 Chrome 開發者工具的 Network 面板，選一個請求，你會看到一根 <strong>Waterfall 瀑布圖</strong>：
+            </p>
+
+            <div class="code-block">Request: https://example.com/index.html
+├── Queueing         2 ms
+├── DNS Lookup       35 ms      ← 找服務器
+├── Initial connection 80 ms    ← TCP 三次握手
+├── SSL              120 ms     ← TLS 握手 (HTTPS)
+├── Request sent     1 ms
+├── Waiting (TTFB)   240 ms     ← 服務器在算
+└── Content Download 45 ms      ← 下載 HTML
+                                                 總計: ~523 ms</div>
+
+            <p>
+                這就是一次請求的"體檢報告"。<strong>TTFB（Time To First Byte）</strong>反映後端速度，<strong>Content Download</strong>反映資源體積和網速，<strong>DNS / SSL</strong>反映連接建立開銷。
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                真實的一次"打開網站"，是一場接力賽。任何一棒掉鏈子都會拖垮全程：
+            </p>
+
+            <div class="diagram-box">
+用戶瀏覽器
+  ↓  ① DNS 解析（可能 5ms，也可能 300ms）
+  ↓  ② TCP + TLS 握手（跨洋網絡 → 200ms+）
+  ↓  ③ 請求發出，經過運營商、骨幹網、CDN 邊緣節點
+  ↓
+CDN 邊緣節點（可能命中緩存，直接返回）
+  ↓  ④ 未命中 → 回源
+  ↓
+負載均衡器 → 應用服務器
+  ↓  ⑤ 應用層：讀緩存 / 查數據庫 / 調下游 API
+  ↓
+數據庫 / Redis / 外部服務
+  ↓  ⑥ 返回結果，一路走回瀏覽器
+  ↓
+瀏覽器：解析 HTML → 請求 CSS/JS/圖片 → 佈局 → 繪製
+                                      ↑ ⑦ 首屏繪製</div>
+
+            <p>
+                所以"快"的網站通常做對了這些事：
+            </p>
+
+            <ul>
+                <li><strong>CDN 就近分發：</strong>把靜態資源放到離用戶最近的邊緣節點，從跨洋 200ms 變成同城 10ms。</li>
+                <li><strong>HTTP/2、HTTP/3、連接複用：</strong>減少握手次數，多路複用。</li>
+                <li><strong>後端緩存：</strong>熱點數據放 Redis，避免每次都查數據庫。</li>
+                <li><strong>資源優化：</strong>圖片走 WebP/AVIF、JS 拆包懶加載、字體子集化。</li>
+                <li><strong>關鍵路徑優化：</strong>首屏 CSS 內聯，非關鍵 JS 延後執行。</li>
+            </ul>
+
+            <p>
+                而"慢"的網站，大概率是把上面每一項都省了——或者恰好在某一環節裡踩了雷（比如首屏加載 20MB 的 banner 視頻、後端一次調用查了 8 次數據庫）。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                性能不是免費的。每一個"快"的背後都藏著代價：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>用了 CDN</h4>
+                    <p>訪問快了，但每月要多付一筆帶寬費；緩存刷新有滯後；動態內容不適合。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>加了緩存</h4>
+                    <p>QPS 上去了，但數據可能不新鮮；緩存與數據庫不一致的 bug 極其難查。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>拆分了微服務</h4>
+                    <p>每個服務獨立擴容，但一次請求要跨多個服務，網絡 RTT 累加。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>用了預渲染 / SSR</h4>
+                    <p>首屏快了，但服務端壓力更大，架構更復雜。</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>把"慢"直接歸罪於"服務器不好"。實際情況裡，80% 的慢來自前端資源、DNS/TLS、跨域跨洋、以及被忽視的 N+1 數據庫查詢——服務器 CPU 反而經常閒著。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>給兩個網站做一次"體檢"</h3>
+                <p>
+                    在 Chrome 裡按 F12 → Network 面板 → 勾選 "Disable cache" → 分別打開：
+                </p>
+                <ol>
+                    <li>google.com</li>
+                    <li>任一你覺得慢的國內小網站</li>
+                </ol>
+                <p>
+                    對比看：誰的 TTFB 更長？誰的資源體積更大？誰請求數更多？誰沒用 CDN（Response Headers 裡沒有 <code>x-cache</code>、<code>cf-ray</code> 之類）？
+                </p>
+                <p>
+                    你會親眼看到——<strong>"慢"從來不是一個原因</strong>。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=1">Q1: 輸入網址後發生了什麼？</a>
+                <a href="question.html?q=9">Q9: 前端為什麼越來越複雜？</a>
+                <a href="question.html?q=17">Q17: 為什麼大型系統總在談緩存、隊列、限流？</a>
+                <a href="question.html?q=20">Q20: 為什麼緩存能極大提升性能？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>慢網站 = 未被優化的複雜度，暴露給了用戶</h3>
+                <p>
+                    一個網站快，不是因為它簡單，而是因為工程師把複雜度<strong>藏起來了</strong>——藏進了 CDN、藏進了緩存、藏進了預取、藏進了異步加載。
+                </p>
+                <p>
+                    一個網站慢，是因為工程師沒時間、沒預算、或者乾脆沒意識到，把內部複雜度<strong>直接甩給了用戶</strong>去承擔。
+                </p>
+                <p>
+                    所以性能不是純技術問題，它是資源、組織、優先級的映射。你能看到多遠的性能優化，取決於公司願意投入多少。<br><br>
+                    <strong>大廠網站為什麼快？</strong>不是因為工程師更聰明，是因為他們有專門的 SRE 團隊、專門的性能預算、專門的用戶體驗 KPI 在盯著這幾十毫秒。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼有的網站快，有的網站慢？
+            </p>
+
+            <div class="highlight-box">
+                <strong>因為"打開網站"從來不是一件事，而是一整條鏈路。</strong><br><br>
+                快的網站，是每一環都被認真優化過；<br>
+                慢的網站，是某一環——或者好幾環——沒人管。<br><br>
+                你看到的"快慢"，其實是團隊與系統的<strong>能力剖面</strong>。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=15" class="btn">繼續探索 Q15 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

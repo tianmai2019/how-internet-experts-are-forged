@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互聯網大帝是如何煉成的</title>
+    <link rel="stylesheet" href="../assets/css/shared.css">
+    <style>
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .layers {
+            display: grid;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .layer {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background: #F9FAFB;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.2s;
+        }
+
+        .layer:hover {
+            transform: translateX(5px);
+            background: #F9F6FF;
+        }
+
+        .layer-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        .layer-content h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #1F2937;
+        }
+
+        .layer-content p {
+            color: #6B7280;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .layer-example {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(102, 126, 234, 0.06);
+            border-left: 3px solid rgba(102, 126, 234, 0.4);
+            border-radius: 6px;
+            color: #4B5563;
+            font-size: 0.88rem;
+            line-height: 1.55;
+        }
+        .layer-example b { color: #667eea; font-weight: 600; }
+
+        .disclaimer {
+            margin-top: 24px;
+            padding: 16px 20px;
+            background: #FFFBEB;
+            border: 1px dashed #F59E0B;
+            border-radius: 10px;
+            color: #78350F;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+        .disclaimer b { color: #B45309; }
+
+        /* 人群指南 */
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .persona {
+            padding: 20px;
+            background: #F9FAFB;
+            border-radius: 12px;
+            border-top: 4px solid #764ba2;
+        }
+        .persona h4 {
+            margin: 0 0 8px 0;
+            color: #1F2937;
+            font-size: 1rem;
+        }
+        .persona-path {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 6px 0;
+        }
+        .persona p {
+            color: #6B7280;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* 分流出口 */
+        .track-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .track {
+            position: relative;
+            padding: 18px 18px 18px 18px;
+            background: #F9FAFB;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .track:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        }
+        .track h4 {
+            margin: 0 0 6px 0;
+            color: #1F2937;
+            font-size: 1rem;
+        }
+        .track p {
+            color: #6B7280;
+            font-size: 0.85rem;
+            line-height: 1.55;
+            margin: 0;
+        }
+        .track-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 2px 8px;
+            background: #E5E7EB;
+            color: #6B7280;
+            font-size: 0.72rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 15px;
+            margin-bottom: 15px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .quote {
+            font-size: 1.4rem;
+            font-style: italic;
+            color: #667eea;
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            margin: 40px 0;
+        }
+
+        .card-intro {
+            font-size: 1.1rem;
+            color: #4B5563;
+            line-height: 1.8;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 30px 20px;
+            }
+            .layer {
+                flex-direction: column;
+                text-align: center;
+            }
+            .layer-number {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="zh-Hans" href="/index.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/index.html">
+    <link rel="alternate" hreflang="en" href="/en/index.html">
+    <link rel="alternate" hreflang="x-default" href="/index.html">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>互聯網大帝是如何煉成的</h1>
+            <p class="subtitle">一套普通人也能看懂的互聯網認知成長模型</p>
+            <p style="margin-top: 15px; opacity: 0.85;">從使用互聯網,到理解互聯網,再到看見互聯網背後的世界</p>
+        </header>
+
+        <div class="card">
+            <h2>📖 閱讀主文章</h2>
+            <p class="card-intro">
+                這篇文章講述了一個人從普通用戶成長為互聯網大帝的完整心路歷程，
+                一層一層揭示互聯網背後的世界。
+            </p>
+            <a href="articles/01-how-internet-experts-are-forged.html" class="btn">閱讀全文 →</a>
+        </div>
+
+        <div class="card">
+            <h2>👥 你是誰？該怎麼讀？</h2>
+            <p class="card-intro" style="margin-bottom: 8px;">
+                不同身份的讀者，關心的層級不一樣。先對號入座，再決定往哪裡深入。
+            </p>
+            <div class="persona-grid">
+                <div class="persona">
+                    <h4>🙋 普通網民 / 好奇的愛好者</h4>
+                    <div class="persona-path">重點看：第 1 ~ 3 層</div>
+                    <p>先搞懂"點一下之後，互聯網到底發生了什麼"。第 4 層之後偏工程細節，可略讀。</p>
+                </div>
+                <div class="persona">
+                    <h4>💻 轉行 / 應屆 / 初級開發</h4>
+                    <div class="persona-path">重點看：完整 1 ~ 5 層</div>
+                    <p>用這套模型給自己定位，看清"下一層"該往哪走，避免只會寫代碼不知道往哪成長。</p>
+                </div>
+                <div class="persona">
+                    <h4>📊 產品 / 運營 / 項目經理</h4>
+                    <div class="persona-path">重點看：第 1、3、4、5 層</div>
+                    <p>弱化第 2 層的代碼細節，重點理解請求鏈路、工程取捨和平臺機制 —— 更貼合跨部門溝通。</p>
+                </div>
+                <div class="persona">
+                    <h4>🤖 想理解 AI 時代的人</h4>
+                    <div class="persona-path">重點看：第 6 層 + 反向補 3、4、5</div>
+                    <p>先看懂 AI 相對傳統互聯網變了什麼，再倒回來補底層，理解得更快。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🗺️ 6層認知遞進</h2>
+            <div class="layers">
+                <div class="layer">
+                    <div class="layer-number">1</div>
+                    <div class="layer-content">
+                        <h3>🎯 用戶視角</h3>
+                        <p>互聯網是"會回應的世界" — 只看結果，不追問原理</p>
+                        <div class="layer-example">
+                            🌰 <b>身邊例子</b>：點開外賣 App，下單幾十分鐘後熱飯送到手 —— 你只關心"能不能吃"，不關心它經過了哪些服務器、走了多少張表。
+                        </div>
+                    </div>
+                </div>
+                <div class="layer">
+                    <div class="layer-number">2</div>
+                    <div class="layer-content">
+                        <h3>🔨 程序員入門視角</h3>
+                        <p>互聯網是"被構建的世界" — 理解前端、後端、數據庫的分工</p>
+                        <div class="layer-example">
+                            🌰 <b>身邊例子</b>：登錄一次淘寶 —— 前端畫出輸入框，後端校驗賬號密碼，數據庫存儲用戶信息。三件事分別由三撥人寫，合起來才叫"能登錄"。
+                        </div>
+                    </div>
+                </div>
+                <div class="layer">
+                    <div class="layer-number">3</div>
+                    <div class="layer-content">
+                        <h3>🌊 工程師視角</h3>
+                        <p>互聯網是"流動的系統" — 看到完整請求鏈路</p>
+                        <div class="layer-example">
+                            🌰 <b>身邊例子</b>：微信發一條消息 —— 從你手機出發，先過基站，再走運營商網絡，到騰訊網關，被服務集群處理，再一路推到對方手機上。看似"秒到"，其實是一次跨越千里的接力。
+                        </div>
+                    </div>
+                </div>
+                <div class="layer">
+                    <div class="layer-number">4</div>
+                    <div class="layer-content">
+                        <h3>⚖️ 高級工程師視角</h3>
+                        <p>互聯網是"權衡的系統" — 理解工程中的取捨</p>
+                        <div class="layer-example">
+                            🌰 <b>身邊例子</b>：短視頻平臺不能無限加服務器（成本），所以要限流、要緩存；支付寶寧可慢半秒也不能算錯一分錢 —— 每個體驗背後，都是性能、成本、穩定性之間的取捨。
+                        </div>
+                    </div>
+                </div>
+                <div class="layer">
+                    <div class="layer-number">5</div>
+                    <div class="layer-content">
+                        <h3>👑 大帝視角</h3>
+                        <p>互聯網是"塑造現實的系統" — 技術如何與社會互動</p>
+                        <div class="layer-example">
+                            🌰 <b>身邊例子</b>：抖音的推薦算法決定了你每天看到什麼內容，進而影響你的興趣、消費、甚至認知邊界。技術不再只是工具，它塑造了一整個信息環境。
+                        </div>
+                    </div>
+                </div>
+                <div class="layer">
+                    <div class="layer-number">6</div>
+                    <div class="layer-content">
+                        <h3>💬 AI時代視角</h3>
+                        <p>互聯網是"會對話的系統" — 理解確定性與概率性的共存</p>
+                        <div class="layer-example">
+                            🌰 <b>身邊例子</b>：搜索引擎給你 10 條鏈接（確定性檢索），而 ChatGPT 直接生成一段回答（概率性生成）。前者告訴你"去哪裡找"，後者直接"告訴你結果"—— 這是交互方式的一次躍遷。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="disclaimer">
+                💡 <b>提示</b>：這 6 層是一套認知參考座標，不是必須按順序走完的臺階。真實的成長可以跳躍、多層並存 —— 有人從第 4 層的"取捨"倒回來才真正理解第 2 層的分工；也有人一直停在第 1 層照樣把生活過得很好。<b>不必機械對標，找到自己關心的那一層深入即可。</b>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number">6</div>
+                    <div class="stat-label">認知層級</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">50</div>
+                    <div class="stat-label">關鍵問題</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">探索可能</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>❓ 50個問句錨點</h2>
+            <p class="card-intro">
+                50個問題，每個都可以作為一個知識入口，帶你一層一層深入理解互聯網。
+            </p>
+            <a href="questions/00-question-map.html" class="btn btn-outline">📋 問題清單</a>
+            <a href="questions/knowledge-graph.html" class="btn">🗺️ 知識圖譜</a>
+        </div>
+
+        <div class="card">
+            <h2>🚪 讀完之後，你可以去往哪裡</h2>
+            <p class="card-intro" style="margin-bottom: 8px;">
+                建立全局認知，只是起點。選一個你感興趣的方向深入探索 ——
+            </p>
+            <div class="track-grid">
+                <div class="track">
+                    <span class="track-badge">敬請期待</span>
+                    <h4>🌐 網絡通信</h4>
+                    <p>TCP/IP、HTTP、DNS、CDN —— 讓數據在全球流動的那套底層機制。</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">敬請期待</span>
+                    <h4>🎨 前端開發</h4>
+                    <p>HTML/CSS/JS、React、性能優化 —— 用戶看到的每一像素背後的手藝。</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">敬請期待</span>
+                    <h4>⚙️ 後端開發</h4>
+                    <p>服務、數據庫、緩存、消息隊列 —— 支撐千萬人同時使用的骨架。</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">敬請期待</span>
+                    <h4>💡 產品思維</h4>
+                    <p>需求、用戶體驗、增長、商業化 —— 從"能用"到"有人用"的一整套邏輯。</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">敬請期待</span>
+                    <h4>🔐 網絡安全</h4>
+                    <p>攻防、滲透、加密、隱私 —— 互聯網世界裡另一條平行的戰線。</p>
+                </div>
+                <div class="track">
+                    <span class="track-badge">敬請期待</span>
+                    <h4>🤖 AI 大模型應用</h4>
+                    <p>Prompt、RAG、Agent、微調 —— AI 時代的新一層工程能力。</p>
+                </div>
+            </div>
+            <p style="margin-top: 20px; color: #9CA3AF; font-size: 0.85rem; font-style: italic;">
+                📝 各方向的深入內容還在整理中，敬請期待。想優先看哪個方向？歡迎在文末評論區告訴我。
+            </p>
+        </div>
+
+        <div class="card">
+            <div class="quote">
+                "它為什麼會這樣工作?"
+            </div>
+            <p class="card-intro" style="text-align: center;">
+                當你開始這樣問的時候，你其實就已經走上這條路了。<br>
+                不是從知道答案開始，而是從不再把一切都當成理所當然開始。
+            </p>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+            <p style="margin-top:10px; font-size: 0.85rem;">💡 快捷鍵: T 切換主題 · H 首頁 · Ctrl+K 知識地圖</p>
+        </footer>
+    </div>
+    <script src="../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>問題加載中...</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <script src="../../assets/data/questions.js"></script>
+    <style>
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .level-1 { background: #DBEAFE; color: #1E40AF; }
+        .level-2 { background: #D1FAE5; color: #065F46; }
+        .level-3 { background: #CFFAFE; color: #164E63; }
+        .level-4 { background: #EDE9FE; color: #5B21B6; }
+        .level-5 { background: #FEF3C7; color: #92400E; }
+        .level-6 { background: #FCE7F3; color: #9D174D; }
+        .level-0 { background: #F3F4F6; color: #374151; }
+
+        .question-title {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: #1F2937;
+        }
+
+        .progress-hint {
+            background: #F9FAFB;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .related-links {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .related-links a {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 16px;
+            background: #F3F4F6;
+            border-radius: 20px;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .related-links a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .checking-box {
+            background: #EFF6FF;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #93C5FD;
+            border-top-color: #3B82F6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .available-box {
+            background: #D1FAE5;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #10B981;
+        }
+
+        .available-box h3 {
+            color: #065F46;
+            margin-top: 0;
+        }
+    </style>
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/question.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/question.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/question.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/question.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <header id="page-header">
+            <h1>⏳ 加載中...</h1>
+            <p class="subtitle" id="level-name">正在檢查文章狀態...</p>
+        </header>
+
+        <div class="card">
+            <div class="coming-soon">
+                <div class="checking-box" id="checking-box">
+                    <div class="spinner"></div>
+                    <span>正在檢查文章是否已發佈...</span>
+                </div>
+
+                <div class="icon" id="page-icon">📝</div>
+                <div class="level-badge" id="level-badge"></div>
+                <h2 class="question-title" id="question-text">加載中...</h2>
+                <p id="status-text">這篇文章正在緊張創作中...</p>
+                <p id="contrib-text">如果你想幫忙撰寫，歡迎貢獻！</p>
+
+                <div class="progress-hint" id="progress-hint">
+                    <strong>💡 寫作提示</strong>
+                    <p>可以從以下角度來寫這篇文章：</p>
+                    <ul id="hint-list" style="text-align: left; margin-top: 15px; color: #666;"></ul>
+                </div>
+
+                <div class="related-links">
+                    <strong>探索更多：</strong><br>
+                    <a href="../questions/00-question-map.html">🗺️ 知識地圖</a>
+                    <a href="01-how-internet-experts-are-forged.html">📖 主文章</a>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+
+    <script>
+        // 已完成的文章列表 - 更新这个来标记已发布！
+        // ✅ 全部 50 篇均已发布
+        const PUBLISHED = {
+            1: true, 2: true, 3: true, 4: true, 5: true, 6: true,
+            7: true, 8: true, 9: true, 10: true, 11: true, 12: true,
+            13: true, 14: true, 15: true, 16: true, 17: true, 18: true, 19: true,
+            20: true, 21: true, 22: true, 23: true, 24: true, 25: true,
+            26: true, 27: true, 28: true, 29: true, 30: true, 31: true, 32: true,
+            33: true, 34: true, 35: true, 36: true, 37: true, 38: true, 39: true,
+            40: true, 41: true, 42: true, 43: true, 44: true, 45: true,
+            46: true, 47: true, 48: true, 49: true, 50: true
+        };
+
+        // 从URL获取问题编号
+        function getQuestionId() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('q');
+            return id ? parseInt(id) : null;
+        }
+
+        // 检查是否有已发布的文章
+        function checkPublished(id) {
+            if (PUBLISHED[id]) {
+                // 跳转到真实文章 —— 用 replace 而不是 href，
+                // 这样中转页不会留在浏览器历史里，
+                // 从主文章跳过来后再点"返回上一页"能直接回到主文章。
+                const filename = q${String(id).padStart(2, '0')}`.html`;
+                window.location.replace(filename);
+                return true;
+            }
+            return false;
+        }
+
+        // 获取该层级的写作提示
+        function getHintsForLevel(level) {
+            const hints = {
+                1: [
+                    "從小白視角開始，用生活中的例子",
+                    "解釋這個現象為什麼重要",
+                    "不需要深入技術細節",
+                    "留下懸念，引導到下一層"
+                ],
+                2: [
+                    "從程序員入門角度解釋",
+                    "加入一些簡單的代碼示例",
+                    "解釋前後端如何分工",
+                    "讓讀者感覺自己也能做出來"
+                ],
+                3: [
+                    "從系統和鏈路視角分析",
+                    "加入流程圖或架構圖（可以手繪）",
+                    "解釋性能、併發、穩定性等概念",
+                    "關聯到其他相關問題"
+                ],
+                4: [
+                    "從權衡和選擇角度展開",
+                    "討論技術方案的優缺點",
+                    "加入真實場景中的取捨案例",
+                    "體現工程思維"
+                ],
+                5: [
+                    "從更高的視角看這個問題",
+                    "討論技術如何影響人、組織、社會",
+                    "加入產品思維、商業思維",
+                    "昇華到世界觀層面"
+                ],
+                6: [
+                    "對比傳統系統和AI系統的不同",
+                    "討論概率性和確定性的區別",
+                    "探討AI時代的新挑戰",
+                    "聯繫到現實中的AI應用"
+                ],
+                0: [
+                    "作為總結性問題，要有全局視角",
+                    "串聯前面各層的內容",
+                    "昇華到世界觀層面",
+                    "給讀者留下深刻印象"
+                ]
+            };
+            return hints[level] || hints[0];
+        }
+
+        // 渲染页面
+        function renderPage() {
+            const id = getQuestionId();
+
+            if (!id || !QUESTIONS[id]) {
+                document.getElementById('question-text').textContent = "問題不存在";
+                document.getElementById('level-name').textContent = "返回首頁查看所有問題";
+                document.getElementById('checking-box').style.display = 'none';
+                return;
+            }
+
+            // 先检查是否已发布（有一个短暂的延迟让用户看到检查动画）
+            setTimeout(() => {
+                if (checkPublished(id)) {
+                    return;  // 将跳转，不继续渲染
+                }
+
+                // 没有发布，继续显示placeholder
+                document.getElementById('checking-box').style.display = 'none';
+
+                const question = QUESTIONS[id];
+                const levelName = LEVEL_NAMES[question.level];
+                const icon = LEVEL_ICONS[question.level];
+
+                // 设置标题
+                document.title = Q${id}: ${question.text}``;
+                document.getElementById('question-text').textContent = question.text;
+                document.getElementById('level-name').textContent = levelName;
+                document.getElementById('page-icon').textContent = icon;
+
+                // 设置层级徽章
+                const badge = document.getElementById('level-badge');
+                badge.textContent = levelName;
+                badge.className = level-badge level-${question.level}``;
+
+                // 设置写作提示
+                const hintList = document.getElementById('hint-list');
+                const hints = getHintsForLevel(question.level);
+                hintList.innerHTML = hints.map(h => <li>${h}`</li>`).join('');
+
+                // 修改header，显示Q编号
+                document.getElementById('page-header').innerHTML = 
+                    <h1>⏳ Q${id}: 即將上線</h1>
+                    <p class="subtitle">${levelName}`</p>
+                `;
+            }, 800);
+        }
+
+        // 页面加载完成后渲染
+        renderPage();
+    </script>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

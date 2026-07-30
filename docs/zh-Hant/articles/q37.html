@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q37：為什麼組織結構會反過來影響系統架構？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q37.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q37.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q37.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q37.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-5">
+            <div class="level-badge">👑 第5層認知 · 大帝視角</div>
+            <h1>為什麼組織結構會反過來影響系統架構？</h1>
+            <p class="subtitle">康威定律：你畫的架構圖，最後長成了你的組織架構圖</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你可能聽過一個"迷"：為什麼很多大公司的產品，看起來功能是拼在一起的？
+                為什麼淘寶和支付寶這麼像但又分裂？為什麼一個 App 裡，不同 tab 的設計風格完全不同？
+            </p>
+
+            <p>
+                你以為是"設計師能力不齊"或"產品經理沒眼光"。其實背後有一條鐵律：
+            </p>
+
+            <div class="highlight-box">
+                <strong>康威定律（Conway's Law, 1968）：</strong><br><br>
+                "任何組織設計出的系統，最終都會反映這個組織的溝通結構。"<br><br>
+                → 3 個團隊做瀏覽器，會做出 3 個模塊拼起來的瀏覽器。<br>
+                → 一個團隊做的，就是一個 monolith。
+            </div>
+
+            <p>
+                換句話說：<strong>你的組織什麼樣，你的代碼就什麼樣。</strong>
+                這是軟件工程裡最"隱形"、也最不可抗拒的力量。
+            </p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>康威定律到底說的什麼？</strong></li>
+                <li><strong>為什麼組織結構會決定系統結構？</strong></li>
+                <li><strong>反過來，能不能"改組織"來"改架構"？</strong>（逆康威）</li>
+                <li><strong>Amazon、Netflix、字節都在這個定律上做了什麼？</strong></li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                用戶會說：<strong>"這個 App 有些地方好用，有些地方特別割裂。"</strong>
+                "登錄一下要跳三個頁面。""搜索出來的商品和購物車看著完全不是一個團隊做的。"
+            </p>
+
+            <p>
+                這些"割裂感"，往往就是<strong>組織牆的投影</strong>。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                假設有 3 個團隊要合作做一個 App：
+            </p>
+
+            <div class="code-block">// 三個團隊各自的邊界
+
+Team A: 用戶模塊      → 一個 UserService
+Team B: 商品模塊      → 一個 ProductService
+Team C: 支付模塊      → 一個 PaymentService
+
+// 結果：架構自然分成三塊
+// 因為跨團隊溝通有成本，所以 API 邊界總是在團隊邊界上
+
+// 如果 Team A 和 Team B 有矛盾？
+// —— 會出現一個"翻譯層"來解耦
+// —— 這個翻譯層，就是"人際關係"在代碼裡的實體化</div>
+
+            <p>
+                這不是理論——它每天都在發生。<strong>你的 team 裡三個人不說話，代碼裡就會多一箇中間層。</strong>
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                Amazon 是把這個定律"逆向"用得最成功的公司。看這條鏈路：
+            </p>
+
+            <div class="diagram-box">
+                <strong>Jeff Bezos 的"兩個披薩團隊"規則（2002 年）</strong>
+                <span class="arrow">↓</span>
+                每個團隊小到"兩個披薩能吃飽"（6-10 人）
+                <span class="arrow">↓</span>
+                每個團隊獨立、有 KPI、有 API 邊界
+                <span class="arrow">↓</span>
+                團隊之間必須通過 API 通信，不許"跳過 API"
+                <span class="arrow">↓</span>
+                <strong>組織成了微服務的形狀</strong>
+                <span class="arrow">↓</span>
+                <strong>系統架構自然成了微服務架構</strong>
+                <span class="arrow">↓</span>
+                這些內部 API 變成了 AWS
+            </div>
+
+            <p>
+                這就是<strong>逆康威定律（Inverse Conway Maneuver）</strong>：
+                想要什麼樣的系統架構，就先把組織改成那個樣子。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                微服務是好的？大 monolith 是壞的？不一定——每個選擇對應不同的組織現實：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>Monolith（單體）</h4>
+                    <p>適合小團隊（&lt; 30 人）。所有人共享一個代碼庫，溝通成本低，迭代快。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Microservice（微服務）</h4>
+                    <p>適合大組織。讓每個團隊自治，用 API 隔離溝通複雜度——但代價是運維和一致性。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Modular Monolith</h4>
+                    <p>中間態。代碼物理上一起，但邏輯上分層。適合"想微服務但組織還沒到"的團隊。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>Distributed Monolith</h4>
+                    <p>最糟的一種。看著是微服務，實際耦合還在。往往是"沒改組織就先改架構"的結果。</p>
+                </div>
+            </div>
+
+            <p>
+                <strong>架構選擇的第一問，從來不是"技術上哪個好"，而是"我的組織長什麼樣"。</strong>
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>🔍 觀察實驗：畫一次"組織架構 vs 系統架構"</h3>
+                <p>
+                    找一款你熟悉的產品（比如淘寶、微信、抖音），試著回答：
+                </p>
+                <ol>
+                    <li>把它的主要模塊畫出來（推薦、搜索、聊天、支付、直播……）；</li>
+                    <li>猜猜每個模塊背後是幾個團隊；</li>
+                    <li>觀察哪些模塊"銜接得順"（可能是同一個 BU）？</li>
+                    <li>觀察哪些模塊"銜接得彆扭"（可能是不同 BU 拼的）？</li>
+                </ol>
+                <p>
+                    如果你在公司裡工作過，回頭看你們的產品，你會發現<strong>每一個別扭的地方，都對應一堵組織牆</strong>。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=32">Q32: 為什麼互聯網系統必須"可持續"？</a>
+                <a href="question.html?q=38">Q38: 為什麼商業目標決定技術路線？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>系統架構 = 組織架構在代碼裡的投影</h3>
+                <p>
+                    康威定律的深層含義是：<strong>軟件不是"設計出來的"，是"生長出來的"</strong>。
+                    它跟隨組織的形狀生長，跟隨人的溝通路徑生長，跟隨權力關係生長。
+                </p>
+                <p>
+                    這解釋了很多"技術之謎"：
+                </p>
+                <ul>
+                    <li>為什麼 Google 的產品經常"啟動又下架"？——因為組織結構頻繁重組；</li>
+                    <li>為什麼大公司的技術棧總是分裂？——因為不同 BU 獨立選型；</li>
+                    <li>為什麼開源項目常常演化成"許多小模塊的聯邦"？——因為貢獻者是分佈式的；</li>
+                    <li>為什麼創業公司做的 App 總是"一致感"更強？——因為團隊小、溝通密、邊界少。</li>
+                </ul>
+                <p>
+                    大帝視角看到的更深一層是：<strong>技術架構和社會結構，是同一件事的兩面</strong>。
+                    你如何組織人，就在如何組織信息；你如何組織信息，就在決定這個系統能長成什麼樣。
+                </p>
+                <p>
+                    這也是為什麼真正好的 CTO，同時也是好的組織設計師。<br>
+                    修代碼的人，其實是在修人和人之間的關係。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼組織結構會反過來影響系統架構？
+            </p>
+
+            <p>
+                <strong>答案是：</strong>因為軟件是人寫的，而<strong>人的溝通結構決定了代碼的耦合結構</strong>。
+                你不能畫一張漂亮的架構圖，然後期望它在一個亂糟糟的組織里"實現出來"——
+                它最終會長成組織真實的樣子。
+            </p>
+
+            <div class="highlight-box">
+                <strong>大帝視角的覺醒：</strong><br><br>
+                下次你看到一個"難看的系統"，先別怪工程師。<br>
+                問一問：<strong>做這個系統的組織，長什麼樣？</strong><br>
+                答案往往就在那裡。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=38" class="btn">繼續探索 Q38 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

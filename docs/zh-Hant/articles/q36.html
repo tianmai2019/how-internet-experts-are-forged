@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q36：為什麼互聯網產品設計，最後會影響人的情緒、表達和判斷？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q36.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q36.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q36.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q36.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-5">
+            <div class="level-badge">👑 第5層認知 · 大帝視角</div>
+            <h1>為什麼互聯網產品設計，最後會影響人的情緒、表達和判斷？</h1>
+            <p class="subtitle">當技術媒介重塑了情感的語法</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你有沒有過這些感覺？
+            </p>
+
+            <ul>
+                <li>看完 15 分鐘短視頻，情緒莫名煩躁；</li>
+                <li>刷完一晚上評論區，忍不住想跟人吵架；</li>
+                <li>看到一個新聞標題，還沒讀完就已經憤怒；</li>
+                <li>在朋友圈刷到"別人的生活"，突然焦慮起來。</li>
+            </ul>
+
+            <p>
+                這些情緒不是"你"，也不是"內容"，而是<strong>你和產品設計的共同產物</strong>。
+                同樣一件事，報紙上讀到、朋友嘴裡聽到、抖音上刷到、微博熱搜上看到——
+                你的<strong>情緒反應完全不同</strong>。
+            </p>
+
+            <div class="highlight-box">
+                <strong>產品設計，是情緒的"揚聲器"。</strong><br><br>
+                它決定了什麼情緒被放大、什麼情緒被壓制、<br>
+                什麼樣的表達能傳播、什麼樣的觀點會消失。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>為什麼"憤怒"在互聯網上傳播最快？</strong></li>
+                <li><strong>為什麼評論區容易極端化？</strong></li>
+                <li><strong>為什麼"信息繭房"會重塑判斷？</strong></li>
+                <li><strong>為什麼表達變得越來越"表演化"？</strong></li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                普通用戶的感受：<strong>"這個平臺戾氣好重。""網友怎麼這麼極端？""網上都是鍵盤俠。"</strong>
+            </p>
+
+            <p>
+                但你注意到沒——離開這個 App，那些"戾氣"就沒了。<strong>不是人變了，是環境變了。</strong>
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                內容分發的核心邏輯，用一段簡化的偽代碼就能表達：
+            </p>
+
+            <div class="code-block">// 一條內容能不能被推薦？看它的"互動率"
+score = weight_1 * click_rate
+      + weight_2 * complete_rate
+      + weight_3 * comment_rate       // 評論最貴！
+      + weight_4 * share_rate
+      + weight_5 * follow_rate
+
+// 什麼內容最容易觸發評論和轉發？
+// —— 情緒強烈的內容
+// —— 立場鮮明的內容
+// —— 令人憤怒/驚訝/焦慮的內容
+
+// 於是算法自然會"選擇"這些內容，
+// 因為它們最能帶來"高價值互動"</div>
+
+            <p>
+                算法本身沒有情緒傾向，但因為它優化"互動率"——而<strong>憤怒是最能引發互動的情緒</strong>——
+                所以它<strong>系統性地放大了憤怒</strong>。這不是陰謀，是數學的自然結果。
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                一個"情緒的正反饋循環"是這樣發生的：
+            </p>
+
+            <div class="diagram-box">
+                憤怒的內容 → 高互動率 → 算法多推
+                <span class="arrow">↓</span>
+                更多人看到 → 更多人評論 → 更多人轉發
+                <span class="arrow">↓</span>
+                <strong>憤怒的評論區，進一步激發新的憤怒</strong>
+                <span class="arrow">↓</span>
+                創作者發現"憤怒有流量" → 生產更多憤怒
+                <span class="arrow">↓</span>
+                <strong>整個平臺的"情緒基線"被抬高</strong>
+            </div>
+
+            <p>
+                這就是 MIT 那篇著名論文說的："<strong>Falsehood diffuses faster than truth.</strong>"
+                （謠言比真相傳播得快，因為它更令人驚訝。）
+            </p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                你可能會問：為什麼不讓算法優化"溫和的、深思熟慮的內容"？
+                答案是<strong>那樣做，平臺會失去流量，用戶會流失</strong>：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>憤怒驅動的設計</h4>
+                    <p>用戶停留久、互動多、廣告收入高——但社會情緒被撕裂。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>平靜驅動的設計</h4>
+                    <p>用戶理性、內容更好——但停留時間短、增長慢，商業上競爭不過對手。</p>
+                </div>
+            </div>
+
+            <p>
+                在<strong>商業競爭的壓力下</strong>，幾乎所有平臺最終都被拉向前者。
+                這不是某個人的選擇，是<strong>整個行業的均衡</strong>。
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>🔍 情緒日記實驗</h3>
+                <p>
+                    做一次為期 3 天的觀察：
+                </p>
+                <ol>
+                    <li>每次打開某個 App 前，記錄你的情緒（1-10 分）；</li>
+                    <li>關閉後，再記錄一次；</li>
+                    <li>看看：哪些 App 讓你情緒變好了？哪些讓你變差了？</li>
+                    <li>額外一步：找一天完全不刷微博 / 抖音 / 朋友圈，看看你會想些什麼。</li>
+                </ol>
+                <p>
+                    很多人做完這個實驗會震驚——<strong>某些 App 每次刷完，我都變得更煩躁，但我停不下來。</strong>
+                    這就是"情緒工程"的具體體現。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=33">Q33: 推薦系統如何塑造注意力？</a>
+                <a href="question.html?q=35">Q35: 一個按鈕如何改變行為？</a>
+                <a href="question.html?q=39">Q39: 互聯網如何改變人和世界的關係？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>技術媒介重塑了情感的語法</h3>
+                <p>
+                    Marshall McLuhan 說："The medium is the message."（媒介即訊息。）
+                    這句話在 2020 年代變得極其精準：
+                </p>
+                <ul>
+                    <li><strong>Twitter/X 的 280 字符</strong>——培養了"金句思維"，鼓勵尖銳、簡化、極端；</li>
+                    <li><strong>短視頻的 15 秒</strong>——獎勵強刺激開頭，讓深度表達無處生存；</li>
+                    <li><strong>評論區的按序展示</strong>——讓"最激烈的評論"永遠排在最前；</li>
+                    <li><strong>點贊數的可見</strong>——讓"表演性表達"勝過"真實表達"。</li>
+                </ul>
+                <p>
+                    你在這些平臺上"發言"，其實是在<strong>參加一場特定規則的比賽</strong>。
+                    比賽規則獎勵什麼，你就慢慢學會說什麼、感受什麼、相信什麼。
+                </p>
+                <p>
+                    最深的影響不是"你今天生氣了"——而是<strong>你的情緒反應模式，被這些平臺重新校準了</strong>。
+                    過去讓你憤怒需要一件大事，現在一個標題就夠；過去表達一個觀點要想半天，現在幾秒就能"輸出"；
+                    過去我們說"我理解你"，現在我們說"我 diss 你"。
+                </p>
+                <p>
+                    這是<strong>技術媒介重塑情感語法</strong>的力量——比任何廣告都深，比任何政治都久。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼互聯網產品設計，最後會影響人的情緒、表達和判斷？
+            </p>
+
+            <p>
+                <strong>答案是：</strong>因為產品設計不只是"承載"信息，它<strong>決定了信息如何流動、什麼被放大、什麼被壓抑</strong>。
+                當幾十億人每天幾小時地生活在同一個"信息流動規則"裡，
+                這個規則最終會塑造他們感受世界的方式。
+            </p>
+
+            <div class="highlight-box">
+                <strong>看到這一點，你就可以問自己一個真正重要的問題：</strong><br><br>
+                我最近的"感受"，有多少是真實世界給我的？<br>
+                有多少，只是某個推薦算法給我的？
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=37" class="btn">繼續探索 Q37 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

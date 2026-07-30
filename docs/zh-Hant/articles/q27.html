@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q27：為什麼一個看起來先進的架構，不一定適合當前業務？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q27.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q27.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q27.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q27.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-4">
+            <div class="level-badge">⚖️ 第4層認知 · 高級工程師視角</div>
+            <h1>為什麼一個看起來先進的架構，不一定適合當前業務？</h1>
+            <p class="subtitle">「先進」是相對的，「合適」才是絕對的</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>你可能聽過這樣的對話：</p>
+
+            <div class="highlight-box">
+                "現在都 2026 年了，還寫單體應用？"<br>
+                "別人早都上 Kubernetes 了，你們還在 Docker 上跑？"<br>
+                "AI 時代，不加 Agent 都不好意思說是新產品。"
+            </div>
+
+            <p>這些話有一個共同點：<strong>用「時代」壓「場景」，用「先進」壓「合適」。</strong></p>
+
+            <p>但真實世界裡，你會看到很多反直覺的結果：</p>
+
+            <ul>
+                <li>一家 30 人的創業公司上了 K8s，一年後運維團隊比業務團隊還大；</li>
+                <li>一家銀行核心系統還跑在 COBOL 上，穩定運行了 40 年；</li>
+                <li>一家電商把單體拆成 200 個微服務，每次上線都要開 3 小時的對齊會。</li>
+            </ul>
+
+            <p>所以這一層認知的關鍵是：<strong>不再問"這個架構是不是最新的"，而是問"這個架構和我們現在的業務、團隊、預算，是不是匹配的"。</strong></p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li>什麼叫「先進」？它是絕對指標，還是相對指標？</li>
+                <li>為什麼大廠的方案，搬到小廠就水土不服？</li>
+                <li>架構決策的隱性成本，藏在哪裡？</li>
+                <li>怎麼判斷"當前業務"真正需要什麼？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>用戶從來不關心你用什麼架構。用戶只關心三件事：<strong>能不能打開、快不快、穩不穩。</strong></p>
+
+            <p>微信用戶不會因為微信底層是 Erlang 就多用它一分鐘，也不會因為知乎用 Python 而少刷它一次。<strong>用戶只為結果買單。</strong></p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>入門工程師看架構，看到的是"技術清單"：</p>
+
+            <div class="code-block">項目 A：Spring Boot + MySQL + Redis
+項目 B：Go + gRPC + Kafka + ClickHouse + K8s + Istio + Prometheus + Jaeger</div>
+
+            <p>然後得出結論：項目 B 比項目 A「先進」。</p>
+
+            <p>但這個結論忽略了一個關鍵問題：<strong>項目 B 需要多少人、多少錢、多少時間來維護？</strong></p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>高級工程師看架構，會同時看四條鏈路：</p>
+
+            <div class="diagram-box">
+                <span class="step-box">技術鏈路</span>
+                <span class="arrow">↓</span>
+                <span class="step-box">數據鏈路</span>
+                <span class="arrow">↓</span>
+                <span class="step-box">組織鏈路</span>
+                <span class="arrow">↓</span>
+                <span class="step-box">財務鏈路</span>
+            </div>
+
+            <p>一個"先進"的架構，如果落到一個沒有配套組織能力的團隊裡，它的技術優勢會被組織成本吞沒。</p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>讓我們看一個真實場景：30 人技術團隊，是否應該上 Kubernetes？</p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>看起來的收益</h4>
+                    <p>✅ 彈性伸縮<br>✅ 滾動發佈<br>✅ 服務自愈<br>✅ 聲明式管理</p>
+                </div>
+                <div class="compare-card">
+                    <h4>被忽略的成本</h4>
+                    <p>❌ 需要 2-3 個專職 SRE<br>❌ 學習曲線陡峭<br>❌ 網絡排障複雜度飆升<br>❌ 雲成本可能上漲 30-50%</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>破除迷思：</strong>Kubernetes 不是"銀彈"，是"重卡"。如果你的業務是搬一箱礦泉水，用重卡不叫「先進」，叫「浪費」；更麻煩的是，重卡本身需要卡車駕照——那就是你沒有的<strong>組織能力</strong>。
+            </div>
+
+            <p>所以真正的問題不是「K8s 好不好」，而是：</p>
+
+            <ul>
+                <li>我們現在的部署頻率高到需要它嗎？</li>
+                <li>我們的服務多到需要它編排嗎？</li>
+                <li>我們的團隊具備維護它的能力嗎？</li>
+                <li>省下的運維成本能覆蓋引入的複雜度成本嗎？</li>
+            </ul>
+
+            <h2>🏗️ 階段匹配：架構是有生命週期的</h2>
+
+            <p>同一個業務，不同階段需要的架構是完全不同的：</p>
+
+            <div class="code-block">階段 1（0→1）：驗證階段
+  目標：快速上線，驗證需求
+  合適架構：單體 + 一個數據庫 + 一臺服務器
+  錯配後果：過度設計 → 團隊被架構拖住，驗證不了業務
+
+階段 2（1→10）：增長階段
+  目標：快速迭代，快速發佈
+  合適架構：模塊化單體 + 讀寫分離 + CDN
+  錯配後果：過早微服務化 → 每次改動都要跨 5 個服務
+
+階段 3（10→100）：擴展階段
+  目標：多團隊並行、獨立部署
+  合適架構：按業務域拆分的服務化 + 消息隊列
+  錯配後果：還在單體 → 團隊互相踩腳，發佈隊列排隊
+
+階段 4（100→∞）：平臺階段
+  目標：技術平臺化、成本優化
+  合適架構：容器編排 + 服務網格 + 多雲
+  錯配後果：架構跟不上 → 技術債累積到不可控</div>
+
+            <p>核心洞察：<strong>「先進」的架構，是給下一個階段用的，不是給當前階段用的。</strong></p>
+
+            <h2>📝 決策工具：ADR（架構決策記錄）</h2>
+
+            <p>成熟團隊做架構決策時，不靠"感覺先進"，而是寫下 ADR：</p>
+
+            <div class="code-block"># ADR-042：是否引入 Kafka 替代當前的 RabbitMQ
+
+## 背景
+當前 RabbitMQ 承載 5k QPS，未來 12 個月預期 20k QPS。
+
+## 選項
+A. 繼續使用 RabbitMQ（集群化擴容）
+B. 遷移到 Kafka
+C. 混合使用（新業務上 Kafka，老業務保留）
+
+## 權衡表
+                   | A. RabbitMQ | B. Kafka   | C. 混合
+吞吐能力           | 夠用        | 遠超需求   | 夠用
+遷移成本           | 0           | 8-12 人月  | 4-6 人月
+運維複雜度         | 已掌握      | 需要學習   | 雙倍複雜度
+團隊現有技能       | 熟練        | 需培訓     | 部分需培訓
+
+## 決策
+選 A。理由：現有方案能覆蓋未來 18 個月負載，
+遷移收益不足以覆蓋 8-12 人月成本，
+團隊首要目標是業務擴張，不是技術升級。
+
+## 觸發重新評估的條件
+- QPS 突破 15k
+- RabbitMQ 出現 3 次以上不可修復的穩定性問題
+- 團隊有 Kafka 經驗的成員超過 2 人</div>
+
+            <p>ADR 的價值不在於「記錄」，在於逼你把「隱性權衡」變成「顯性權衡」。</p>
+
+            <h2>💡 真實案例：Segment 的"逆流"故事</h2>
+
+            <p>數據平臺公司 Segment 曾經在 2017 年做過一件"倒行逆施"的事：把 140 多個微服務，合併回單體。</p>
+
+            <p>原因很簡單：他們發現在他們的業務規模和團隊規模下，微服務帶來的運維複雜度、部署耦合、數據一致性成本，已經遠超單體的維護成本。</p>
+
+            <div class="highlight-box">
+                <strong>Segment 的復盤原話：</strong>"微服務解決了 Uber 和 Netflix 的問題，但它不是我們的問題。我們的問題是讓 30 個工程師能高效協作——這個問題，一個組織良好的單體反而更擅長。"
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>做一次"架構反向審視"</h3>
+                <p>找一個你正在用的"先進"技術組件（Redis 集群、K8s、消息隊列、微服務網關……），回答下面 5 個問題：</p>
+                <ol>
+                    <li>它解決了我們什麼具體問題？（不能用"性能好"這種籠統答案）</li>
+                    <li>如果去掉它，業務會立刻怎樣？</li>
+                    <li>我們為維護它每月付出多少人力和金錢？</li>
+                    <li>團隊裡有幾個人能獨立排查它的故障？</li>
+                    <li>如果重新選，我們還會選它嗎？</li>
+                </ol>
+                <p>如果 3-5 題的答案讓你不安，恭喜你——你發現了一個「先進但不合適」的架構。</p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=26">Q26: 為什麼系統設計裡沒有銀彈？</a>
+                <a href="question.html?q=28">Q28: 單體不一定落後，微服務不一定先進</a>
+                <a href="question.html?q=30">Q30: 白板上很好看，線上未必值得</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>技術選型的隱性成本，是「組織能力」</h3>
+                <p>為什麼很多公司會追逐"先進"？因為「先進」是最容易被論證、被展示、被寫進 PPT 的東西。但真正決定一個架構能不能跑起來的，從來不是技術本身，而是<strong>組織能不能撐得住這個技術</strong>。</p>
+                <p>一個技術選擇，本質上是在選一整套配套需求：需要什麼樣的人、什麼樣的流程、什麼樣的預算、什麼樣的文化。當你選了 K8s，你其實是在承諾"我們要成為一個有 SRE 文化的團隊"；當你選了微服務，你其實是在承諾"我們要建立跨團隊的契約文化"。</p>
+                <p>大帝的清醒是：<strong>技術永遠不是孤立的選項，它是一份組織契約。選擇合適的架構，本質上是選擇一個自己扛得起的未來。</strong></p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>為什麼一個看起來先進的架構，不一定適合當前業務？</p>
+
+            <div class="highlight-box">
+                <strong>因為「先進」是別人的答案，「合適」才是你自己的答案。</strong><br><br>
+                別人的架構是解決別人的問題的：他們的用戶規模、他們的團隊能力、他們的歷史包袱。<br><br>
+                你需要的不是複製別人的答案，而是<strong>回到自己的問題上</strong>——你現在的瓶頸是什麼？你現在的能力邊界在哪裡？你現在的下一步是什麼？<br><br>
+                答對了這些問題，"合適的架構"自己就浮現出來了。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=28" class="btn">繼續探索 Q28 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

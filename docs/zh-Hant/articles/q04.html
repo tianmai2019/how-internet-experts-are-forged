@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q4：為什麼地圖知道你現在在哪？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q04.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q04.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q04.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q04.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-1">
+            <div class="level-badge">🎯 第1層認知 · 用戶視角</div>
+            <h1>為什麼地圖知道你現在在哪？</h1>
+            <p class="subtitle">你沒告訴它你在哪，可它精確到樓層</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你打開高德，地圖上那顆藍色小圓點就<em>已經</em>停在你所在的位置上了。
+                你走兩步，它跟著走兩步。哪怕你在地下商場，它都能標出你走到了 B1 層的星巴克。
+            </p>
+
+            <p>
+                這件事我們已經習慣到"理所當然"——但仔細想想很奇怪：你的手機怎麼知道它自己在哪？
+                它沒有窗戶去認路，它甚至不認識"北京"或"上海"。
+            </p>
+
+            <p>
+                更奇怪的是：如果你把手機放進電梯裡，它有時候還能猜到你到了幾樓；
+                如果你從外面走進商場，它甚至知道你現在在哪家店門口。
+            </p>
+
+            <div class="highlight-box">
+                <strong>為什麼這個問題重要？</strong><br>
+                定位是幾乎所有 O2O 服務（外賣、打車、共享單車、約會、健身）的地基。
+                理解它，你不僅明白藍點怎麼來的，還能看到<em>你的位置</em>作為一種"數據商品"，是如何被生產和交易的。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>手機到底靠什麼"看到自己在哪"？</strong>是天上有衛星？還是地面有信標？</li>
+                <li><strong>為什麼室外精度高、室內也不差？</strong>它們是同一套原理嗎？</li>
+                <li><strong>為什麼有時候剛打開地圖，藍點跳來跳去？</strong>這是"漂移"還是"融合"？</li>
+                <li><strong>誰知道你在哪？</strong>是你的手機，還是地圖 App 背後的服務器？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                在你眼裡，就是一個藍點。它跟著你走，誤差偶爾大一點，但一般都夠用。
+            </p>
+
+            <p>
+                如果你留心過，會發現兩個細節：
+                <strong>剛打開地圖那幾秒它經常"跳"一下</strong>——從很遠的地方跳到你身邊；
+                進了大商場，藍點的精度變差，但它還是能大致猜對樓層。
+            </p>
+
+            <p>
+                這兩個細節其實揭示了：定位不是"一個方法"，是<strong>幾種方法在打架 + 融合</strong>。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                手機常用的定位手段有<strong>四種</strong>，各有長短：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🛰️ GPS / 北斗</h4>
+                    <p>接收 4 顆以上衛星的時間信號，用幾何算距離。精度 5–10 米。<br><strong>缺點：</strong>啟動慢（30 秒+），室內幾乎失效。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📡 基站</h4>
+                    <p>手機總是連接著周圍的基站，運營商知道每個基站的經緯度。精度幾百米到幾公里。<br><strong>優點：</strong>永遠可用；<strong>缺點：</strong>糙。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📶 WiFi</h4>
+                    <p>你附近每個 WiFi 都在廣播 MAC 地址，地圖公司提前掃過整個城市，把"這個 MAC 在哪"存成一張巨大表格。精度 20 米。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📍 藍牙信標 / 慣導</h4>
+                    <p>大商場部署 iBeacon 藍牙點，幫你在室內定位到"星巴克門口"。加速度計、陀螺儀則記錄你的移動趨勢。</p>
+                </div>
+            </div>
+
+            <p>
+                GPS 的核心原理其實很幾何：幾顆衛星同時"喊"當前時間，手機比較收到的時間差算出距離，再用三球相交定位：
+            </p>
+
+            <div class="code-block">// 簡化的 GPS 定位思路（偽代碼）
+// 每顆衛星廣播: (衛星位置 sat_x,y,z, 衛星時間 t_sat)
+// 手機計算: (距離 d = 光速 × (t_now - t_sat))
+
+方程組:
+  (x - sat1_x)² + (y - sat1_y)² + (z - sat1_z)² = d1²
+  (x - sat2_x)² + (y - sat2_y)² + (z - sat2_z)² = d2²
+  (x - sat3_x)² + (y - sat3_y)² + (z - sat3_z)² = d3²
+  (x - sat4_x)² + (y - sat4_y)² + (z - sat4_z)² = d4²
+
+解出 (x, y, z) = 你的經緯度和海拔
+第 4 顆衛星用來矯正"手機時鐘不準"的問題</div>
+
+            <p>
+                但 GPS 有個大問題：冷啟動要找齊衛星要幾十秒。所以現代手機用 <strong>A-GPS（輔助 GPS）</strong>：
+                通過網絡從服務器直接下載"衛星在哪兒"的星曆數據，幾秒就能定位。你覺得"打開就定位好了"，其實是網絡先幫它抄了作業。
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                真正的"我在哪"，是<strong>多種信號融合</strong>出來的一個"最可信的猜測"：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">🛰️ GPS：粗略 8 米</div>
+                <div class="step-box">📡 基站：大致方向</div>
+                <div class="step-box">📶 WiFi：室內 20 米</div>
+                <div class="step-box">📍 藍牙/慣導：連續追蹤</div>
+                <div class="arrow">↓ 卡爾曼濾波等算法融合</div>
+                <div class="step-box">🎯 藍點：一個平滑的當前位置</div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>關鍵動作：地圖公司做了什麼？</strong>
+                <ul>
+                    <li>派車（街景車）+ 用戶手機匿名上報，構建了全球每一個 WiFi MAC 到經緯度的映射。</li>
+                    <li>在大型室內空間部署或採集藍牙信標，繪製"室內地圖"。</li>
+                    <li>建立"電梯氣壓→樓層"的經驗模型：氣壓計一秒內明顯下降 = 你上樓了。</li>
+                </ul>
+                你以為定位是"你的手機自己算的"，其實<em>大半個功勞屬於事先躺在服務器裡的一張巨大地圖</em>。
+            </div>
+
+            <p>
+                所以藍點的"跳一下"是有原因的：一開始只有基站信號，藍點扔在幾公里外；幾秒後 WiFi 匹配上，藍點跳到你附近；
+                再過幾秒 GPS 鎖定，藍點穩穩趴在你腳下。你看到的"越來越準"，其實是<em>幾套系統前後接力</em>的過程。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                每一種定位手段都是一次權衡：
+            </p>
+
+            <ul>
+                <li><strong>精度 vs 耗電</strong>：全開 GPS 精度高，但一小時耗電 30%。所以後臺定位大多隻用低功耗的基站+WiFi。</li>
+                <li><strong>速度 vs 隱私</strong>：A-GPS 快，但代價是你要把"我在這附近"告訴服務器。</li>
+                <li><strong>覆蓋 vs 成本</strong>：全國部署藍牙信標覆蓋每棟樓？成本天文數字。所以只重點部署商圈、機場、地鐵。</li>
+                <li><strong>準確性 vs 可用性</strong>：GPS 卡在山谷裡沒信號，與其顯示"未知"，不如用基站給個粗略估計——用戶寧願看到"大致對"也不願看到"沒有"。</li>
+            </ul>
+
+            <p>
+                還有一個隱藏權衡：<strong>誰承擔這套系統的成本？</strong>Apple 和 Google 免費提供這些服務的代價，
+                是他們收集了幾十億部手機的位置和 WiFi 數據。你的定位越準，是因為每一個使用同款設備的人都在貢獻信號。
+                你在為地球上其他 20 億人繪圖，反過來別人也在為你繪圖。
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>試試看：觀察藍點是怎麼"演化"的</h3>
+                <p>
+                    1. 找一個剛出地鐵站的時刻，立刻打開地圖 App，盯著藍點看 30 秒。
+                    你會看到它從一大坨模糊的圓圈慢慢收縮到一個準確的點——這就是從"基站+WiFi粗定位"過渡到"GPS 鎖定"的過程。
+                </p>
+                <p>
+                    2. 進入一家大商場，觀察藍點在幾秒內切換到"室內定位"，能標出你在哪家店旁邊。
+                    再看看這時候如果你打開設置裡的"精確位置"開關，精度會立刻變粗——那就是操作系統把 GPS 精度做了模糊化。
+                </p>
+            </div>
+
+            <p>
+                想更技術一點，可以在瀏覽器裡試：
+            </p>
+
+            <div class="code-block">navigator.geolocation.getCurrentPosition(
+  (pos) =&gt; {
+    console.log("緯度:", pos.coords.latitude);
+    console.log("經度:", pos.coords.longitude);
+    console.log("精度(米):", pos.coords.accuracy);   // ← 關注這個數字
+  },
+  (err) =&gt; console.log("失敗:", err.message),
+  { enableHighAccuracy: true }  // 打開這個開關，會調用 GPS
+);</div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=1">Q1: 為什麼輸入一個網址，頁面就會出現在眼前？</a>
+                <a href="question.html?q=5">Q5: 為什麼刪除的東西不真的消失？</a>
+                <a href="question.html?q=34">Q34: 為什麼隱私很難保護？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>從技術到世界</h3>
+                <p>
+                    "你在哪"曾經是一個人最私密的信息之一。今天，它變成了一種<strong>持續生成的商品</strong>：
+                    你的每一秒軌跡，都可能被打包成"人流量熱力圖"賣給零售業、被拼接成"通勤畫像"賣給廣告商、被聚合成"到店率"賣給品牌方。
+                </p>
+                <p>
+                    定位技術讓"精準營銷"成為可能，也讓"跟蹤"成為廉價商品。
+                    有些國家已經用它做疫情追蹤、犯罪追查、政治畫像；有些公司用它判斷你在哪個商圈上班、能承擔多貴的通勤、值多少信用額度。
+                </p>
+            </div>
+
+            <p>
+                更深一層：定位不只是"知道你在哪"，還悄悄改變了<strong>"哪裡值錢"</strong>。
+                大眾點評的一個高評分能讓一家店流量翻倍；一個外賣平臺把某小區圈成"外送範圍外"，那裡的租金就會跌。
+                位置數據讓物理世界變成一張可以實時打分、可以被算法獎懲的地圖。
+            </p>
+
+            <p>
+                當你以為你在使用地圖，地圖也在使用你。
+            </p>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                為什麼地圖知道你現在在哪？
+            </p>
+
+            <p>
+                <strong>答案是：</strong>你的手機同時在聽衛星、基站、WiFi、藍牙四種信號，
+                地圖公司提前掃過整個世界的 WiFi 和信標，服務器上有一張巨大的位置字典。
+                然後一個融合算法把這些參差不齊的線索拼成一個"最可信的位置"，就是屏幕上的那顆藍點。
+                <em>你以為它在追蹤你，其實是你和幾十億人一起，共同繪製了讓它能追蹤你的那張地圖。</em>
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=5" class="btn">繼續探索 Q5 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

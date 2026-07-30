@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q17：為什麼大型系統總是在談緩存、隊列、負載均衡、限流、降級和熔斷？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q17.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q17.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q17.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q17.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>為什麼大型系統總是在談緩存、隊列、負載均衡、限流、降級和熔斷？</h1>
+            <p class="subtitle">這不是"炫技六件套"，是對不確定性的六種剎車</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                只要你稍微關注過後端架構文章，就會反覆看到幾個詞：<strong>緩存、消息隊列、負載均衡、限流、降級、熔斷</strong>。它們幾乎出現在每一張架構圖上。
+            </p>
+
+            <p>
+                你可能忍不住懷疑："為什麼每家都在講同一套？是行業跟風嗎？"
+            </p>
+
+            <div class="highlight-box">
+                <strong>不是跟風。這六件套解決的是同一個根問題：不確定性。</strong><br><br>
+                流量不確定、下游不確定、故障不確定、用戶行為不確定——工程師要用這些工具，把混亂框成可預測。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li>系統面對的"混亂"來自哪裡？</li>
+                <li>緩存 / 隊列 / LB 分別在應對哪一類混亂？</li>
+                <li>限流 / 降級 / 熔斷為什麼被單獨歸為一組？</li>
+                <li>什麼時候用哪個？彼此的關係是什麼？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                用戶完全感覺不到這六件套的存在——除非它們沒做好。他們只會遇到：
+            </p>
+
+            <ul>
+                <li>頁面秒開（緩存 / CDN 在起作用）</li>
+                <li>下單時突然"請稍後再試"（限流觸發了）</li>
+                <li>付款成功頁裡推薦沒加載出來（降級把非關鍵路徑砍了）</li>
+                <li>大促瞬間不卡頓，但優惠券審核變慢（隊列削峰在起作用）</li>
+            </ul>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                我把這六件套按"應對什麼問題"分成兩組：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>提升組：讓系統更能扛</h4>
+                    <p><strong>緩存</strong>：把熱點數據放近，減少慢操作。<br>
+                       <strong>隊列</strong>：把突發流量攤平到一段時間。<br>
+                       <strong>負載均衡</strong>：把流量分給多臺機器。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>保護組：讓系統崩得優雅</h4>
+                    <p><strong>限流</strong>：主動拒絕超過承受力的請求。<br>
+                       <strong>降級</strong>：犧牲次要功能保關鍵功能。<br>
+                       <strong>熔斷</strong>：故障快速失敗，別拖累別人。</p>
+                </div>
+            </div>
+
+            <p>
+                提升組是"進攻"，讓系統能吃更多流量。保護組是"防守"，在打不動的時候有底線。真實系統需要兩組一起用。
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                把它們放進一張架構圖，就是這個樣子：
+            </p>
+
+            <div class="diagram-box">
+[ 千萬級用戶流量 ]
+       ↓
+   CDN / 邊緣緩存 ────────────────── ① 緩存（就近）
+       ↓
+   負載均衡 (Nginx / LVS) ────────── ② LB（分流）
+       ↓
+   ┌────────┬────────┬────────┐
+   │ App-1  │ App-2  │ App-N  │  ← 水平擴展
+   └────────┴────────┴────────┘
+       ↓  ← ③ 限流（在入口擋住洪水）
+       ↓
+   業務層 → Redis 緩存 ─────────── ④ 緩存（業務）
+       ↓
+       ├─→ ⑤ 消息隊列（Kafka）── 削峰、異步、解耦
+       │       ↓
+       │   下游消費者（可以慢慢消化）
+       ↓
+   下游服務調用（RPC / HTTP）
+       ↓  ← ⑥ 熔斷器（Hystrix / Sentinel / Resilience4j）
+       ↓
+   下游服務（如果它掛了，走 ⑦ 降級返回兜底數據）
+       ↓
+   數據庫</div>
+
+            <p>
+                這不是六個孤立的技術，而是一整套<strong>防禦縱深</strong>：
+            </p>
+
+            <ul>
+                <li><strong>緩存 + CDN</strong>攔掉 80% 的請求，讓它們根本不到後端。</li>
+                <li><strong>LB</strong>把剩下的均勻分到多臺機器，避免某一臺過載。</li>
+                <li><strong>限流</strong>在入口保底，防止把機器打死。</li>
+                <li><strong>隊列</strong>把爆發的寫請求攤到時間軸上，讓下游慢慢消化。</li>
+                <li><strong>熔斷</strong>：下游 A 掛了，我別再打它、也別在它身上等。</li>
+                <li><strong>降級</strong>：拿不到數據，就返回"上次的"或"默認的"，別把錯誤往用戶那邊扔。</li>
+            </ul>
+
+            <p>
+                每一層，都在向內收窄"可能的混亂範圍"。這就是為什麼大廠的架構文章翻來覆去都是這幾個詞。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                每一件套都有代價，選與不選是個具體決策：
+            </p>
+
+            <ul>
+                <li><strong>緩存</strong>：一致性風險（髒數據、緩存穿透、雪崩）。</li>
+                <li><strong>隊列</strong>：引入異步，用戶不再能"實時"看到結果，出問題排查更難。</li>
+                <li><strong>負載均衡</strong>：有狀態服務不好做，session、粘性、健康檢查都是坑。</li>
+                <li><strong>限流</strong>：粗了誤殺正常用戶，細了邏輯複雜。</li>
+                <li><strong>降級</strong>：誰來定義"降級後的最小可用集"？這是產品與工程的博弈。</li>
+                <li><strong>熔斷</strong>：什麼時候熔斷？什麼時候恢復？閾值調得不好比不熔更糟。</li>
+            </ul>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"我業務小，不需要這些。" 其實這六件套是<strong>規模函數</strong>——QPS 100 你確實不需要，QPS 1 萬你就少不了。而"1 萬"是任何一次營銷爆款、明星入駐、社交裂變都能帶來的量。真正的問題是：<strong>你想為可能發生的規模保留多少準備？</strong>
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>給一個玩具服務加"熔斷"</h3>
+                <p>
+                    在本機啟動兩個服務：A 調 B。讓 B 有 30% 概率 sleep 3 秒。用 Node 的 <code>opossum</code> 或 Java 的 <code>Resilience4j</code> 給 A 加一個熔斷器：
+                </p>
+                <div class="code-block">const CircuitBreaker = require('opossum')
+const breaker = new CircuitBreaker(callB, {
+    timeout: 500,              // 超過 500ms 認為失敗
+    errorThresholdPercentage: 50, // 50% 失敗率觸發熔斷
+    resetTimeout: 5000         // 5 秒後嘗試恢復
+})
+breaker.fallback(() =&gt; ({ msg: 'B is down, using cache' }))</div>
+                <p>
+                    然後壓測。你會看到——不用熔斷時 A 的響應也被拖成 3 秒；有熔斷時，A 立刻返回兜底數據，從此不再被 B 拖累。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=13">Q13: 輸入網址後發生了什麼？</a>
+                <a href="question.html?q=16">Q16: 簡單功能背後為什麼設計那麼多環節？</a>
+                <a href="question.html?q=20">Q20: 緩存為什麼能極大提高性能？</a>
+                <a href="question.html?q=21">Q21: 為什麼要用消息隊列？</a>
+                <a href="question.html?q=22">Q22: 為什麼要做負載均衡？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>六件套不是炫技，是對"不確定性"的六種剎車</h3>
+                <p>
+                    工程系統與人類社會有一個驚人的類比：<strong>規模越大，越需要"減震裝置"</strong>。
+                </p>
+                <p>
+                    緩存 = 記憶（不必每次從頭來）；<br>
+                    隊列 = 排隊（把突發變成有序）；<br>
+                    負載均衡 = 分工（不讓一個人扛所有）；<br>
+                    限流 = 配給（資源有限就得節制）；<br>
+                    降級 = 優先級（關鍵的先保）；<br>
+                    熔斷 = 隔離（著火的房間要關門）。
+                </p>
+                <p>
+                    這幾乎是所有<strong>複雜社會系統</strong>共同的模式——醫院分診、機場安檢、銀行排號、電網限電、疫情分級管理。當你能在一張系統架構圖上看見這些抽象結構，你就開始理解：<strong>"工程"本質上是"如何在不確定的世界裡做出可靠的東西"</strong>。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼大型系統總在談這六件套？
+            </p>
+
+            <div class="highlight-box">
+                因為規模一旦上去，<strong>確定性就成了奢侈品</strong>。<br><br>
+                這六件套，是工程師給系統裝的六種剎車、六種緩衝、六種保險。<br>
+                它們不解決業務問題——它們解決"業務在真實世界裡能不能活下去"的問題。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=18" class="btn">繼續探索 Q18 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

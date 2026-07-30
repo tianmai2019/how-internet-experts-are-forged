@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q19：為什麼一個接口超時，最後可能拖垮整條業務鏈？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q19.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q19.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q19.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q19.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>為什麼一個接口超時，最後可能拖垮整條業務鏈？</h1>
+            <p class="subtitle">錯誤從來不是孤立發生的——它會傳染</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你可能聽過技術團隊說："某個接口掛了半小時，整個 App 都用不了。"
+                外行人第一反應會是：不就是一個接口嗎？繞過去不行嗎？
+            </p>
+
+            <p>
+                但真實的分佈式系統裡，一個小小的慢接口，能像多米諾骨牌一樣一路推倒整個業務。
+            </p>
+
+            <div class="highlight-box">
+                <strong>錯誤從來不是孤立發生的——它會順著調用鏈傳染。</strong><br><br>
+                這就是所謂的"級聯故障"或"鏈路雪崩"。
+                你的一個下游多花了 3 秒，你的服務就跟著卡；你的調用方看你卡了，它自己也卡；很快整條鏈路都躺平。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li>一個接口"慢"和一個接口"錯"，哪個更可怕？</li>
+                <li>為什麼"慢"會佔用資源？（線程 / 連接 / 內存）</li>
+                <li>調用鏈是怎麼把慢傳染出去的？</li>
+                <li>用什麼手段切斷傳染？（超時、隔離、熔斷、異步）</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                用戶看到的可能是：下單一直轉圈、付款按鈕點不動、App 首頁刷新失敗、甚至完全打不開。
+            </p>
+
+            <p>
+                他很難想像——"這一切只是因為營銷系統裡的一個查優惠券接口，因為一次數據庫慢查詢，從 50ms 變成了 5 秒。"
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                很多同學寫代碼是這樣的：
+            </p>
+
+            <div class="code-block">// 天真版：沒設超時
+async function createOrder(userId, items) {
+    const coupon = await couponService.getCoupon(userId)  // ← 假如這裡卡 5 秒
+    const price  = calc(items, coupon)
+    const order  = await orderService.save(userId, price)
+    return order
+}</div>
+
+            <p>
+                看起來一切合理。但只要 <code>couponService.getCoupon</code> 變慢：
+            </p>
+
+            <ul>
+                <li>本次請求就一直卡在這裡，佔著<strong>一個線程 / 一個連接 / 一段內存</strong>。</li>
+                <li>下一秒來 1000 個請求，都卡在同一個地方 → 1000 個資源全部被佔住。</li>
+                <li>調用方（App 網關、上游服務）等你等超時，開始<strong>重試</strong> → 請求量再翻一倍。</li>
+                <li>你的服務已經打滿，連本來跟"優惠券"無關的接口（比如查訂單）也響應不了。</li>
+            </ul>
+
+            <p>
+                這就是"一個接口拖垮全部"的機制——它不是"錯誤傳染"，而是<strong>資源被同一批慢請求全部佔住</strong>了。</p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                在真實微服務裡，調用關係錯綜複雜：
+            </p>
+
+            <div class="diagram-box">
+[App] → [網關] → [訂單服務]
+                      ↓
+              ┌──────┼──────┬─────────┐
+              ↓      ↓      ↓         ↓
+         [商品服務][優惠券服務][庫存服務][風控服務]
+                        ↓
+                    [數據庫]  ← 假設這裡出現了慢查詢
+                        ↓
+              優惠券服務的所有線程被佔滿
+                        ↓
+              訂單服務調用優惠券超時，線程也被佔
+                        ↓
+              網關等待訂單服務，連接池打爆
+                        ↓
+              App 什麼都打不開</div>
+
+            <p>
+                這是一個從下游一路向上感染的"逆行"故障。原因就一個：<strong>調用鏈上任何一環沒有"止損"，下游的問題就會變成整條鏈路的問題</strong>。
+            </p>
+
+            <p>
+                真實世界的著名例子：
+            </p>
+
+            <ul>
+                <li><strong>2015 年 AWS S3 一次抖動</strong>，因為大量依賴 S3 的服務沒設合理超時，把整片 us-east-1 拖垮幾個小時。</li>
+                <li><strong>各家電商大促日</strong>，一個非核心鏈路（比如"用戶等級查詢"）掛掉，導致下單也做不下去——因為核心鏈路忘了處理這個"非核心依賴"。</li>
+            </ul>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                好在業內積累了一整套"止血"工具：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>① 超時（Timeout）</h4>
+                    <p>每一次遠程調用都要有超時。<strong>不設超時 = 允許對方無限佔用你</strong>。這是最便宜、最重要的一條防線。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>② 熔斷（Circuit Breaker）</h4>
+                    <p>短時間內失敗率超閾值 → 直接快速失敗，不再打對方。給下游恢復的機會，也保住自己。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>③ 隔離（Bulkhead）</h4>
+                    <p>不同下游用不同線程池 / 連接池。優惠券掛了不會把商品線程也吃光。像船艙防水隔間。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>④ 降級（Fallback）</h4>
+                    <p>拿不到數據？返回一個兜底：默認值、緩存舊值、空數組，讓業務能繼續走。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>⑤ 異步化</h4>
+                    <p>非關鍵路徑丟消息隊列。掛了慢慢補，不阻塞主流程。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>⑥ 重試策略</h4>
+                    <p>要指數退避 + 抖動，別一遇錯立即重試——那是加燃料。</p>
+                </div>
+            </div>
+
+            <p>
+                加了這些以後，同樣的代碼會變成：
+            </p>
+
+            <div class="code-block">async function createOrder(userId, items) {
+    let coupon = null
+    try {
+        coupon = await withTimeout(
+            couponBreaker.fire(userId),   // 熔斷包裹
+            300                            // 300ms 超時
+        )
+    } catch (e) {
+        coupon = defaultCoupon()          // 降級：拿不到就用默認
+        log.warn('coupon fallback', e)
+    }
+    const price = calc(items, coupon)
+    return orderService.save(userId, price)
+}</div>
+
+            <p>
+                這段代碼醜一點，囉嗦一點——但它<strong>不再會被下游拖死</strong>。
+            </p>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"我這個是內部調用，不用設超時。" 恰恰相反，<strong>內部調用是最容易忘設超時的地方</strong>——因為它平時太快了，沒人想過它會慢。生產事故大多不是外部 API 掛了，而是內部服務之間"信任過頭"，沒做隔離。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>模擬一次鏈路雪崩</h3>
+                <p>
+                    起三個服務：A → B → C。讓 C 有 30% 概率 sleep 3 秒。
+                </p>
+                <ol>
+                    <li><strong>第一版：</strong>A、B 不加超時。壓測 A，觀察響應時間。你會看到 P99 快速飆到 3 秒以上，A 的線程被佔滿，甚至連不帶 C 的接口都變慢。</li>
+                    <li><strong>第二版：</strong>給 A→B 和 B→C 都加上 500ms 超時 + 熔斷 + 降級。再壓測，你會看到 A 的響應時間穩定在 500ms 上限，只是有一部分請求返回"兜底數據"，但系統沒崩。</li>
+                </ol>
+                <p>
+                    這就是"防雪崩"最直觀的感受——同樣的下游狀況，兩種系統的命運完全不同。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=15">Q15: 為什麼流量一大系統就崩？</a>
+                <a href="question.html?q=18">Q18: 為什麼數據庫常常是瓶頸？</a>
+                <a href="question.html?q=24">Q24: 為什麼要做限流和熔斷？</a>
+                <a href="question.html?q=25">Q25: 為什麼需要監控和鏈路追蹤？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>錯誤從來不是孤立發生的</h3>
+                <p>
+                    一個接口超時，能拖垮整條業務鏈——這不是分佈式系統獨有的怪癖，它是<strong>所有緊耦合系統的通病</strong>。
+                </p>
+                <p>
+                    2008 年金融危機，幾隻 CDO 違約拖垮整個華爾街；<br>
+                    2021 年蘇伊士運河一船擱淺，堵住全球 12% 的海運；<br>
+                    某個國家的一次電網故障，會順著聯網線路讓鄰國大停電。
+                </p>
+                <p>
+                    這背後是同一個道理：<strong>連接得越緊，衝擊就傳得越遠</strong>。工程師在做的"超時、熔斷、隔離"，其實是給系統做<strong>解耦、緩衝、斷電保護</strong>——讓不確定性停留在它誕生的地方，而不是變成整場災難。
+                </p>
+                <p>
+                    真正成熟的系統，不追求"不出故障"，而追求"出故障不擴散"。真正成熟的組織、成熟的社會，也是。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼一個接口超時會拖垮整條鏈路？
+            </p>
+
+            <div class="highlight-box">
+                因為在沒有護欄的系統裡，<strong>慢會佔資源，資源會被排隊，隊伍會引發重試，重試會加倍慢</strong>——直到所有節點都躺平。<br><br>
+                真正抗打的系統，從不假設下游一定快、一定活。<br>
+                它假設最壞，用超時、熔斷、隔離、降級，把每一次故障都<strong>關在門裡</strong>。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=20" class="btn">繼續探索 Q20 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

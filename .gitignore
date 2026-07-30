@@ -16,3 +16,7 @@ Thumbs.db
 # Claude Code local config
 .claude/
 
+# Node modules（build-zh-hant.js 依赖 opencc-js，用 `npm install --no-save opencc-js` 拉取即可）
+node_modules/
+package-lock.json
+

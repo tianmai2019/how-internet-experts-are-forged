@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q20：為什麼緩存能顯著提高系統性能？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q20.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q20.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q20.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q20.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-3">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>為什麼緩存能顯著提高系統性能？</h1>
+            <p class="subtitle">用「不新鮮」換「更快」的一場時間賭博</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你有沒有注意過一個奇怪的現象——同一個淘寶商品頁，第一次點開可能要"轉圈"1 秒，第二次刷新就"啪"一下出來了？
+                同一個抖音視頻，第一次滑到時會緩衝一下，回頭再刷就再也不卡了？
+            </p>
+
+            <p>
+                這背後不是玄學，而是一個幾乎所有互聯網系統都在做的事情——<strong>緩存（Cache）</strong>。
+                它是讓一切"看起來很快"的秘密武器。
+            </p>
+
+            <div class="highlight-box">
+                <strong>緩存的本質是什麼？</strong><br><br>
+                一句話：<strong>把"上一次算過的結果"暫存起來，下一次就不用再算了。</strong><br>
+                時間被"存款"了，下一個請求就能"提款"。
+            </div>
+
+            <p>
+                理解緩存，你就理解了為什麼"12306 加了緩存後能扛春運"、"微博熱搜為什麼這麼快出結果"、"CDN 是幹嘛的"。
+                這是工程師看世界的一個基礎"透鏡"。
+            </p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li><strong>為什麼"再算一遍"這麼慢？</strong> 慢的到底是什麼？</li>
+                <li><strong>緩存存在哪裡？</strong> 一個系統裡就一層緩存嗎？</li>
+                <li><strong>緩存怎麼知道自己過時了？</strong> 數據變了怎麼辦？</li>
+                <li><strong>緩存出問題時會怎樣？</strong> 穿透、雪崩這些嚇人的詞是什麼？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                普通用戶對緩存唯一的感知是：<strong>"這個網站好像變快了。"</strong>
+            </p>
+
+            <p>
+                更微妙的一些感受：
+            </p>
+            <ul>
+                <li>第一次打開某個頁面稍慢，之後飛快</li>
+                <li>斷網時，一些內容居然還能看（瀏覽器緩存）</li>
+                <li>某些頁面裡的數據"沒最新"，刷新一下才更新</li>
+            </ul>
+
+            <p>
+                在這一層，用戶看不到緩存的存在，只感受到它帶來的"順滑"。
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                緩存最樸素的實現，就是一個"能快速查的字典"——通常是 <strong>Key-Value（鍵值對）</strong>結構。
+                Key 是"你要問什麼"，Value 是"上次算出來的答案"。
+            </p>
+
+            <div class="code-block">
+# 一個極簡的緩存示意（偽代碼）
+def get_user(user_id):
+    if cache.has(user_id):          # 緩存命中：直接返回
+        return cache.get(user_id)
+    user = db.query(user_id)         # 緩存未命中：查數據庫
+    cache.set(user_id, user, ttl=60) # 存起來，60 秒內都能複用
+    return user
+            </div>
+
+            <p>
+                這段代碼幾乎是"緩存模式"的全部靈魂。剩下的所有複雜性，都是圍繞這四行在打轉。
+            </p>
+
+            <p>
+                但這裡就有個隱藏假設了：<strong>為什麼"查緩存"比"查數據庫"快？</strong>
+                因為它們所處的"速度層級"不同：
+            </p>
+
+            <div class="diagram-box">
+                CPU 寄存器  ≈ 1 ns<br>
+                L1 緩存    ≈ 1 ns<br>
+                內存        ≈ 100 ns<br>
+                SSD 硬盤    ≈ 100,000 ns（100 微秒）<br>
+                網絡往返    ≈ 1,000,000 ns（1 毫秒）<br>
+                跨機房調用  ≈ 100,000,000 ns（100 毫秒）
+            </div>
+
+            <p>
+                從上到下，每一層慢 100 到 1000 倍。緩存就是"把數據從慢的一層，搬到快的一層"。
+                這就是它憑空變快的物理原理。
+            </p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>
+                真實互聯網系統裡，從來不是"一層緩存"，而是"緩存鏈"——數據要穿過一整排緩存，才能觸達最底下的數據庫。
+            </p>
+
+            <div class="diagram-box">
+                瀏覽器緩存<br>
+                ↓（本地就有？直接返回）<br>
+                CDN（內容分發網絡，機房離你幾十公里）<br>
+                ↓<br>
+                反向代理緩存（Nginx / Varnish）<br>
+                ↓<br>
+                應用進程內緩存（本地內存）<br>
+                ↓<br>
+                分佈式緩存（Redis / Memcached）<br>
+                ↓<br>
+                數據庫（MySQL / PostgreSQL）
+            </div>
+
+            <p>
+                一個請求從上往下走，任何一層"命中"，就立即掉頭返回，不會繼續往下打擾。這就是"多層緩存"的思想——<strong>最快的層攔住最多的請求</strong>。
+            </p>
+
+            <p>
+                有個關鍵指標衡量一層緩存好不好，叫<strong>命中率</strong>（Hit Rate）：
+                進來 100 個請求，多少個在這一層被攔下了。
+                命中率越高，下游壓力越小。
+                一線大廠的 CDN 命中率經常做到 95% 以上——意味著後端只需要處理 5% 的原始流量。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                緩存看起來是"白拿"的性能，但它其實是有代價的。老工程師看到緩存，第一反應是——<strong>數據一致性怎麼辦？</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>緩存的核心權衡：</strong><br>
+                <strong>速度</strong> ↔ <strong>數據新鮮度</strong><br>
+                想要更快，就得容忍數據"稍微過期一點"。<br>
+                想要絕對準確，就得放棄很多緩存收益。
+            </div>
+
+            <p>
+                圍繞這個權衡，有幾個"經典事故詞"你遲早會遇到：
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>緩存穿透</h4>
+                    <p>查一個<strong>根本不存在</strong>的 Key。緩存永遠不命中，請求全部打到數據庫。惡意攻擊者常用這招壓垮系統。<br>解法：給"空結果"也緩存起來。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>緩存擊穿</h4>
+                    <p>某個<strong>熱點 Key</strong> 突然過期，瞬間大量請求同時打到數據庫。<br>解法：加鎖串行回源，或延長熱點數據 TTL。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>緩存雪崩</h4>
+                    <p>大量 Key <strong>同時過期</strong>，請求集中回源，數據庫被打崩。<br>解法：TTL 加隨機抖動，避免"同一秒全過期"。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>髒讀 / 一致性</h4>
+                    <p>更新了數據庫，緩存還是舊的，用戶讀到"上個版本"。<br>解法：寫入策略（Cache-Aside / Write-Through）、延遲雙刪。</p>
+                </div>
+            </div>
+
+            <div class="callout callout--warning">
+                <strong>常見誤區：</strong>"緩存加了性能就一定變好"。<br>
+                如果命中率低於 50%，你可能既承擔了緩存的複雜度，又沒享受到收益——這時候刪掉它反而更快。緩存不是"加了就賺"，是"命中了才賺"。
+            </div>
+
+            <p>
+                更深一層的問題是：<strong>局部性原理（Locality）</strong>。
+                緩存能有效，是因為現實中的訪問模式並不均勻：少數熱點被反覆訪問，大量冷數據幾乎無人問津（俗稱"二八法則"）。
+                這也是為什麼<strong>緩存熱點數據比緩存全部數據更划算</strong>。
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>看看你自己的瀏覽器緩存</h3>
+                <p>
+                    1. 打開 Chrome，按 <code>F12</code> 進入開發者工具，切到 <strong>Network</strong>。<br>
+                    2. 刷新任意一個網站（比如 zhihu.com）。<br>
+                    3. 觀察 "Size" 列——你會看到很多請求寫著 <code>(disk cache)</code> 或 <code>(memory cache)</code>。<br>
+                    4. 勾選頂部 <strong>Disable cache</strong>，再刷新一次。<br>
+                    5. 對比兩次的"總耗時"和"總大小"——差距可能是好幾倍。
+                </p>
+                <p>
+                    這一小步，你就"看見"了緩存對性能的真實影響。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=14">Q14: 為什麼有的網站快有的慢？</a>
+                <a href="question.html?q=17">Q17: 為什麼要談緩存、隊列、負載均衡？</a>
+                <a href="question.html?q=18">Q18: 為什麼數據庫是瓶頸？</a>
+                <a href="question.html?q=21">Q21: 消息隊列如何削峰填谷？</a>
+                <a href="question.html?q=22">Q22: 負載均衡怎麼讓"一個服務"變成"一群服務"？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>緩存 = 一場對時間的賭博</h3>
+                <p>
+                    緩存的哲學，其實很像現實裡的"經驗"：<br>
+                    我們大腦記住"上次這麼做對了"，下次就直接照做，不再重新推理——這是緩存。<br><br>
+                    它的代價是：<strong>當世界變了，你不知道。</strong><br>
+                    習慣讓人變快，也讓人變得遲鈍。<br><br>
+                    互聯網上更放大的一個副作用是——<strong>緩存塑造了"你看到的世界"</strong>。
+                    CDN 決定了你能多快看到新聞，運營商 DNS 緩存決定了你能不能訪問某個網站，
+                    甚至你所看到的搜索結果，都被某一層緩存"定格"過一次。<br><br>
+                    <strong>緩存不是白送的速度，而是用"新鮮"換的速度。</strong>
+                    工程師做的所有努力，都在小心地控制這場賭局：
+                    賭的是"世界短期內不會變化太快"。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼緩存能顯著提高系統性能？
+            </p>
+
+            <p>
+                <strong>因為它把"下一次要做的事"，用"上一次做過的結果"直接頂掉了。</strong>
+                在從寄存器到跨機房調用之間，任何一次"層級下移"都意味著 100 倍以上的延遲。
+                緩存所做的，只是把數據搬近一點點——效果就是天翻地覆的快。
+            </p>
+
+            <div class="highlight-box">
+                但真正讓人成為工程師的，不是"會加緩存"，<br>
+                而是<strong>知道什麼時候不能加緩存</strong>——<br>
+                知道哪些數據可以過期一秒，哪些數據一秒都不能錯。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=21" class="btn">繼續探索 Q21 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

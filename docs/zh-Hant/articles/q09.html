@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q9:瀏覽器為什麼能顯示出你寫的頁面?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q09.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q09.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q09.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q09.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 第2層認知 · 程序員入門視角</div>
+            <h1>瀏覽器為什麼能顯示出你寫的頁面?</h1>
+            <p class="subtitle">一臺被規範馴服的"通用運行時"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角:這個問題為什麼重要?</h2>
+
+            <p>
+                你在記事本里敲下一堆看起來像"外語"的東西——尖括號、花括號、分號——保存,雙擊。
+                奇蹟發生了:一張有標題、有顏色、有按鈕、點了會變色的<strong>網頁</strong>出現在屏幕上。
+            </p>
+
+            <p>
+                這中間到底發生了什麼?為什麼<strong>同一段代碼</strong>,在 Chrome、Safari、Firefox、你媽的老手機上,都能長得差不多?
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心洞察:</strong><br><br>
+                瀏覽器不是"打開文件的軟件",它是一臺<strong>虛擬機</strong>——
+                一臺專門用來運行"網頁"這種應用的機器。<br><br>
+                所有瀏覽器都嚴格遵守同一份規範,才讓你寫的一段代碼,能在幾十億臺設備上跑出接近的效果。
+            </div>
+
+            <p>
+                這個問題重要,是因為你只要理解了瀏覽器的工作方式,就能理解——為什麼某些頁面卡、為什麼開發者工具能"暫停時間"、為什麼改一行 CSS 可能讓整個頁面重排。
+            </p>
+
+            <h2>🧩 拆解:把大問題拆成小問題</h2>
+
+            <ol>
+                <li>瀏覽器拿到的其實是什麼?(HTML/CSS/JS 都只是<strong>文本</strong>)</li>
+                <li>它怎麼讀懂這些文本?</li>
+                <li>它怎麼把"文本描述"變成"像素畫面"?</li>
+                <li>頁面動起來的時候(滾動、點擊、動畫)它在忙什麼?</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層:只看結果</h3>
+
+            <p>
+                你按下回車,幾百毫秒後畫面出現。快到你覺得"這有什麼好研究的?"
+            </p>
+
+            <p>
+                但如果你在飛機上開一個網頁,連接慢得像老式撥號——你會突然看到"分段出現"的畫面:先是文字,然後圖片一張張浮現,再然後按鈕變得可點。
+                這才是瀏覽器<strong>真正的工作節奏</strong>被慢動作放出來。
+            </p>
+
+            <h3 class="section-code">實現層:開始理解構造</h3>
+
+            <p>
+                我們先看看瀏覽器到底收到了什麼。假設你寫了這麼一個小頁面:
+            </p>
+
+            <div class="code-block">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;style&gt;
+    h1 { color: #10B981; font-size: 32px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Hello!&lt;/h1&gt;
+  &lt;script&gt;
+    document.querySelector('h1').addEventListener('click', () =&gt; alert('嗨'));
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</div>
+
+            <p>
+                對瀏覽器來說,這段代碼只是<strong>一串字符</strong>。它必須把這堆字符,變成一個能顯示、能交互的"活的東西"。
+                這個過程分幾步——每一步都有專門的名字:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">📄 HTML 文本</div>
+                <div class="arrow">↓ 解析</div>
+                <div class="step-box">🌲 DOM 樹</div>
+                <div class="arrow">+</div>
+                <div class="step-box">🎨 CSSOM 樹</div>
+                <div class="arrow">↓ 合併</div>
+                <div class="step-box">🌿 Render Tree</div>
+                <div class="arrow">↓ 佈局 Layout</div>
+                <div class="step-box">📐 每個元素的位置和大小</div>
+                <div class="arrow">↓ 繪製 Paint</div>
+                <div class="step-box">🖌️ 一層層的圖像</div>
+                <div class="arrow">↓ 合成 Composite</div>
+                <div class="step-box">🖥️ 屏幕像素</div>
+            </div>
+
+            <p>
+                我們一步一步看:
+            </p>
+
+            <ul>
+                <li><strong>DOM 樹</strong>:HTML 被讀懂後,變成一棵<em>對象樹</em>——<code>&lt;html&gt;</code> 是根,<code>&lt;body&gt;</code> 是它的孩子,<code>&lt;h1&gt;</code> 又是 body 的孩子。這棵樹就是你之後用 JS 操作的那個"頁面結構"。</li>
+                <li><strong>CSSOM 樹</strong>:CSS 也被讀成一棵樹,記錄著"誰應該長什麼樣"。</li>
+                <li><strong>Render Tree</strong>:把這兩棵樹合併——每個可見節點帶上樣式,不可見的(如 <code>&lt;head&gt;</code> 或 <code>display:none</code>)被過濾掉。</li>
+                <li><strong>Layout(佈局/迴流)</strong>:計算每個元素的<em>確切位置和大小</em>。這一步很重。</li>
+                <li><strong>Paint(繪製)</strong>:把每個元素畫成一張張圖層——字、邊框、背景、陰影……</li>
+                <li><strong>Composite(合成)</strong>:把圖層像 Photoshop 那樣疊在一起,交給顯卡顯示。</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>瀏覽器四大件:</strong><br><br>
+                • <strong>渲染引擎</strong>(Blink/WebKit/Gecko):管上面所有畫面步驟<br>
+                • <strong>JavaScript 引擎</strong>(V8/JavaScriptCore/SpiderMonkey):運行你寫的 JS<br>
+                • <strong>網絡模塊</strong>:發請求、拿資源<br>
+                • <strong>存儲模塊</strong>:Cookie / LocalStorage / IndexedDB
+            </div>
+
+            <h3 class="section-system">系統層:看到完整鏈路</h3>
+
+            <p>
+                頁面畫完之後,瀏覽器並沒有"下班"。它進入一個<strong>永恆的事件循環(Event Loop)</strong>:
+                等你點擊、等你滾動、等定時器觸發、等網絡回包……每一次事件,可能都會觸發一次<strong>重排(reflow)</strong>或<strong>重繪(repaint)</strong>。
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🔁 Reflow(重排)</h4>
+                    <p>元素的<strong>位置或大小</strong>變了——比如新增一個元素、寬度改變、字體變大。</p>
+                    <p>瀏覽器要重新算所有相鄰元素的佈局。<strong>貴!</strong></p>
+                </div>
+                <div class="compare-card">
+                    <h4>🎨 Repaint(重繪)</h4>
+                    <p>只是<strong>顏色/背景</strong>變了,位置沒變。比如 hover 高亮、字色變化。</p>
+                    <p>不用重算佈局,只重畫。<strong>便宜一些。</strong></p>
+                </div>
+            </div>
+
+            <p>
+                更進一步,像 <code>transform</code> 和 <code>opacity</code> 這種,連重繪都不需要——直接在合成階段動手,是最<strong>絲滑</strong>的動畫方式。
+                這也是為什麼高質量的前端代碼總是優先用 transform 做動畫,而不是 top/left。
+            </p>
+
+            <p>
+                同時,<strong>JavaScript 引擎</strong>也在一旁待命。你寫的 <code>addEventListener</code> 會被註冊進事件系統;
+                任何一次事件觸發,V8(Chrome 的 JS 引擎)會:
+            </p>
+
+            <ol>
+                <li>把你的 JS 代碼<strong>即時編譯</strong>成機器碼(JIT)</li>
+                <li>執行,可能修改 DOM 或 CSSOM</li>
+                <li>觸發部分或全部重排、重繪</li>
+                <li>下一幀,畫面更新</li>
+            </ol>
+
+            <h3 class="section-tradeoff">權衡層:為什麼這樣設計?</h3>
+
+            <p>
+                為什麼瀏覽器要搞這麼複雜?為啥不能像圖片一樣,直接"顯示"就完了?
+            </p>
+
+            <p>
+                因為瀏覽器面對的是一個幾乎不可能的任務:
+            </p>
+
+            <div class="highlight-box">
+                <strong>瀏覽器要同時滿足的幾件矛盾的事:</strong><br><br>
+                • 頁面必須能<strong>響應式</strong>——窗口變大變小,佈局要跟著變<br>
+                • 必須支持<strong>動畫和交互</strong>——每秒重畫 60 次不能卡<br>
+                • 必須<strong>安全</strong>——網頁不能讀你硬盤、不能偷別的網站的數據<br>
+                • 必須<strong>跨平臺</strong>——手機、電腦、平板顯示一致<br>
+                • 必須<strong>兼容 30 年曆史</strong>——90 年代的老網頁現在也要能看
+            </div>
+
+            <p>
+                為了同時滿足這些,瀏覽器不得不選擇:
+                <strong>用一套複雜的分層管線(parse → layout → paint → composite),換取足夠的靈活性和性能。</strong>
+            </p>
+
+            <p>
+                所以它像一個"內建了整套操作系統"的應用——有自己的調度器、自己的圖形棧、自己的沙箱、自己的編譯器。
+                你用的每一個網頁,其實都跑在這臺"虛擬機"裡。
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>試試看:親眼看到瀏覽器"畫畫"</h3>
+                <p>
+                    1. 打開任意網頁,按 <code>F12</code> 打開開發者工具<br>
+                    2. 找到 <strong>Performance(性能)</strong> 標籤,點錄製<br>
+                    3. 在頁面上滾動幾秒鐘,點擊一些按鈕,然後停止錄製<br>
+                    4. 你會看到一條彩色的"火焰圖":<br>
+                    &nbsp;&nbsp;&nbsp;• <span style="color:#8B5CF6;">紫色</span> = Layout(重排)<br>
+                    &nbsp;&nbsp;&nbsp;• <span style="color:#10B981;">綠色</span> = Paint(重繪)<br>
+                    &nbsp;&nbsp;&nbsp;• <span style="color:#F59E0B;">黃色</span> = JavaScript
+                </p>
+                <p>
+                    這就是瀏覽器每 16 毫秒(60 幀/秒)在做的事,被你親眼看到了。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索:</h3>
+                <a href="question.html?q=7">Q7: 一個網頁是怎麼做出來的?</a>
+                <a href="question.html?q=14">Q14: 為什麼有的網站快?</a>
+                <a href="question.html?q=20">Q20: 緩存到底是什麼?</a>
+                <a href="question.html?q=8">Q8: 前後端在做什麼?</a>
+            </div>
+
+            <h2>👑 大帝視角:這如何塑造現實?</h2>
+
+            <div class="emperor-box">
+                <h3>瀏覽器是當代最重要的"通用運行時"</h3>
+                <p>
+                    今天,你打開 Notion、Figma、Google Docs、飛書、騰訊會議——它們全部跑在瀏覽器裡。
+                    瀏覽器不再是"看網頁的工具",它是一臺<strong>能運行任何應用的操作系統之上的操作系統</strong>。
+                </p>
+                <p>
+                    這背後是一套花了 30 年才達成的規範體系:HTML、CSS、ECMAScript、DOM、WebRTC、WebGL……
+                    每一條規範都是幾十家公司、幾百個工程師、上千次會議吵出來的<strong>公共約定</strong>。
+                </p>
+                <p>
+                    正因為大家都遵守同一份規範,你在北京寫的一段代碼,能在紐約、拉各斯、聖保羅的任何一臺手機上跑起來。
+                </p>
+                <p>
+                    <strong>瀏覽器是人類歷史上最成功的"標準化勝利"之一。</strong>
+                    它比任何一個應用商店都更平等——不需要審核、不需要付費、不需要下載,一個網址就能觸達全世界。
+                </p>
+                <p>
+                    當你理解了瀏覽器是一臺"被規範馴服的通用運行時",你就理解了為什麼"Web"至今沒有輸給 App。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以,瀏覽器為什麼能顯示出你寫的頁面?
+            </p>
+
+            <p>
+                <strong>因為它是一臺嚴格按照 Web 規範工作的"頁面運行機器"</strong>:
+                它把你寫的一堆文本,解析成 DOM 樹和 CSSOM 樹,合成渲染樹,算出每個元素在哪裡、多大,
+                再一層一層畫出來,最後交給顯卡。整個過程可能只花 100 毫秒,卻包含了幾十年的工程積累。
+            </p>
+
+            <p>
+                下一次你看到一個網頁,試著想像它背後那條流水線正在轟隆隆地轉動——
+                這個感覺,會讓你從"看網頁的人"變成"看穿網頁的人"。
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=10" class="btn">繼續探索 Q10 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q8：前端和後端到底分別在做什麼？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q08.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q08.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q08.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q08.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 第2層認知 · 程序員入門視角</div>
+            <h1>前端和後端到底分別在做什麼？</h1>
+            <p class="subtitle">一間餐廳的前廳與後廚</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你可能聽身邊做程序員的朋友說過："我是做前端的"、"我是搞後端的"。
+                聽著好像在講兩種完全不同的工作，但網頁明明就是一個網頁啊——為什麼要分成兩撥人來做？
+            </p>
+
+            <p>
+                這個問題重要，是因為它藏著互聯網系統<strong>最基本的分工邏輯</strong>：
+                <strong>什麼應該在你的設備上跑？什麼應該在遠方的服務器上跑？</strong>
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心洞察：</strong><br><br>
+                前端＝你能看到、能摸到、跑在你手機/電腦裡的東西<br>
+                後端＝你看不到、跑在別人機器上、掌管數據的東西<br><br>
+                兩者之間靠 <code>HTTP + JSON</code> 說話。
+            </div>
+
+            <p>
+                一旦理解了這個分工，你會突然看懂：為什麼"網卡了刷不出來"和"服務器崩了大家都用不了"是兩種完全不同的故障。
+            </p>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <p>要理解前後端，只需要問自己 4 個問題：</p>
+
+            <ol>
+                <li><strong>誰在跑代碼？</strong> 是你的瀏覽器，還是遠方的機器？</li>
+                <li><strong>誰在存數據？</strong> 數據放在哪裡，誰能改？</li>
+                <li><strong>它們怎麼說話？</strong> 前端和後端之間用什麼語言交流？</li>
+                <li><strong>為什麼要這麼分？</strong> 全部讓瀏覽器做行不行？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>
+                你打開淘寶，點一下"我的訂單"，頁面裡出現你昨天買的那雙鞋——那一刻你完全不會想到：
+                "鞋子這條訂單信息，其實是從幾千公里外的一個數據庫裡飛過來的。"
+            </p>
+
+            <p>
+                在用戶眼裡，一切都是"網頁"。<strong>沒有前後端，只有"能用"或"不能用"。</strong>
+            </p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>
+                讓我們打個比方：<strong>互聯網服務就像一家餐廳。</strong>
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🍽️ 前端 = 前廳</h4>
+                    <p>菜單、餐桌、燈光、服務員的微笑。<strong>顧客能看見的一切。</strong></p>
+                    <p>負責：把菜單展示得好看、記下顧客的需求、把菜送到桌上。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🔥 後端 = 後廚</h4>
+                    <p>食材倉庫、灶臺、洗碗機、賬本。<strong>顧客看不見,但決定實力。</strong></p>
+                    <p>負責:炒菜、算賬、管理庫存、記錄訂單。</p>
+                </div>
+            </div>
+
+            <p>
+                所以前端做的是:<strong>頁面長什麼樣 + 用戶能怎麼操作</strong>。
+                後端做的是:<strong>數據放哪裡 + 業務規則怎麼算</strong>。
+            </p>
+
+            <p>
+                舉個具體的例子——一個"點贊"按鈕:
+            </p>
+
+            <div class="code-block">// 【前端】寫在瀏覽器裡,決定按鈕長啥樣、點了怎麼響應
+&lt;button id="like-btn"&gt;❤️ 點贊&lt;/button&gt;
+
+document.getElementById('like-btn').addEventListener('click', async () =&gt; {
+  // 變紅,給用戶即時反饋
+  document.getElementById('like-btn').classList.add('liked');
+
+  // 悄悄告訴後端:這個用戶給這條帖子點讚了
+  await fetch('/api/like', {
+    method: 'POST',
+    body: JSON.stringify({ postId: 42 })
+  });
+});</div>
+
+            <div class="code-block"># 【後端】寫在服務器裡,決定"點贊"到底意味著什麼
+@app.post("/api/like")
+def like(request):
+    user_id = get_current_user(request)     # 你是誰?
+    post_id = request.json["postId"]        # 點的哪條?
+    db.execute(                             # 記到數據庫
+        "INSERT INTO likes(user_id, post_id) VALUES(?, ?)",
+        [user_id, post_id]
+    )
+    return {"ok": True, "total": count_likes(post_id)}</div>
+
+            <p>
+                看清楚了嗎?按鈕的<em>樣子</em>和<em>點了變紅</em>是前端的事;
+                但"這個贊真的被記住了、算進了總數"——這是後端的事。
+            </p>
+
+            <h3 class="section-system">系統層:看到完整鏈路</h3>
+
+            <p>
+                把它們放在一起,一次交互長這樣:
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">👆 你點擊按鈕</div>
+                <div class="arrow">↓ (瀏覽器裡執行 JS)</div>
+                <div class="step-box">📦 打包 JSON 請求</div>
+                <div class="arrow">↓ (HTTP 走網絡)</div>
+                <div class="step-box">🌐 後端接口收到</div>
+                <div class="arrow">↓ (執行業務邏輯)</div>
+                <div class="step-box">💾 讀寫數據庫</div>
+                <div class="arrow">↓ (打包結果)</div>
+                <div class="step-box">📨 返回 JSON</div>
+                <div class="arrow">↓ (瀏覽器解析)</div>
+                <div class="step-box">🎨 更新頁面</div>
+            </div>
+
+            <p>
+                前後端中間的這條虛線,有一個專有名字叫 <strong>API</strong>(應用程序接口)。
+                它就像餐廳的<strong>下單小票</strong>——上面寫好了"要什麼、加什麼料、去掉什麼",
+                前廳和後廚都認這個格式,誰換人都不影響。
+            </p>
+
+            <div class="highlight-box">
+                <strong>API 契約:通常長這樣</strong><br><br>
+                請求:<code>POST /api/like</code>,攜帶 <code>{ "postId": 42 }</code><br>
+                響應:<code>{ "ok": true, "total": 133 }</code><br><br>
+                這份"合同"一旦定下來,前端後端就可以各改各的——只要還按這份合同辦事。
+            </div>
+
+            <p>
+                這也是為什麼大公司裡,前端和後端可以是兩個不同的團隊,甚至用兩種完全不同的語言(前端 JavaScript,後端可能是 Java/Python/Go),
+                但產品照樣能跑。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層:為什麼這樣設計?</h3>
+
+            <p>
+                你可能會想:既然瀏覽器越來越強了,為什麼不乾脆把所有事都讓瀏覽器做?或者反過來,後端全權代理不好嗎?
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🚫 全放前端的問題</h4>
+                    <p>用戶能改代碼!你寫"付款成功再發貨",他把 <code>if (paid)</code> 改成 <code>if (true)</code>,就白嫖了。</p>
+                    <p>數據也沒法共享——你在手機上點的贊,電腦上刷不到。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🚫 全放後端的問題</h4>
+                    <p>每一次點擊都要走一趟服務器。滾動、懸停、動畫……用戶體驗會卡到沒人願意用。</p>
+                    <p>服務器負載也會爆炸。</p>
+                </div>
+            </div>
+
+            <p>
+                所以工程師們最後達成了一種默契:
+            </p>
+
+            <div class="highlight-box">
+                <strong>分工原則:</strong><br><br>
+                • <strong>展示、交互、動效</strong> → 前端(離用戶越近越好)<br>
+                • <strong>數據、規則、權限、賬單</strong> → 後端(離信任越近越好)<br>
+                • <strong>無狀態的 API</strong> → 讓後端可以複製多份、隨便擴容
+            </div>
+
+            <p>
+                注意最後一點:大多數後端接口是<strong>無狀態的</strong>——
+                每次請求都自帶足夠的信息(比如登錄 token),後端不需要"記得你上次說了啥"。
+                這讓系統可以橫向擴展到幾千臺服務器,任何一臺都能接你的請求。
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>試試看:親眼看到前後端在說話</h3>
+                <p>
+                    1. 打開任意一個網頁(比如知乎、B 站)<br>
+                    2. 按 <code>F12</code> 打開開發者工具<br>
+                    3. 切到 <strong>Network(網絡)</strong> 標籤,勾選 <strong>Fetch/XHR</strong><br>
+                    4. 在頁面上隨便點點、滑滑、點贊、評論
+                </p>
+                <p>
+                    你會看到一條一條的請求列表——那就是<strong>前端在悄悄和後端對話</strong>!
+                    點開其中一條,你能看到:發過去的 JSON、拿回來的 JSON,一目瞭然。
+                </p>
+                <p>
+                    這一刻,你從"網頁使用者"變成了"網頁監聽者"。
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索:</h3>
+                <a href="question.html?q=7">Q7: 一個網頁是怎麼做出來的?</a>
+                <a href="question.html?q=10">Q10: 點擊按鈕後數據去哪了?</a>
+                <a href="question.html?q=11">Q11: 註冊、登錄、評論……本質是什麼?</a>
+                <a href="question.html?q=9">Q9: 瀏覽器為什麼能顯示頁面?</a>
+            </div>
+
+            <h2>👑 大帝視角:這如何塑造現實?</h2>
+
+            <div class="emperor-box">
+                <h3>前後端的分裂,是"信任邊界"的誕生</h3>
+                <p>
+                    今天我們覺得"前後端分離"天經地義,但歷史並非如此。
+                </p>
+                <p>
+                    早期的網頁(90 年代),幾乎沒有"前端"這個說法——服務器直接吐一整張 HTML,瀏覽器只是顯示。
+                    直到 AJAX 出現(2005 年前後),瀏覽器才第一次能"揹著服務器說話"。
+                    再到智能手機爆發、SPA(單頁應用)崛起,前端才真正獨立成一個學科。
+                </p>
+                <p>
+                    <strong>這條分界線的本質,是"信任"的邊界。</strong>
+                </p>
+                <p>
+                    你的設備可以被你修改,所以任何"必須真"的東西——你的餘額、你的身份、訂單是否付款——都必須放在你摸不到的地方。
+                    後端不是技術選擇,是<strong>規則的守門人</strong>。
+                </p>
+                <p>
+                    每次你打開一個 App,你都在同意一件事:<em>"這個世界裡,有些真相不由我決定。"</em>
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以,前端和後端到底分別在做什麼?
+            </p>
+
+            <p>
+                <strong>前端負責"呈現"和"交互"——讓你看得見、點得動、覺得順手。</strong><br>
+                <strong>後端負責"記憶"和"規則"——決定什麼是真的、什麼該發生、誰能做什麼。</strong>
+            </p>
+
+            <p>
+                它們之間用 API 說話,像餐廳前廳和後廚用小票溝通。
+                前廳可以換風格、換語言,後廚可以換廚師、換灶臺——只要小票上的"合同"沒變,顧客就永遠吃得到那盤菜。
+            </p>
+
+            <div class="highlight-box">
+                <strong>下一個思考:</strong><br><br>
+                當你寫下前端代碼,你在"雕琢用戶體驗";<br>
+                當你寫下後端代碼,你在"制定世界規則"。<br><br>
+                兩者缺一不可,合起來才叫"產品"。
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=9" class="btn">繼續探索 Q9 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

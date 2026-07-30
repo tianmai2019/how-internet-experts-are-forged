@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q28：為什麼單體應用並不一定落後，微服務也不一定天然先進？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q28.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q28.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q28.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q28.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-4">
+            <div class="level-badge">⚖️ 第4層認知 · 高級工程師視角</div>
+            <h1>為什麼單體應用並不一定落後，微服務也不一定天然先進？</h1>
+            <p class="subtitle">架構不是先進程度的比賽，是「合適度」的博弈</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>過去十年，"微服務"幾乎成了技術圈的政治正確。招聘 JD 上寫"微服務經驗優先"，技術分享大會上講"如何拆分微服務"，公司內部技術評審時，誰提議做單體誰就像在裸奔。</p>
+
+            <p>但真實的現場卻在悄悄反轉：</p>
+
+            <ul>
+                <li><strong>Segment</strong> 把 140 個微服務合併回單體，性能反而變好；</li>
+                <li><strong>Uber</strong> 曾經拆到 2200 個微服務，然後開始搞"服務合併"運動；</li>
+                <li><strong>Amazon Prime Video</strong> 2023 年發論文說：把無服務器微服務架構合併成單體後，成本降低了 90%；</li>
+                <li><strong>Basecamp/37signals</strong> 用一個 20 年的 Ruby on Rails 單體，服務著百萬級用戶。</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>這些不是"退步"，是「祛魅」。</strong>技術圈開始承認：微服務是一種<em>解決方案</em>，而不是一種<em>優越性</em>。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <ol>
+                <li>單體和微服務，到底在解決什麼問題？</li>
+                <li>為什麼康威定律說"架構會長成組織的樣子"？</li>
+                <li>微服務的隱藏成本有哪些？</li>
+                <li>什麼規模、什麼組織，才真的需要微服務？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層：只看結果</h3>
+
+            <p>用戶從來不會因為「後面是不是微服務」而選擇用不用一個產品。用戶看到的是：<strong>響應快不快、穩不穩、功能全不全。</strong>單體做得好，用戶覺得優秀；微服務做得差，用戶覺得垃圾。<strong>用戶不獎勵架構，只獎勵結果。</strong></p>
+
+            <h3 class="section-code">實現層：開始理解構造</h3>
+
+            <p>單體和微服務的核心差異，不在技術棧，而在<strong>「一個進程還是多個進程」+「一個數據庫還是多個數據庫」</strong>：</p>
+
+            <div class="code-block">單體：
+  一個倉庫 → 一個二進制 → 一個進程 → 一個數據庫
+  函數調用是「本地調用」（納秒級）
+  事務是「本地事務」（數據庫保證）
+
+微服務：
+  多個倉庫 → 多個二進制 → 多個進程 → 多個數據庫
+  函數調用變成「網絡調用」（毫秒級，可能失敗）
+  事務變成「分佈式事務」（要靠 Saga/最終一致性保證）</div>
+
+            <p>看清楚這層的關鍵變化：<strong>你把「函數調用」升級成了「網絡協議」，把「本地事務」升級成了「分佈式協調」。</strong>每一個升級都意味著一個新的失敗點。</p>
+
+            <h3 class="section-system">系統層：看到完整鏈路</h3>
+
+            <p>微服務化後，一個用戶請求可能要經過 10 個服務：</p>
+
+            <div class="diagram-box">
+                <span class="step-box">API Gateway</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Auth</span>
+                <span class="arrow">→</span>
+                <span class="step-box">User</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Order</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Payment</span>
+                <br>
+                <span class="step-box">Inventory</span>
+                <span class="arrow">→</span>
+                <span class="step-box">Notification</span>
+                <span class="arrow">→</span>
+                <span class="step-box">...</span>
+            </div>
+
+            <p>每一個箭頭，都可能：網絡延遲、超時、失敗、重試。要保證整條鏈路的可用性 99.9%，每個環節都必須做到 99.99% 以上——這個複合可用性是<strong>指數級衰減</strong>的。</p>
+
+            <h3 class="section-tradeoff">權衡層：為什麼這樣設計？</h3>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>單體的真相</h4>
+                    <p>✅ 開發簡單：一個 IDE 開一個項目<br>✅ 調試簡單：斷點即可<br>✅ 事務簡單：ACID 天生支持<br>✅ 部署簡單：一個 jar/一個鏡像<br>❌ 團隊規模上限：50 人左右<br>❌ 單個模塊出問題會拖垮整體<br>❌ 單點擴展粒度粗</p>
+                </div>
+                <div class="compare-card">
+                    <h4>微服務的真相</h4>
+                    <p>✅ 團隊可以獨立並行<br>✅ 服務可以獨立擴展<br>✅ 局部故障可以隔離<br>✅ 技術棧可以多樣化<br>❌ 分佈式複雜度爆炸<br>❌ 數據一致性難保證<br>❌ 運維成本 3-10 倍<br>❌ 排障需要全鏈路追蹤</p>
+                </div>
+            </div>
+
+            <h2>🏢 康威定律：架構會長成組織的樣子</h2>
+
+            <p>1968 年，Melvin Conway 提出：</p>
+
+            <div class="highlight-box">
+                <strong>"組織設計的系統，其結構必然複製組織的溝通結構。"</strong>
+            </div>
+
+            <p>換句話說：<strong>你有幾個團隊，你的系統就會自然長出幾個模塊</strong>。</p>
+
+            <p>所以微服務的本質，不是"技術拆分"，而是"組織拆分"：</p>
+
+            <div class="code-block">10 人團隊 → 單體最優
+  一個團隊 = 一個倉庫 = 一個部署單元
+  拆微服務 = 製造無謂的溝通成本
+
+50 人團隊 → 模塊化單體或粗粒度服務
+  按業務域拆幾個大服務
+  每個服務由 5-10 人小團隊負責
+
+500 人團隊 → 微服務是必選項
+  沒有微服務，團隊之間會陷入無休止的合併衝突
+  每個團隊必須能獨立發佈、獨立部署、獨立擴展
+
+5000 人團隊 → 服務網格 + 平臺化
+  微服務本身也需要"元架構"來治理</div>
+
+            <div class="callout callout--warning">
+                <strong>破除迷思：</strong>如果你的團隊只有 20 個人，拆了 30 個微服務，不叫「先進」，叫「用微服務架構解決溝通不足的問題」。這就像用高鐵通勤上班——技術上沒錯，只是完全用不上。
+            </div>
+
+            <h2>💥 真實案例：Uber 的反向工程</h2>
+
+            <p>Uber 是微服務最狂熱的踐行者之一，一度拆到 2200+ 個微服務。然後他們發現：</p>
+
+            <ul>
+                <li>一個簡單的乘車流程要跨越幾十個服務；</li>
+                <li>排查一個 bug 要看幾百個 dashboard；</li>
+                <li>發佈一個新功能要協調 10+ 個團隊；</li>
+                <li>新員工要幾個月才能理解一個業務流程。</li>
+            </ul>
+
+            <p>於是 Uber 在 2020 年後開始搞"Domain-Oriented Microservice Architecture (DOMA)"：<strong>把 2200 個微服務按業務域重新聚合成 70 個"域"，域內高度耦合，域間鬆散通信。</strong>本質上就是把過度拆分的微服務，重新變成"粗粒度的服務"。</p>
+
+            <h2>💰 Amazon Prime Video 的省錢故事</h2>
+
+            <p>2023 年 Amazon Prime Video 團隊發了篇文章："Scaling up the Prime Video audio/video monitoring service and reducing costs by 90%"。</p>
+
+            <p>他們把一個基於 AWS Lambda + Step Functions 的"雲原生微服務架構"，重構成一個<strong>單體應用</strong>，運行在 ECS 上。結果：</p>
+
+            <div class="highlight-box">
+                <strong>成本下降 90%，擴展性反而更好。</strong><br><br>
+                原因：微服務架構下，服務之間通過 S3 和網絡傳數據，光是傳輸成本和調度延遲就吃掉了大部分算力。改成單體後，數據在同一個進程內傳遞，不再需要序列化、網絡往返、狀態編排。
+            </div>
+
+            <p>Amazon 自己的團隊公開承認："微服務不是萬能的。"這在 2023 年之前是不可想像的政治不正確。</p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>做一次"架構合適度自評"</h3>
+                <p>回答下面 6 個問題，每個"是"計 1 分：</p>
+                <ol>
+                    <li>我們的團隊超過 50 人？</li>
+                    <li>我們的多個團隊經常在同一份代碼裡合併衝突？</li>
+                    <li>我們的發佈流程已經變成"排隊等窗口期"？</li>
+                    <li>我們的不同業務模塊，流量差距超過 10 倍？</li>
+                    <li>我們有專職的 SRE/DevOps 團隊？</li>
+                    <li>我們的故障復盤裡，「上線互相影響」是高頻原因？</li>
+                </ol>
+                <p><strong>0-2 分：</strong>好好做單體，微服務會拖垮你。<br>
+                <strong>3-4 分：</strong>考慮做"模塊化單體"或"粗粒度服務"。<br>
+                <strong>5-6 分：</strong>可以認真評估微服務化了。</p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=23">Q23: 大型互聯網系統怎麼支撐億級用戶？</a>
+                <a href="question.html?q=26">Q26: 為什麼系統設計裡沒有銀彈？</a>
+                <a href="question.html?q=27">Q27: 先進架構不一定適合當前業務</a>
+                <a href="question.html?q=29">Q29: 一致性、性能、可用性怎麼取捨？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>架構不是先進程度的比賽，是「合適度」的博弈</h3>
+                <p>我們這一代工程師，太容易被"架構敘事"綁架。一個架構好不好，答案往往不是從"是否解決了具體問題"出發，而是從"它是不是符合當下的技術潮流"出發。這本質上是一種<strong>技術審美的路徑依賴</strong>。</p>
+                <p>但真正走過幾個技術週期的老手會告訴你：<strong>架構沒有"進化論"，只有"匹配論"。</strong>單體、SOA、微服務、Serverless、服務網格……它們不是一條線性上升的技術階梯，而是一個個針對不同規模、不同組織、不同問題的<em>工具</em>。</p>
+                <p>大帝視角看到的是：<strong>技術潮流會變，但「合適」這個標準永遠不變。當所有人都在追新的時候，敢於說"我們不需要"，才是真正的成熟。</strong></p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>為什麼單體應用並不一定落後，微服務也不一定天然先進？</p>
+
+            <div class="highlight-box">
+                <strong>因為架構的價值從來不在於"新不新"，而在於"配不配"。</strong><br><br>
+                單體和微服務不是替代關係，是<strong>階段關係</strong>——每一個從單體做起、又走到微服務、又回過頭來重新聚合的團隊，都會告訴你同一句話：<br><br>
+                <em>"最好的架構，是那個讓你現在的團隊跑得最快的架構。"</em>
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=29" class="btn">繼續探索 Q29 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

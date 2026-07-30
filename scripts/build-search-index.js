@@ -2,17 +2,19 @@
 /*
  * 构建全文搜索索引
  * ------------------------------
- * 扫描 docs/articles/qNN.html（或 docs/en/articles/qNN.html），
+ * 扫描 docs/articles/qNN.html（zh-Hans / zh-Hant / en 三种目录），
  * 抽取标题 + 正文文本，输出：
- *   - docs/assets/data/search-index.json    （中文索引）
- *   - docs/assets/data/search-index-en.json （英文索引）
+ *   - docs/assets/data/search-index.json        （简体中文索引）
+ *   - docs/assets/data/search-index-zh-Hant.json（繁体中文索引）
+ *   - docs/assets/data/search-index-en.json     （英文索引）
  *
  * 前端 (enhance.js 的 Search 模块) 根据当前 <html lang> 加载对应索引。
  *
  * 用法：
- *   node scripts/build-search-index.js          # 两个索引都构建
- *   node scripts/build-search-index.js zh       # 只构建中文
- *   node scripts/build-search-index.js en       # 只构建英文
+ *   node scripts/build-search-index.js               # 三个索引都构建
+ *   node scripts/build-search-index.js zh            # 只构建简体
+ *   node scripts/build-search-index.js zh-Hant       # 只构建繁体
+ *   node scripts/build-search-index.js en            # 只构建英文
  *
  * 依赖：无（只用 Node 内置 fs / path）。
  */
@@ -30,6 +32,12 @@ const LOCALES = {
         outPath: path.join(ROOT, 'docs', 'assets', 'data', 'search-index.json'),
         urlPrefix: 'articles/',
         mainTitle: '互联网大帝是如何炼成的（主文章）',
+    },
+    'zh-Hant': {
+        articlesDir: path.join(ROOT, 'docs', 'zh-Hant', 'articles'),
+        outPath: path.join(ROOT, 'docs', 'assets', 'data', 'search-index-zh-Hant.json'),
+        urlPrefix: 'zh-Hant/articles/',
+        mainTitle: '互聯網大帝是如何煉成的（主文章）',
     },
     en: {
         articlesDir: path.join(ROOT, 'docs', 'en', 'articles'),

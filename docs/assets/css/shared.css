@@ -654,8 +654,23 @@ footer {
 }
 
 /* ============================================
-   语言切换胶囊
+   语言切换胶囊组（简 · 繁 · EN）
    ============================================ */
+
+/* 三胶囊一组，包裹容器 */
+.lang-switcher-group {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 4px;
+    padding: 3px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color, rgba(102, 126, 234, 0.35));
+    border-radius: 22px;
+    box-shadow: var(--card-shadow-sm);
+    line-height: 1;
+}
+
+/* 单个胶囊（当前 = span.is-active；其余 = a） */
 .lang-switcher {
     display: inline-flex;
     align-items: center;
@@ -676,15 +691,41 @@ footer {
     text-align: center;
 }
 
+/* 组内的胶囊：外层容器已经画了 border，单胶囊瘦身 */
+.lang-switcher-group .lang-switcher {
+    border: none;
+    padding: 4px 12px;
+    min-width: 36px;
+    font-size: 0.85rem;
+    border-radius: 18px;
+    background: transparent;
+    color: var(--text-secondary, var(--accent-primary));
+    box-shadow: none;
+}
+
+.lang-switcher-group .lang-switcher.is-active {
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+    cursor: default;
+    pointer-events: none;
+}
+
 .lang-switcher:hover {
     background: var(--accent-primary);
     color: var(--text-inverse);
     transform: translateY(-1px);
 }
 
-/* .nav-header 里的胶囊：与 .nav-back-home 等高对齐 */
-.nav-header .lang-switcher {
-    margin-left: auto;   /* 挤到最右 */
+.lang-switcher-group .lang-switcher:not(.is-active):hover {
+    transform: none;
+    background: rgba(102, 126, 234, 0.12);
+    color: var(--accent-primary);
+}
+
+/* .nav-header 里的胶囊组：与 .nav-back-home 等高对齐 */
+.nav-header .lang-switcher,
+.nav-header .lang-switcher-group {
+    margin-left: auto;
     align-self: center;
 }
 
@@ -702,6 +743,11 @@ footer {
         padding: 4px 10px;
         font-size: 0.8rem;
         min-width: 38px;
+    }
+    .lang-switcher-group .lang-switcher {
+        padding: 3px 9px;
+        min-width: 30px;
+        font-size: 0.78rem;
     }
     .lang-switcher-floating {
         top: 10px;

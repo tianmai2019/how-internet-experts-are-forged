@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q1：為什麼輸入一個網址，頁面就會出現在眼前？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #1D4ED8;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .diagram-box {
+            background: #F9FAFB;
+            border: 2px dashed #D1D5DB;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        /* SVG 图解：可交互、可响应、暗色友好 */
+        .diagram-svg-wrap {
+            font-family: inherit;
+            padding: 30px 20px 20px;
+        }
+
+        .flow-svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+        }
+
+        /* 阶段方框：悬停微上浮，暗示可读 */
+        .flow-stage rect {
+            filter: drop-shadow(0 4px 8px rgba(37, 99, 235, 0.18));
+            transition: transform 0.2s ease, filter 0.2s ease;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .flow-stage:hover rect {
+            transform: translateY(-3px) scale(1.02);
+            filter: drop-shadow(0 8px 16px rgba(37, 99, 235, 0.32));
+        }
+
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-family: inherit;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* 暗色模式：让 SVG 主色更亮一点，不然对比度不够 */
+        [data-theme="dark"] .diagram-svg-wrap {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* 移动端：SVG 挤成一坨看不清，切换到垂直卡片列表 */
+        .flow-mobile {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .flow-svg {
+                display: none;
+            }
+            .flow-mobile {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+                font-family: system-ui, -apple-system, "PingFang SC", sans-serif;
+            }
+            .flow-mobile li {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 14px 16px;
+                margin-bottom: 10px;
+                background: linear-gradient(135deg, #60A5FA 0%, #2563EB 100%);
+                color: #fff;
+                border-radius: 12px;
+                box-shadow: 0 4px 10px rgba(37, 99, 235, 0.18);
+                position: relative;
+            }
+            /* 卡片之间的 ↓ 连接线 */
+            .flow-mobile li:not(:last-child)::after {
+                content: "↓";
+                position: absolute;
+                left: 50%;
+                bottom: -18px;
+                transform: translateX(-50%);
+                color: var(--text-muted, #9CA3AF);
+                font-size: 1rem;
+                z-index: 1;
+            }
+            .flow-mobile-icon {
+                font-size: 1.8rem;
+                flex-shrink: 0;
+            }
+            .flow-mobile li strong {
+                display: block;
+                font-size: 0.98rem;
+                margin-bottom: 2px;
+            }
+            .flow-mobile-sub {
+                display: block;
+                font-size: 0.78rem;
+                color: rgba(255, 255, 255, 0.85);
+            }
+            .flow-mobile-time {
+                display: inline-block;
+                margin-top: 4px;
+                padding: 2px 8px;
+                font-size: 0.72rem;
+                background: rgba(255, 255, 255, 0.22);
+                border-radius: 10px;
+                color: #fff;
+            }
+            /* 移动端把外层 padding 收紧一点 */
+            .diagram-svg-wrap {
+                padding: 20px 14px 14px;
+            }
+        }
+
+        .step-box {
+            display: inline-block;
+            background: #3B82F6;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin: 10px;
+            font-weight: 600;
+        }
+
+        .arrow {
+            display: block;
+            font-size: 1.5rem;
+            color: #9CA3AF;
+            margin: 10px 0;
+        }
+
+        .highlight-box {
+            background: #EFF6FF;
+            border-left: 4px solid #3B82F6;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #1D4ED8;
+        }
+
+        .code-block {
+            background: #1F2937;
+            color: #E5E7EB;
+            padding: 25px;
+            border-radius: 12px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box {
+            background: #10B981;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .try-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box a {
+            color: #ECFDF5;
+            text-decoration: underline;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q01.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q01.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q01.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q01.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header">
+            <div class="level-badge">🎯 第1層認知 · 用戶視角</div>
+            <h1>為什麼輸入一個網址，頁面就會出現在眼前？</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">這是一個關於"奇蹟"如何發生的故事</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                每天我們都在輸入網址，但你有沒有停下來想過：
+                <strong>這到底是怎麼發生的？</strong>
+            </p>
+
+            <p>
+                你輸入 <code>google.com</code>，按下回車，不到一秒，頁面就出現了。
+                看起來就像魔法一樣。
+            </p>
+
+            <p>
+                但"魔法"的背後，是幾十個系統、數千公里的光纜、數億次計算在協同工作。
+                理解這個過程，就是打開互聯網黑盒的第一步。
+            </p>
+
+            <div class="highlight-box">
+                <strong>為什麼這個問題是"第1層"的起點？</strong><br>
+                因為這是每一個上網的人都會有的好奇。
+                從這個問題開始，我們可以一層一層把整個互聯網剝開來看。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <p>要回答"網址怎麼變成頁面"，我們需要先回答這幾個問題：</p>
+
+            <ol style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>網址是什麼？</strong> <code>google.com</code> 到底是什麼意思？</li>
+                <li><strong>電腦怎麼找到那個網站？</strong> 服務器在哪裡？</li>
+                <li><strong>請求怎麼發出去？</strong> 數據如何傳輸幾千公里？</li>
+                <li><strong>頁面怎麼回來？</strong> HTML是如何變成屏幕上的畫面的？</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3>用戶層：只看結果</h3>
+
+            <p>
+                在普通用戶眼裡，這是這樣的：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">輸入網址</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">按下回車</div>
+                <div class="arrow">↓</div>
+                <div class="step-box">🎉 頁面出現！</div>
+            </div>
+
+            <p>
+                <strong>就這麼簡單。</strong><br>
+                不需要知道中間發生了什麼，能用就行。
+                這就是我們大多數人每天的狀態。
+            </p>
+
+            <h3>🔨 實現層：開始理解構造</h3>
+
+            <p>
+                一旦你開始學習編程，這個黑盒就開始透明瞭。
+                你會發現，原來背後是這樣的：
+            </p>
+
+            <div class="diagram-box diagram-svg-wrap">
+                <svg viewBox="0 0 900 240" class="flow-svg" role="img"
+                     aria-label="從輸入網址到頁面出現：URL 解析、DNS 查詢、HTTP 請求、響應返回、瀏覽器渲染五個階段">
+                    <defs>
+                        <!-- 阶段方框的渐变（跟着 --color-level-1 走） -->
+                        <linearGradient id="flow-stage-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%"  stop-color="#60A5FA"/>
+                            <stop offset="100%" stop-color="#2563EB"/>
+                        </linearGradient>
+                        <!-- 箭头头 -->
+                        <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5"
+                                markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+                        </marker>
+                        <!-- 主线：手绘感的轻微弯曲 -->
+                        <path id="flow-line" d="M 90 120 C 200 90, 260 150, 340 120
+                                                 S 490 90, 590 120
+                                                 S 740 150, 830 120"
+                              fill="none" stroke="currentColor" stroke-width="2.5"
+                              stroke-linecap="round" stroke-dasharray="4 6"/>
+                    </defs>
+
+                    <!-- 手绘曲线（虚线，暗示"过程中"） -->
+                    <use href="#flow-line" style="color: var(--border-color, #D1D5DB);"/>
+
+                    <!-- 5 个阶段方框 -->
+                    <!-- Stage 1: URL 解析 -->
+                    <g class="flow-stage" transform="translate(20 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📝</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">URL 解析</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">拆分協議 / 域名 / 路徑</text>
+                    </g>
+
+                    <!-- Stage 2: DNS -->
+                    <g class="flow-stage" transform="translate(180 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📖</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">DNS 查詢</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">域名 → IP 地址</text>
+                    </g>
+
+                    <!-- Stage 3: HTTP 请求 -->
+                    <g class="flow-stage" transform="translate(340 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📤</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">HTTP 請求</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">向服務器要東西</text>
+                    </g>
+
+                    <!-- Stage 4: 响应回来 -->
+                    <g class="flow-stage" transform="translate(500 60)">
+                        <rect width="140" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="70" y="42" text-anchor="middle" font-size="28" fill="#fff">📥</text>
+                        <text x="70" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">響應回來</text>
+                        <text x="70" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">HTML / CSS / JS</text>
+                    </g>
+
+                    <!-- Stage 5: 浏览器渲染 -->
+                    <g class="flow-stage" transform="translate(720 60)">
+                        <rect width="160" height="100" rx="14" fill="url(#flow-stage-grad)"/>
+                        <text x="80" y="42" text-anchor="middle" font-size="28" fill="#fff">🎨</text>
+                        <text x="80" y="72" text-anchor="middle" font-size="14"
+                              font-weight="700" fill="#fff">瀏覽器渲染</text>
+                        <text x="80" y="90" text-anchor="middle" font-size="11"
+                              fill="rgba(255,255,255,0.85)">畫到屏幕上</text>
+                    </g>
+
+                    <!-- 箭头（水平方向的短箭头，暗示传递） -->
+                    <g style="color: var(--color-level-1, #3B82F6);">
+                        <line x1="162" y1="110" x2="176" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                        <line x1="322" y1="110" x2="336" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                        <line x1="482" y1="110" x2="496" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                        <line x1="642" y1="110" x2="716" y2="110"
+                              stroke="currentColor" stroke-width="2.5" marker-end="url(#flow-arrow)"/>
+                    </g>
+
+                    <!-- 底部时间轴标注 -->
+                    <text x="90"  y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~幾毫秒</text>
+                    <text x="250" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~幾十毫秒</text>
+                    <text x="410" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~百毫秒</text>
+                    <text x="570" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">取決於網速</text>
+                    <text x="800" y="200" text-anchor="middle" font-size="11"
+                          fill="var(--text-muted, #6B7280)">~幾十毫秒</text>
+                </svg>
+
+                <!-- 移动端 fallback：垂直卡片列表，视觉风格跟 SVG 保持一致 -->
+                <ol class="flow-mobile" aria-hidden="true">
+                    <li>
+                        <span class="flow-mobile-icon">📝</span>
+                        <div>
+                            <strong>URL 解析</strong>
+                            <span class="flow-mobile-sub">拆分協議 / 域名 / 路徑</span>
+                            <span class="flow-mobile-time">~幾毫秒</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">📖</span>
+                        <div>
+                            <strong>DNS 查詢</strong>
+                            <span class="flow-mobile-sub">域名 → IP 地址</span>
+                            <span class="flow-mobile-time">~幾十毫秒</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">📤</span>
+                        <div>
+                            <strong>HTTP 請求</strong>
+                            <span class="flow-mobile-sub">向服務器要東西</span>
+                            <span class="flow-mobile-time">~百毫秒</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">📥</span>
+                        <div>
+                            <strong>響應回來</strong>
+                            <span class="flow-mobile-sub">HTML / CSS / JS</span>
+                            <span class="flow-mobile-time">取決於網速</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="flow-mobile-icon">🎨</span>
+                        <div>
+                            <strong>瀏覽器渲染</strong>
+                            <span class="flow-mobile-sub">畫到屏幕上</span>
+                            <span class="flow-mobile-time">~幾十毫秒</span>
+                        </div>
+                    </li>
+                </ol>
+
+                <p class="diagram-caption">圖 1：一次網頁加載的 5 個核心階段 · 底部標註是量級參考</p>
+            </div>
+
+            <p>
+                讓我們一個一個來看：
+            </p>
+
+            <div class="highlight-box">
+                <strong>1. URL解析：網址到底是什麼？</strong><br><br>
+                <code>https://www.google.com/search?q=hello</code><br><br>
+                <ul style="text-align: left; margin-top: 15px;">
+                    <li><code>https://</code> - 協議（用什麼方式說話）</li>
+                    <li><code>www.google.com</code> - 域名（找誰說話）</li>
+                    <li><code>/search</code> - 路徑（找什麼內容）</li>
+                    <li><code>?q=hello</code> - 參數（說什麼話）</li>
+                </ul>
+            </div>
+
+            <p>
+                <strong>2. DNS查詢：域名怎麼變成IP地址？</strong><br>
+                這就像查電話簿：你記得名字，需要查到號碼。
+            </p>
+
+            <div class="code-block">
+google.com → DNS查詢 → 142.250.71.14<br>
+(名字)      (電話簿)    (電話號碼)
+            </div>
+
+            <p>
+                <strong>3. 發送HTTP請求：建立連接</strong><br>
+                瀏覽器找到了IP地址，就像撥通了電話，然後開始對話：
+            </p>
+
+            <div class="code-block">
+瀏覽器："你好，我要首頁！"<br>
+服務器："收到，這就給你發！"<br>
+瀏覽器："謝謝！"
+            </div>
+
+            <p>
+                <strong>4. 接收HTML：拿到頁面內容</strong><br>
+                服務器發回的不是圖片，而是一段HTML代碼，大概長這樣：
+            </p>
+
+            <div class="code-block">
+&lt;html&gt;<br>
+  &lt;head&gt;<br>
+    &lt;title&gt;Google&lt;/title&gt;<br>
+  &lt;/head&gt;<br>
+  &lt;body&gt;<br>
+    &lt;h1&gt;Hello!&lt;/h1&gt;<br>
+  &lt;/body&gt;<br>
+&lt;/html&gt;
+            </div>
+
+            <p>
+                <strong>5. 渲染：把代碼變成畫面</strong><br>
+                瀏覽器是一個畫家，它拿到HTML描述，然後在畫布上一筆一筆畫出來：
+            </p>
+
+            <div class="diagram-box">
+                <div class="step-box">📄 解析HTML結構</div>
+                <div class="step-box">🎨 應用CSS樣式</div>
+                <div class="step-box">⚡ 運行JavaScript</div>
+                <div class="step-box">🖥️ 顯示在屏幕上</div>
+            </div>
+
+            <h3>🌊 系統層：看到完整鏈路</h3>
+
+            <p>
+                到了工程師視角，你會發現這不僅僅是"瀏覽器和服務器"對話那麼簡單。
+                這背後是一個巨大的分佈式系統在工作。
+            </p>
+
+            <div class="highlight-box">
+                <strong>請求的旅程，可能經過：</strong><br><br>
+                1. 你的手機 → WiFi路由器 → ISP網絡<br>
+                2. CDN（內容分發網絡，可能就近返回）<br>
+                3. 負載均衡器（分配給哪個服務器）<br>
+                4. Web服務器（處理HTTP）<br>
+                5. 應用服務器（處理業務邏輯）<br>
+                6. 數據庫/緩存（讀取數據）<br>
+                7. 然後原路返回！
+            </div>
+
+            <p>
+                所有這一切，通常在<strong>幾百毫秒</strong>內完成。
+                而你，就在屏幕前，看到了結果。
+            </p>
+
+            <h3>⚖️ 權衡層：為什麼這樣設計？</h3>
+
+            <p>
+                到了高級工程師視角，你會問：<strong>為什麼系統要設計成這樣？</strong>
+            </p>
+
+            <p>
+                每個選擇都是權衡：
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>為什麼用域名而不直接用IP？</strong> → 好記 vs 多一層查詢</li>
+                <li><strong>為什麼用CDN？</strong> → 速度快 vs 成本高</li>
+                <li><strong>為什麼分層？</strong> → 靈活可擴展 vs 複雜度高</li>
+            </ul>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>試試看：親眼看看這個過程！</h3>
+                <p>
+                    在Chrome瀏覽器中，按 <strong>F12</strong> 打開開發者工具，
+                    選擇 <strong>Network（網絡）</strong> 標籤頁，然後刷新頁面。
+                </p>
+                <p>
+                    你會看到瀏覽器發出的每一個請求，還有它們花了多少時間！
+                </p>
+            </div>
+
+            <p>
+                或者，你也可以試試這個：
+            </p>
+
+            <div class="code-block">
+Windows: 打開 cmd，輸入 ping google.com<br>
+Mac: 打開終端，輸入 ping google.com
+            </div>
+
+            <p>
+                你會看到你的電腦正在和Google服務器對話！
+            </p>
+
+            <h2>🔗 延伸問題</h2>
+
+            <p>
+                理解了這個過程，你自然會想問更多：
+            </p>
+
+            <div class="related-questions">
+                <h3>相關問題探索：</h3>
+                <a href="question.html?q=2">Q2: 為什麼消息能即時到達？</a>
+                <a href="question.html?q=7">Q7: 網頁是怎麼做出來的？</a>
+                <a href="question.html?q=9">Q9: 瀏覽器如何顯示頁面？</a>
+                <a href="question.html?q=13">Q13: 輸入網址後發生了什麼？</a>
+                <a href="question.html?q=14">Q14: 為什麼有的網站快有的慢？</a>
+                <a href="question.html?q=20">Q20: 緩存為什麼能提高性能？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>從技術到世界</h3>
+                <p>
+                    當你真正理解這個過程後，你看世界的方式會改變。
+                </p>
+                <p>
+                    你會意識到：<strong>互聯網不是"自然"存在的，而是人造的。</strong><br>
+                    每個設計選擇背後，都有商業、政治、社會的考量。
+                </p>
+            </div>
+
+            <p>
+                想想看：
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>為什麼網址是這樣的格式？</strong> 誰規定的？</li>
+                <li><strong>為什麼 .com 那麼貴？</strong> 誰在賺錢？</li>
+                <li><strong>為什麼有些網站在某些地方訪問不了？</strong> 誰說了算？</li>
+                <li><strong>為什麼你訪問的是這個結果而不是那個？</strong> 誰在過濾？</li>
+            </ul>
+
+            <p>
+                這就是從"用戶"到"大帝"的轉變：
+                <strong>不再只看結果，而是開始問"誰在決定這個結果？"</strong>
+            </p>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，為什麼輸入一個網址，頁面就會出現在眼前？
+            </p>
+
+            <p>
+                <strong>答案是：</strong><br>
+                因為無數工程師構建了一個不可思議的系統，
+                把複雜隱藏在簡單的界面後面，
+                讓每個人都能享受"奇蹟"。
+            </p>
+
+            <div class="highlight-box">
+                <strong>而現在，你已經開始看到這個"奇蹟"背後的真相了。</strong><br><br>
+                🎉 恭喜你！你已經邁出了從用戶到思考者的第一步！
+            </div>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=2" class="btn">繼續探索 Q2 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q13：當你輸入一個網址時，背後發生了什麼？</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <style>
+        .article-header {
+            background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .article-header h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .article-content {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .article-content h2 {
+            color: #0891B2;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .article-content h3 {
+            color: #374151;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .article-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #4B5563;
+            margin-bottom: 20px;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+            margin: 30px 0;
+            border-left: 2px solid #06B6D4;
+            padding-left: 24px;
+        }
+
+        .timeline-item {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .timeline-marker {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .timeline-content {
+            background: #F9FAFB;
+            padding: 20px 25px;
+            border-radius: 12px;
+        }
+
+        .timeline-content h4 {
+            margin: 0 0 10px 0;
+            color: #0891B2;
+            font-size: 1.1rem;
+        }
+
+        .highlight-box {
+            background: #ECFEFF;
+            border-left: 4px solid #06B6D4;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box strong {
+            color: #0891B2;
+        }
+
+        .code-block {
+            background: #1F2937;
+            color: #E5E7EB;
+            padding: 25px;
+            border-radius: 12px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+            margin: 25px 0;
+        }
+
+        .request-flow {
+            display: grid;
+            gap: 10px;
+            margin: 30px 0;
+            justify-items: center;
+        }
+
+        .flow-step {
+            background: #F9FAFB;
+            padding: 15px 24px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .flow-arrow {
+            color: #0891B2;
+            font-size: 1.2rem;
+        }
+
+        .related-questions {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        .related-questions h3 {
+            color: #667eea;
+        }
+
+        .related-questions a {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 20px;
+            background: #F9F6FF;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .related-questions a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .emperor-box {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .emperor-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .try-box {
+            background: #06B6D4;
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .try-box h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .nav-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .tech-item {
+            background: #ECFEFF;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #A5F3FC;
+        }
+
+        .tech-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        /* ============================================
+           SVG 拓扑图（Q13 服务器内部旅程）
+           样板复用自 Q1，配色改用多色区分组件类型
+           ============================================ */
+        .diagram-box {
+            background: var(--bg-secondary, #F9FAFB);
+            border: 2px dashed var(--border-color, #D1D5DB);
+            border-radius: 12px;
+            padding: 30px 20px 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .topology-svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            display: block;
+        }
+
+        .topo-node rect {
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
+            transition: transform 0.2s ease, filter 0.2s ease;
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .topo-node:hover rect {
+            transform: translateY(-3px) scale(1.03);
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.22));
+        }
+
+        .diagram-caption {
+            margin: 12px 0 0;
+            font-size: 0.88rem;
+            color: var(--text-muted, #6B7280);
+            font-style: italic;
+        }
+
+        [data-theme="dark"] .diagram-box {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* 移动端：切换到垂直卡片列表 */
+        .topo-mobile {
+            display: none;
+        }
+
+        @media (max-width: 640px) {
+            .topology-svg {
+                display: none;
+            }
+            .topo-mobile {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+            }
+            .topo-mobile li {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 14px;
+                margin-bottom: 8px;
+                border-radius: 12px;
+                color: #fff;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+                position: relative;
+            }
+            .topo-mobile li[data-color="blue"]   { background: linear-gradient(135deg, #60A5FA 0%, #2563EB 100%); }
+            .topo-mobile li[data-color="cyan"]   { background: linear-gradient(135deg, #22D3EE 0%, #0891B2 100%); }
+            .topo-mobile li[data-color="violet"] { background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%); }
+            .topo-mobile li[data-color="amber"]  { background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%); }
+            .topo-mobile li[data-color="pink"]   { background: linear-gradient(135deg, #F472B6 0%, #DB2777 100%); }
+
+            .topo-mobile li:not(:last-child):not(.topo-branch)::after {
+                content: "↓";
+                position: absolute;
+                left: 50%;
+                bottom: -14px;
+                transform: translateX(-50%);
+                color: var(--text-muted, #9CA3AF);
+                font-size: 0.95rem;
+                z-index: 1;
+            }
+            /* 分支节点：换个连接符暗示"命中/未命中" */
+            .topo-mobile li.topo-branch::before {
+                content: "├─ 先查";
+                position: absolute;
+                left: 8px;
+                top: -12px;
+                font-size: 0.7rem;
+                color: var(--text-muted, #6B7280);
+                background: var(--bg-secondary, #F9FAFB);
+                padding: 0 6px;
+            }
+            .topo-mobile li.topo-branch + li::before {
+                content: "└─ 未命中";
+                position: absolute;
+                left: 8px;
+                top: -12px;
+                font-size: 0.7rem;
+                color: var(--text-muted, #6B7280);
+                background: var(--bg-secondary, #F9FAFB);
+                padding: 0 6px;
+            }
+            .topo-mobile-icon {
+                font-size: 1.6rem;
+                flex-shrink: 0;
+            }
+            .topo-mobile li strong {
+                display: block;
+                font-size: 0.96rem;
+                margin-bottom: 2px;
+            }
+            .topo-mobile li span:not(.topo-mobile-icon) {
+                display: block;
+                font-size: 0.78rem;
+                color: rgba(255, 255, 255, 0.88);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .article-header, .article-content {
+                padding: 30px 20px;
+            }
+            .timeline {
+                padding-left: 18px;
+            }
+            .nav-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q13.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q13.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q13.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q13.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header">
+            <div class="level-badge">🌊 第3層認知 · 工程師視角</div>
+            <h1>當你輸入一個網址時，背後發生了什麼？</h1>
+            <p style="opacity: 0.9; font-size: 1.1rem;">從一個按鈕到一條完整的鏈路</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角：這個問題為什麼重要？</h2>
+
+            <p>
+                你可能聽過一個經典的面試題：<strong>"在瀏覽器輸入 google.com 後發生了什麼？"</strong>
+            </p>
+
+            <p>
+                為什麼這個問題這麼重要？因為它測試的不是背誦，而是：
+            </p>
+
+            <div class="highlight-box">
+                <strong>你是否能看到"流動"的世界。</strong><br><br>
+                普通用戶看到的是：<br>
+                點擊 → 頁面出來<br><br>
+                工程師看到的是：<br>
+                數據在流動、請求在傳遞、系統在協作
+            </div>
+
+            <p>
+                這就是第3層認知的核心：從"看到東西"到"看到流動"。
+            </p>
+
+            <div class="highlight-box" style="background: linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.08)); border-left: 4px solid #667eea; margin-top: 24px;">
+                <strong>🚀 打個比方 · 一次點擊的"旅程"</strong><br><br>
+                你的一次點擊，就像<b>寄出一封信</b>：<br>
+                <span style="display: inline-block; margin-top: 8px; padding-left: 8px; border-left: 2px dashed #667eea;">
+                📮 <b>先要寫清收件地址</b>（DNS 把域名翻譯成 IP）<br>
+                🚚 <b>信件出發，穿過郵政系統</b>（TCP 建立連接、TLS 加密封口）<br>
+                🏢 <b>抵達目的地大樓</b>（服務器網關）<br>
+                📦 <b>大樓裡各個部門協作處理</b>（負載均衡、Web 集群、緩存、數據庫）<br>
+                ✉️ <b>處理完再原路返回，把回信送到你手上</b>（響應回傳、瀏覽器渲染）
+                </span><br><br>
+                每一步都需要人、需要機器、需要基礎設施。你看到的"秒開"，其實是一場跨越千里的接力賽。
+            </div>
+
+            <h2>🧩 拆解：把大問題拆成小問題</h2>
+
+            <p>
+                整個過程可以拆成幾步：
+            </p>
+
+            <ol style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>找人：</strong> 這個網站在哪？（DNS）</li>
+                <li><strong>連接：</strong> 怎麼連上它？（TCP/TLS）</li>
+                <li><strong>請求：</strong> 我要什麼？（HTTP）</li>
+                <li><strong>處理：</strong> 服務器怎麼幹活？（後端）</li>
+                <li><strong>返回：</strong> 內容怎麼回來？（響應）</li>
+                <li><strong>顯示：</strong> 瀏覽器怎麼畫？（渲染）</li>
+            </ol>
+
+            <h2>🌊 一層一層看</h2>
+
+            <h3>用戶層：只看結果</h3>
+
+            <p>
+                在普通用戶眼裡，這是瞬間完成的：
+            </p>
+
+            <div class="request-flow">
+                <div class="flow-step">
+                    <span class="tech-icon">🔤</span>
+                    <span>輸入網址</span>
+                </div>
+                <div class="flow-arrow">↓</div>
+                <div class="flow-step">
+                    <span class="tech-icon">⚡</span>
+                    <span>回車！</span>
+                </div>
+                <div class="flow-arrow">↓</div>
+                <div class="flow-step">
+                    <span class="tech-icon">🎉</span>
+                    <span>頁面出來了！</span>
+                </div>
+            </div>
+
+            <p>
+                簡單，美好。但這不是真相。
+            </p>
+
+            <h3>實現層：開始看到過程</h3>
+
+            <p>
+                在入門程序員眼裡，這變成了"請求-響應"：
+            </p>
+
+            <div class="highlight-box">
+                <strong>瀏覽器問：</strong> "你好，給我首頁！"<br><br>
+                <strong>服務器答：</strong> "好的，這是HTML！"
+            </div>
+
+            <p>
+                但這還只是冰山一角。真實世界比這複雜得多。
+            </p>
+
+            <h3>系統層：完整的8步旅程！</h3>
+
+            <p>
+                現在讓我們進入工程師視角，看看每毫秒都發生了什麼：
+            </p>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">1</span> 📍 DNS 查詢：找到服務器在哪</h4>
+                        <p>
+                            瀏覽器先去問："google.com 的IP地址是什麼？"
+                            這就像查通訊錄：用名字找電話號碼。
+                        </p>
+                        <p>
+                            不是問一次就夠了——它可能會問本地緩存、路由器、ISP、
+                            直到找到根DNS服務器——一層層問出去。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">2</span> 🔌 TCP 握手：建立連接</h4>
+                        <p>
+                            找到IP後，瀏覽器開始和服務器"三次握手"：
+                        </p>
+                        <p>
+                            "SYN!" → "SYN-ACK!" → "ACK!"<br>
+                            就像打電話："喂？" "在" "好開始說"
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">3</span> 🔐 TLS 握手：加密通信</h4>
+                        <p>
+                            如果是 HTTPS，現在要協商加密方式、交換密鑰。
+                            這就是那個小鎖頭圖標的來源！
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">4</span> 📤 HTTP 請求：發出需求</h4>
+                        <p>
+                            瀏覽器終於說正事了：
+                        </p>
+                        <div class="code-block">
+GET / HTTP/1.1<br>
+Host: google.com<br>
+User-Agent: Chrome/120.0<br>
+Accept: text/html
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">5</span> 🏭 服務器處理：內部的旅程</h4>
+                        <p>
+                            請求到達服務器後，事情才真正開始！它會穿越一整條基礎設施鏈路：
+                        </p>
+
+                        <div class="diagram-box diagram-svg-wrap">
+                            <svg viewBox="0 0 960 320" class="topology-svg" role="img"
+                                 aria-label="請求進入服務器後的拓撲路徑：用戶 → CDN → 負載均衡 → Web 集群 → 緩存 / 數據庫">
+                                <defs>
+                                    <linearGradient id="node-blue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#60A5FA"/>
+                                        <stop offset="100%" stop-color="#2563EB"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-cyan" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#22D3EE"/>
+                                        <stop offset="100%" stop-color="#0891B2"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-violet" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#A78BFA"/>
+                                        <stop offset="100%" stop-color="#7C3AED"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-amber" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#FBBF24"/>
+                                        <stop offset="100%" stop-color="#D97706"/>
+                                    </linearGradient>
+                                    <linearGradient id="node-pink" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#F472B6"/>
+                                        <stop offset="100%" stop-color="#DB2777"/>
+                                    </linearGradient>
+                                    <marker id="topo-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                                            markerWidth="7" markerHeight="7" orient="auto">
+                                        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+                                    </marker>
+                                </defs>
+
+                                <!-- 主链路：user -> CDN -> LB -> Web -> App -->
+                                <g style="color: var(--color-level-3, #06B6D4);">
+                                    <line x1="90"  y1="160" x2="146" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                    <line x1="266" y1="160" x2="322" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                    <line x1="442" y1="160" x2="498" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                    <line x1="618" y1="160" x2="674" y2="160"
+                                          stroke="currentColor" stroke-width="2.5" marker-end="url(#topo-arrow)"/>
+                                </g>
+                                <!-- 应用服务 -> 緩存 / DB 的分叉 -->
+                                <g style="color: var(--color-level-5, #F59E0B);">
+                                    <path d="M 795 145 Q 830 100, 866 90"
+                                          fill="none" stroke="currentColor" stroke-width="2.5"
+                                          stroke-dasharray="6 5" marker-end="url(#topo-arrow)"/>
+                                </g>
+                                <g style="color: var(--color-level-6, #EC4899);">
+                                    <path d="M 795 180 Q 830 225, 866 240"
+                                          fill="none" stroke="currentColor" stroke-width="2.5"
+                                          marker-end="url(#topo-arrow)"/>
+                                </g>
+
+                                <!-- 节点：用户 -->
+                                <g class="topo-node" transform="translate(20 120)">
+                                    <rect width="70" height="80" rx="12" fill="url(#node-blue)"/>
+                                    <text x="35" y="36" text-anchor="middle" font-size="24" fill="#fff">👤</text>
+                                    <text x="35" y="60" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">用戶</text>
+                                    <text x="35" y="75" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">瀏覽器</text>
+                                </g>
+
+                                <!-- CDN -->
+                                <g class="topo-node" transform="translate(146 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-cyan)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">🚀</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">CDN 緩存</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">就近命中靜態資源</text>
+                                </g>
+
+                                <!-- 负载均衡 -->
+                                <g class="topo-node" transform="translate(322 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-violet)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">⚖️</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">負載均衡</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">派發到某臺服務器</text>
+                                </g>
+
+                                <!-- Web 集群 -->
+                                <g class="topo-node" transform="translate(498 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-blue)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">🖥️</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">Web 集群</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">Nginx / 反向代理</text>
+                                </g>
+
+                                <!-- 应用服务 -->
+                                <g class="topo-node" transform="translate(674 120)">
+                                    <rect width="120" height="80" rx="12" fill="url(#node-violet)"/>
+                                    <text x="60" y="34" text-anchor="middle" font-size="22" fill="#fff">🧩</text>
+                                    <text x="60" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">應用服務</text>
+                                    <text x="60" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">跑業務邏輯</text>
+                                </g>
+
+                                <!-- 缓存 Redis -->
+                                <g class="topo-node" transform="translate(866 50)">
+                                    <rect width="80" height="80" rx="12" fill="url(#node-amber)"/>
+                                    <text x="40" y="34" text-anchor="middle" font-size="22" fill="#fff">⚡</text>
+                                    <text x="40" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">緩存</text>
+                                    <text x="40" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">Redis</text>
+                                </g>
+
+                                <!-- 数据库 -->
+                                <g class="topo-node" transform="translate(866 220)">
+                                    <rect width="80" height="80" rx="12" fill="url(#node-pink)"/>
+                                    <text x="40" y="34" text-anchor="middle" font-size="22" fill="#fff">🗄️</text>
+                                    <text x="40" y="56" text-anchor="middle" font-size="12"
+                                          font-weight="700" fill="#fff">數據庫</text>
+                                    <text x="40" y="72" text-anchor="middle" font-size="9"
+                                          fill="rgba(255,255,255,0.85)">MySQL / PG</text>
+                                </g>
+
+                                <!-- 分叉说明标签 -->
+                                <text x="820" y="90" text-anchor="start" font-size="10"
+                                      fill="var(--text-muted, #6B7280)">先查緩存</text>
+                                <text x="820" y="235" text-anchor="start" font-size="10"
+                                      fill="var(--text-muted, #6B7280)">未命中回源</text>
+                            </svg>
+
+                            <!-- 移动端 fallback -->
+                            <ol class="topo-mobile" aria-hidden="true">
+                                <li data-color="blue">
+                                    <span class="topo-mobile-icon">👤</span>
+                                    <div><strong>用戶</strong><span>瀏覽器發起請求</span></div>
+                                </li>
+                                <li data-color="cyan">
+                                    <span class="topo-mobile-icon">🚀</span>
+                                    <div><strong>CDN 緩存</strong><span>命中就直接返回靜態資源</span></div>
+                                </li>
+                                <li data-color="violet">
+                                    <span class="topo-mobile-icon">⚖️</span>
+                                    <div><strong>負載均衡</strong><span>派發到當前最空閒的機器</span></div>
+                                </li>
+                                <li data-color="blue">
+                                    <span class="topo-mobile-icon">🖥️</span>
+                                    <div><strong>Web 集群</strong><span>Nginx / 反向代理</span></div>
+                                </li>
+                                <li data-color="violet">
+                                    <span class="topo-mobile-icon">🧩</span>
+                                    <div><strong>應用服務</strong><span>跑業務邏輯</span></div>
+                                </li>
+                                <li data-color="amber" class="topo-branch">
+                                    <span class="topo-mobile-icon">⚡</span>
+                                    <div><strong>緩存（先查）</strong><span>Redis · 毫秒級</span></div>
+                                </li>
+                                <li data-color="pink">
+                                    <span class="topo-mobile-icon">🗄️</span>
+                                    <div><strong>數據庫（未命中回源）</strong><span>MySQL / PostgreSQL</span></div>
+                                </li>
+                            </ol>
+
+                            <p class="diagram-caption">圖：一次請求穿越基礎設施的典型拓撲 · 緩存命中即返回，未命中才落到數據庫</p>
+                        </div>
+
+                        <p>
+                            請求可能經過好幾個服務，調用好幾個數據庫，
+                            最後才把數據組裝好。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">6</span> 📥 HTTP 響應：內容回來</h4>
+                        <p>
+                            服務器把HTML、CSS、JS發回來：
+                        </p>
+                        <div class="code-block">
+HTTP/1.1 200 OK<br>
+Content-Type: text/html<br>
+Content-Length: 1234<br>
+<br>
+&lt;!DOCTYPE html&gt;...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">7</span> 🔄 繼續請求：拿到資源</h4>
+                        <p>
+                            HTML只是開始！瀏覽器發現還需要CSS、JS、圖片...
+                            於是又發起更多請求，並行加載。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><span class="timeline-marker">8</span> 🎨 渲染顯示：頁面出現！</h4>
+                        <p>
+                            瀏覽器解析HTML、應用CSS、運行JS、繪製畫面。
+                            最後——你終於看到了頁面！
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                而所有這一切，通常發生在<strong>幾百毫秒</strong>內！
+            </p>
+
+            <div class="highlight-box">
+                <strong>這就是第3層認知的覺醒：</strong><br><br>
+                互聯網不是"傳送門"——它是一個精密的系統，<br>
+                無數微小的步驟，每一步都不可少！
+            </div>
+
+            <h3>權衡層：為什麼這麼設計？</h3>
+
+            <p>
+                你可能會問：為什麼要這麼多步？不能簡化嗎？
+            </p>
+
+            <p>
+                這就是工程師思維——每個選擇都有代價：
+            </p>
+
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <div class="tech-icon">🔀</div>
+                    <div>DNS解析</div>
+                    <p style="font-size:0.85rem; color:#6B7280">好記但慢</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">🔒</div>
+                    <div>TLS加密</div>
+                    <p style="font-size:0.85rem; color:#6B7280">安全但慢</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">⚡</div>
+                    <div>CDN緩存</div>
+                    <p style="font-size:0.85rem; color:#6B7280">快但花錢</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon">📊</div>
+                    <div>負載均衡</div>
+                    <p style="font-size:0.85rem; color:#6B7280">穩定但複雜</p>
+                </div>
+            </div>
+
+            <p>
+                所有這些加在一起，就是現代Web：一個充滿權衡的系統。
+            </p>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>親眼看看請求的旅程！</h3>
+                <p>
+                    在Chrome瀏覽器裡：
+                </p>
+                <ol style="text-align:left;">
+                    <li>按 <code>F12</code> 打開開發者工具</li>
+                    <li>選擇 <strong>Network</strong>（網絡）標籤</li>
+                    <li>刷新頁面</li>
+                    <li>你會看到每一個請求！</li>
+                </ol>
+                <p>
+                    點擊任意一個請求，你可以看到詳細的時間線：
+                    DNS查詢花了多久、連接花了多久、下載花了多久...
+                </p>
+            </div>
+
+            <p>
+                想玩得更深一點？試試這個命令：
+            </p>
+
+            <div class="code-block">
+traceroute google.com
+            </div>
+
+            <p>
+                你會看到你的數據包去了哪些地方，每一跳花了多少時間！
+            </p>
+
+            <h2>🔗 延伸問題</h2>
+
+            <p>
+                這篇文章只是打開了潘多拉的盒子——現在你可能想問更多：
+            </p>
+
+            <div class="related-questions">
+                <h3>深入探索：</h3>
+                <a href="question.html?q=14">Q14: 為什麼有的網站快有的慢？</a>
+                <a href="question.html?q=17">Q17: 為什麼要談緩存、隊列、負載均衡？</a>
+                <a href="question.html?q=18">Q18: 為什麼數據庫是瓶頸？</a>
+                <a href="question.html?q=20">Q20: 為什麼緩存能提高性能？</a>
+                <a href="question.html?q=25">Q25: 為什麼要做監控和鏈路追蹤？</a>
+            </div>
+
+            <h2>👑 大帝視角：這如何塑造現實？</h2>
+
+            <div class="emperor-box">
+                <h3>從數據流到權力流</h3>
+                <p>
+                    當你理解了數據的流動路徑，你就開始理解：
+                </p>
+                <p>
+                    <strong>誰控制了路徑，誰就控制了信息。</strong>
+                </p>
+            </div>
+
+            <p>
+                想想這些問題：
+            </p>
+
+            <ul style="font-size: 1.1rem; color: #4B5563; line-height: 2;">
+                <li><strong>為什麼有些網站在某些地方訪問不了？</strong> 因為某段路徑被切斷了。</li>
+                <li><strong>為什麼CDN很重要？</strong> 因為它把內容放得離你更近，也控制了內容分發。</li>
+                <li><strong>為什麼大公司要建自己的數據中心？</strong> 因為控制了基礎設施，就控制了命運。</li>
+                <li><strong>為什麼隱私這麼難？</strong> 因為你的請求經過了太多環節，每個環節都可能被記錄。</li>
+            </ul>
+
+            <p>
+                這就是大帝視角：
+                <strong>看到技術，也看到技術背後的權力、經濟、政治結構。</strong>
+            </p>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以，當你輸入一個網址時，背後發生了什麼？
+            </p>
+
+            <p>
+                <strong>答案是：</strong><br>
+                一個精密的系統開始工作——從DNS到TCP，從負載均衡到數據庫，
+                最後回到瀏覽器渲染。
+            </p>
+
+            <div class="highlight-box">
+                <strong>但更深層的答案是：</strong><br><br>
+                你看到的不再是"頁面出來了"，<br>
+                你看到的是——<strong>"數據在流動"！</strong>
+            </div>
+
+            <p>
+                恭喜你！現在你開始用工程師的眼光看世界了。
+            </p>
+
+            <div class="nav-footer">
+                <a href="q07.html" class="btn btn-outline">← 前一篇：Q7</a>
+                <a href="../questions/00-question-map.html" class="btn btn-outline">🗺️ 知識地圖</a>
+                <a href="question.html?q=14" class="btn">下一篇：Q14 →</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>

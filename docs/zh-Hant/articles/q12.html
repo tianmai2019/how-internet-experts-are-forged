@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q12:數據庫到底在存什麼?</title>
+    <link rel="stylesheet" href="../../assets/css/shared.css">
+    <link rel="stylesheet" href="../../assets/css/article.css">
+    <link rel="alternate" hreflang="zh-Hans" href="/articles/q12.html">
+    <link rel="alternate" hreflang="zh-Hant" href="/zh-Hant/articles/q12.html">
+    <link rel="alternate" hreflang="en" href="/en/articles/q12.html">
+    <link rel="alternate" hreflang="x-default" href="/articles/q12.html">
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" class="back-btn">← 返回首頁</a>
+
+        <div class="article-header article-header--level-2">
+            <div class="level-badge">🔨 第2層認知 · 程序員入門視角</div>
+            <h1>數據庫到底在存什麼?</h1>
+            <p class="subtitle">世界被建模成表格,才能被系統"看見"</p>
+        </div>
+
+        <div class="article-content">
+            <h2>🤔 小白視角:這個問題為什麼重要?</h2>
+
+            <p>
+                你的支付寶餘額、你的微信好友、你在淘寶買過的每一件東西、你去年 3 月 12 號發的那條朋友圈——它們都存在<strong>某個地方</strong>。
+                這個地方叫"數據庫"。
+            </p>
+
+            <p>
+                但數據庫到底長什麼樣?是一個巨大的文件嗎?是一堆 Excel 表格嗎?
+                更重要的是:<strong>什麼東西能被存進去,什麼不能</strong>?
+            </p>
+
+            <div class="highlight-box">
+                <strong>核心洞察:</strong><br><br>
+                數據庫不存"現實",它存的是<strong>被模型化過的現實</strong>——<br>
+                你必須先決定"這個東西有哪幾個屬性、和其他東西怎麼關聯",<br>
+                才能把它塞進數據庫。<br><br>
+                <strong>沒被建模的東西,系統就"看不見"。</strong>
+            </div>
+
+            <p>
+                這個問題重要,不是因為你要學 SQL——而是因為一旦你理解了"數據庫如何看世界",你就理解了產品經理為什麼天天在爭"這個字段要不要加"、"這兩個東西是不是同一類"。
+            </p>
+
+            <h2>🧩 拆解:把大問題拆成小問題</h2>
+
+            <ol>
+                <li>數據庫長什麼樣?</li>
+                <li>為什麼"表格"這種形式能存下現實?</li>
+                <li>索引、事務、schema 這些術語在說啥?</li>
+                <li>為什麼會有"關係型"和"非關係型"兩派?</li>
+            </ol>
+
+            <h2>🎯 一層一層看</h2>
+
+            <h3 class="section-user">用戶層:只看結果</h3>
+
+            <p>
+                你打開美團,看到你上個月點的那單奶茶——"太后奶蓋抹茶,加芋圓,不加糖"。
+                你覺得,美團<strong>"記得"你買過什麼</strong>。
+            </p>
+
+            <p>
+                但美團怎麼"記得"?它不是像人一樣有記憶——它有一張表,叫 orders,裡面有一行,大致長這樣:
+            </p>
+
+            <div class="code-block">order_id | user_id | shop_id | items                          | price | status  | created_at
+---------+---------+---------+--------------------------------+-------+---------+---------------------
+9382174  | 8827    | 501     | 太后奶蓋抹茶(加芋圓,不加糖)   | 22.5  | 已完成   | 2024-05-13 14:22:41</div>
+
+            <p>
+                這一行,就是你的那杯奶茶被數據庫"記住"的方式。<strong>它不是你的記憶的複製,它是一個"被格式化的事實"。</strong>
+            </p>
+
+            <h3 class="section-code">實現層:開始理解構造</h3>
+
+            <p>
+                最常見的一類數據庫,叫<strong>關係型數據庫</strong>(MySQL、PostgreSQL、SQL Server……)。
+                它把世界描述成一堆"表格",每個表格有<strong>行</strong>(row)和<strong>列</strong>(column):
+            </p>
+
+            <div class="highlight-box">
+                <strong>一個最簡單的博客系統,需要什麼表?</strong>
+            </div>
+
+            <div class="code-block">-- 用戶表:每個用戶一行
+CREATE TABLE users (
+    id           BIGINT PRIMARY KEY,
+    phone        VARCHAR(20) UNIQUE,
+    nickname     VARCHAR(50),
+    created_at   TIMESTAMP
+);
+
+-- 帖子表:每個帖子一行
+CREATE TABLE posts (
+    id           BIGINT PRIMARY KEY,
+    author_id    BIGINT REFERENCES users(id),   -- 誰寫的
+    title        VARCHAR(200),
+    content      TEXT,
+    created_at   TIMESTAMP
+);
+
+-- 評論表:每條評論一行
+CREATE TABLE comments (
+    id           BIGINT PRIMARY KEY,
+    post_id      BIGINT REFERENCES posts(id),   -- 評論哪條
+    user_id      BIGINT REFERENCES users(id),   -- 誰評的
+    text         TEXT,
+    created_at   TIMESTAMP
+);</code></div>
+
+            <p>
+                注意那幾個 <code>REFERENCES</code>——這是"關係"的核心。
+                comments 表的每一行,通過 <code>post_id</code> 和 <code>user_id</code> 指向另外兩張表的具體一行。
+                所以叫"關係型"——表和表之間有關係。
+            </p>
+
+            <p>
+                有了表,你就可以"問問題":
+            </p>
+
+            <div class="code-block">-- 找出用戶 8827 昨天寫的所有帖子
+SELECT id, title, created_at
+FROM posts
+WHERE author_id = 8827
+  AND created_at &gt;= '2024-05-12'
+  AND created_at &lt;  '2024-05-13';
+
+-- 找出這條帖子下所有評論,包括評論者的暱稱
+SELECT c.text, u.nickname, c.created_at
+FROM comments c
+JOIN users u ON u.id = c.user_id
+WHERE c.post_id = 42
+ORDER BY c.created_at DESC;</div>
+
+            <p>
+                SQL 就是"跟數據庫對話的語言"。它讀起來像英語,寫起來是"我想要什麼",不是"你怎麼找"。
+            </p>
+
+            <h3 class="section-system">系統層:看到完整鏈路</h3>
+
+            <p>
+                如果數據庫只是"存表格",幾十年下來沒什麼好研究的。
+                但數據庫真正難的地方,是<strong>要在"快、對、可靠"之間平衡</strong>。為此,它引入了幾個關鍵概念:
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>📇 索引(Index)</h4>
+                    <p>就像書的目錄。沒有目錄時,查一個詞要翻整本書;有了目錄,秒定位。</p>
+                    <p>代價:目錄本身要佔空間,而且寫數據時得同時更新目錄。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🔒 事務(Transaction)</h4>
+                    <p>一組操作要麼<strong>全部成功,要麼全部失敗</strong>。</p>
+                    <p>轉賬時,"從我賬戶扣 100"和"給對方賬戶加 100",必須同生共死——不然錢就憑空消失或憑空多出。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>📐 Schema(模式)</h4>
+                    <p>數據庫的"設計藍圖"——有幾張表、每張表有哪些字段、字段是什麼類型。</p>
+                    <p>產品迭代時,加字段、改類型都叫"schema 變更",搞不好會宕機。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>♻️ 事務的 ACID</h4>
+                    <p><strong>A</strong>tomicity 原子性、<strong>C</strong>onsistency 一致性、<strong>I</strong>solation 隔離性、<strong>D</strong>urability 持久性——數據庫為"錢"和"賬"提供的安全保證。</p>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>一次數據庫讀寫,幕後發生了什麼?</strong>
+            </div>
+
+            <div class="diagram-box">
+                <div class="step-box">① SQL 到達</div>
+                <div class="arrow">↓ 解析 + 優化</div>
+                <div class="step-box">② 生成執行計劃</div>
+                <div class="arrow">↓ 決定用哪個索引</div>
+                <div class="step-box">③ 讀磁盤/內存頁</div>
+                <div class="arrow">↓ 彙總結果</div>
+                <div class="step-box">④ 返回給應用</div>
+            </div>
+
+            <p>
+                數據庫不會去"遍歷硬盤上的每一個字節"——它維護著一套精心設計的<strong>B+ 樹、哈希表、日誌文件</strong>,
+                讓"查一條數據"通常只需要幾次磁盤 I/O,毫秒級完成。
+            </p>
+
+            <h3 class="section-tradeoff">權衡層:關係型 vs NoSQL,為什麼會分家?</h3>
+
+            <p>
+                幾十年來關係型數據庫統治天下,但 2010 年前後,一批"叛軍"出現了——MongoDB、Redis、Cassandra、Elasticsearch……
+                它們統稱 <strong>NoSQL</strong>(Not Only SQL)。
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-card">
+                    <h4>🏛️ 關係型(MySQL, PostgreSQL)</h4>
+                    <p>結構嚴謹,支持複雜查詢和事務。</p>
+                    <p>適合:錢、賬、訂單、用戶關係——一切"錯不得"的場景。</p>
+                    <p>短板:海量數據難以水平擴展。</p>
+                </div>
+                <div class="compare-card">
+                    <h4>🚀 NoSQL(MongoDB, Redis, Cassandra)</h4>
+                    <p>形式靈活,犧牲一些一致性換取巨大的性能和擴展性。</p>
+                    <p>適合:緩存、日誌、社交動態、搜索——一切"多、快、變得快"的場景。</p>
+                    <p>短板:複雜事務和跨表查詢較弱。</p>
+                </div>
+            </div>
+
+            <p>
+                真實世界的大型系統,通常<strong>兩派都用</strong>:
+            </p>
+
+            <ul>
+                <li>你的賬戶餘額、訂單——放在 MySQL/PostgreSQL(要"對")</li>
+                <li>你的動態流、推薦結果——放在 Redis/MongoDB(要"快")</li>
+                <li>你的搜索關鍵詞、日誌——放在 Elasticsearch(要"能全文搜")</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>這也說明一件事:</strong><br><br>
+                "數據庫"其實不是一種東西,而是<strong>一大類工具</strong>。<br>
+                工程師的活兒,是在眾多數據庫裡挑合適的組合,來匹配業務需求。
+            </div>
+
+            <h2>✋ 動手試試</h2>
+
+            <div class="try-box">
+                <h3>試試看:5 分鐘,寫下你熟悉產品的"數據模型"</h3>
+                <p>
+                    拿一張紙(或任何筆記 App),想一個你熟悉的產品——比如"微信"或"抖音"。<br>
+                    然後回答:如果你是它的工程師,你需要哪幾張表?
+                </p>
+                <p>
+                    以微信為例,你可能會寫下:
+                </p>
+                <ul style="color: white;">
+                    <li><strong>users</strong>: id, phone, nickname, avatar_url</li>
+                    <li><strong>friends</strong>: user_id, friend_id, added_at (誰和誰是好友)</li>
+                    <li><strong>chats</strong>: id, type(單聊/群聊), created_at</li>
+                    <li><strong>messages</strong>: id, chat_id, sender_id, content, sent_at</li>
+                    <li><strong>moments</strong>: id, user_id, text, images, posted_at</li>
+                </ul>
+                <p>
+                    做完這個練習,你會有一種奇妙的感覺:<br>
+                    <strong>一個 App,其實就是一堆表的集合。</strong>
+                </p>
+            </div>
+
+            <h2>🔗 延伸問題</h2>
+
+            <div class="related-questions">
+                <h3>相關問題探索:</h3>
+                <a href="question.html?q=11">Q11: 註冊、登錄、評論……本質是什麼?</a>
+                <a href="question.html?q=18">Q18: 數據一致性如何保證?</a>
+                <a href="question.html?q=5">Q5: 我的數據到底在哪裡?</a>
+                <a href="question.html?q=10">Q10: 點擊按鈕後數據去哪了?</a>
+            </div>
+
+            <h2>👑 大帝視角:這如何塑造現實?</h2>
+
+            <div class="emperor-box">
+                <h3>能被數據庫表達的世界,才被系統"看見"</h3>
+                <p>
+                    這是一個容易被忽略的深刻現實:
+                </p>
+                <p>
+                    <strong>如果一件事情不能被建模成"表和字段",互聯網系統就無法處理它。</strong>
+                </p>
+                <p>
+                    你的性別是"男/女"?——因為一開始的表裡,<code>gender</code> 字段只有兩個枚舉值。
+                    今天很多平臺開始加"其他""不願透露""非二元",這不是社會突然進步了,而是<strong>數據庫的 schema 被擴展了</strong>。
+                </p>
+                <p>
+                    你的身份證只能是 18 位數字?你的名字不能超過 20 個字?你的家庭關係必須是"父/母/子/女"?
+                    這些看似天經地義的"規則",本質都是<strong>某位工程師在定義表結構時下的決定</strong>。
+                </p>
+                <p>
+                    <strong>數據庫是"現實的過濾器"。</strong>它決定了什麼被系統看到、什麼被系統忽略、什麼被系統強行歸類。
+                </p>
+                <p>
+                    每一次你在 App 裡填一張表單,你都在把"活生生的自己"翻譯成機器能理解的字段。
+                    你的複雜被壓縮,你的多面被單選,你的模糊被枚舉——這就是"數字化生存"的代價。
+                </p>
+                <p>
+                    這也是為什麼每一次 schema 變更、每一次"字段新增",都可能是一場無聲的社會討論。
+                </p>
+            </div>
+
+            <h2>✨ 回到問題</h2>
+
+            <p>
+                所以,數據庫到底在存什麼?
+            </p>
+
+            <p>
+                <strong>它存的不是"世界",而是"被工程師建模過的世界"——一張張有嚴格結構的表格,
+                行是記錄,列是屬性,表與表之間通過關聯表達關係。</strong>
+            </p>
+
+            <p>
+                這背後有一整套精妙的機器:索引讓查找變快、事務保證一致、schema 約束數據形狀。
+                關係型和 NoSQL 是不同側重的兩派,現代系統通常兩派並用。
+            </p>
+
+            <div class="highlight-box">
+                <strong>更深一層的真相:</strong><br><br>
+                當你以後打開任何一個 App,試著問自己:<br>
+                "如果我是它的工程師,我會怎麼設計它的表?"<br><br>
+                你能想到幾張表——你就理解了這個產品的幾分。
+            </div>
+
+            <p>
+                至此,你已經走完了"程序員入門視角"的第一段旅程。恭喜你——從看世界的人,變成了<strong>能看穿世界結構的人</strong>。
+            </p>
+
+            <div class="nav-footer">
+                <a href="../questions/00-question-map.html" class="btn btn-outline">← 回到知識地圖</a>
+                <a href="question.html?q=13" class="btn">繼續探索 Q13 → </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 互聯網大帝是如何煉成的</p>
+        </footer>
+    </div>
+    <script src="../../assets/js/enhance.js"></script>
+</body>
+</html>
