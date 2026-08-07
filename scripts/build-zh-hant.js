@@ -14,6 +14,8 @@
  *   6. 删除旧的 hreflang 链接标签 —— 由 scripts/inject-hreflang.js 统一重新注入三语版本。
  *   7. 相对链接（../assets/、../articles/qXX.html、../index.html）保持原样，
  *      同层级引用会自然指向 docs/zh-Hant/ 下的对应文件。
+ *   8. 把 assets/data/questions.js 的引用改成 questions-zh-Hant.js
+ *      （问题文案是数据而非页面内容，需要平行的繁体数据文件）。
  *
  * 幂等：整个 docs/zh-Hant/ 每次都被清空重建。
  *
@@ -117,9 +119,13 @@ function convertCjkStringLiteralsInJs(js) {
 
         if (ch === "'" || ch === '"' || ch === '`') {
             const quote = ch;
-            const start = i;
-            i++; // 跳过起始 quote
+            // 立即输出起始 quote —— 之前的 bug：等到闭合再一次性 quote+buf+quote，
+            // 但模板串遇到 ${...} 会提前 flush buf 而没输出起始 `，最终 renderGraph 之类的
+            // 带插值模板串会缺 ` 导致 JS 语法错误（知识地图页因此白屏）。
+            out += quote;
+            i++;
             let buf = '';
+            let closed = false;
             while (i < n) {
                 const c = js[i];
                 if (c === '\\' && i + 1 < n) {
@@ -128,9 +134,7 @@ function convertCjkStringLiteralsInJs(js) {
                     continue;
                 }
                 if (quote === '`' && c === '$' && js[i + 1] === '{') {
-                    // 模板串内插值：把当前 buf 结算，然后把 ${ ... } 段原样传递
-                    // ${ ... } 里如果又出现字符串，我们不递归，交给下一次外层循环处理不太可行；
-                    // 简化：把 ${...} 内容也走一次简单深度扫描，跳过匹配括号
+                    // 模板串内插值：flush 当前 buf（不带引号，起始 quote 已输出）
                     if (CJK_RE.test(buf)) buf = convert(buf);
                     out += buf;
                     buf = '';
@@ -143,7 +147,7 @@ function convertCjkStringLiteralsInJs(js) {
                         else if (cc === '}') depth--;
                         j++;
                     }
-                    // 递归转换 ${...} 内部（去掉外壳 ${ 和 } 单独处理内部）
+                    // 递归转换 ${...} 内部
                     const innerStart = i + 2;
                     const innerEnd = j - 1; // 指向 }
                     const inner = js.slice(innerStart, innerEnd);
@@ -152,18 +156,20 @@ function convertCjkStringLiteralsInJs(js) {
                     continue;
                 }
                 if (c === quote) {
-                    // 字符串结束
+                    // 字符串结束：只补末尾 quote（起始 quote 早已输出）
                     if (CJK_RE.test(buf)) buf = convert(buf);
-                    out += quote + buf + quote;
+                    out += buf + quote;
                     i++;
+                    closed = true;
                     break;
                 }
                 buf += c;
                 i++;
             }
-            // 如果 while 因 i>=n 退出而 buf 未清空（字符串未闭合），把原始片段还原
-            if (i >= n && (out.length === 0 || out[out.length - 1] !== quote)) {
-                out += quote + buf;
+            if (!closed) {
+                // 字符串未闭合：起始 quote 已输出，剩余内容原样追加
+                if (CJK_RE.test(buf)) buf = convert(buf);
+                out += buf;
             }
             continue;
         }
@@ -262,6 +268,15 @@ function transformDocument(src) {
     src = src.replace(
         /(\b(?:href|src)\s*=\s*["'])((?:\.\.\/)*)(assets\/)/gi,
         (_, attr, upDots, tail) => attr + '../' + upDots + tail
+    );
+
+    // 3b. 问题数据换成繁体版：questions.js -> questions-zh-Hant.js
+    //  QUESTIONS / LEVEL_NAMES / LEVEL_ICONS 是简体文案，繁体页直接引用会显示简体
+    //  （知识图谱节点 tooltip、question.html 的问题标题）。
+    //  繁体数据由 scripts/build-questions-data.js 生成。
+    src = src.replace(
+        /(\bsrc\s*=\s*["'][^"']*assets\/data\/)questions\.js(["'])/gi,
+        '$1questions-zh-Hant.js$2'
     );
 
     // 4. 分段 s2t 转换

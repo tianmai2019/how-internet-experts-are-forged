@@ -99,9 +99,10 @@ node scripts/build-search-index.js
 流程：
 
 ```bash
-npm install --no-save opencc-js   # 首次运行前装一次
-node scripts/build-zh-hant.js     # 从简体源批量重建繁体页
-node scripts/inject-hreflang.js   # 给新增页注入三语 hreflang
+npm install --no-save opencc-js        # 首次运行前装一次
+node scripts/build-questions-data.js   # 生成繁体问题数据 questions-zh-Hant.js
+node scripts/build-zh-hant.js          # 从简体源批量重建繁体页
+node scripts/inject-hreflang.js        # 给新增页注入三语 hreflang
 node scripts/build-search-index.js zh-Hant   # 重建繁体搜索索引
 ```
 
@@ -109,9 +110,30 @@ node scripts/build-search-index.js zh-Hant   # 重建繁体搜索索引
 
 - ✅ 改了 `docs/articles/qNN.html`、`docs/index.html` 或 `docs/questions/*.html`
 - ✅ 新增了一篇文章（从简体源开始）
+- ✅ 改了 `docs/assets/data/questions.js` 的问题文案 → 至少要跑 `build-questions-data.js`
 - ❌ 只改了 CSS / JS / 图片：**不用**
 
 如果想让某个术语走"繁体地道化"（比如 `软件 → 軟體` 而不是 `軟件`），编辑 `scripts/build-zh-hant.js` 顶部注释所指的转换器，把 `to: 'tw'` 改成 `to: 'twp'`，或者维护自己的术语覆盖表。当前默认按用户选择的 s2t（仅字形）跑。
+
+---
+
+## 🌐 问题数据的三份语言副本
+
+`knowledge-graph.html` 的节点 tooltip 和 `articles/question.html` 的问题标题都来自数据文件，**不是页面正文**，所以每种语言各有一份：
+
+| 文件 | 语言 | 维护方式 |
+|---|---|---|
+| `docs/assets/data/questions.js` | 简体 | **手改**（唯一源） |
+| `docs/assets/data/questions-zh-Hant.js` | 繁体 | 自动生成，勿手改 |
+| `docs/assets/data/questions-en.js` | 英文 | **手改**（人工翻译） |
+
+新增或修改问题文案时：
+
+1. 改 `questions.js`（简体源）
+2. 跑 `node scripts/build-questions-data.js` 同步繁体
+3. 手动补 `questions-en.js` 的对应英文文案
+
+`build-zh-hant.js` 会自动把繁体页里的 `questions.js` 引用改写成 `questions-zh-Hant.js`，无需手工处理。
 
 ---
 

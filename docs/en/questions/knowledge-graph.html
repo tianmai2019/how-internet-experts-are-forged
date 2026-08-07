@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knowledge Graph · How Internet Grandmasters Are Forged</title>
     <link rel="stylesheet" href="../../assets/css/shared.css">
-    <script src="../../assets/data/questions.js"></script>
+    <script src="../../assets/data/questions-en.js"></script>
     <style>
         .container {
             max-width: 1400px;
@@ -326,61 +326,7 @@
     <script>
         // All 50 articles are published — nodes link directly to real articles.
         // The "read" state comes from localStorage key ihef-read-articles.
-
-        // English tooltip text for each question. The shared questions.js data file
-        // stays in Chinese; we override tooltips inline for the English page.
-        const QUESTIONS_EN = {
-            1:  "Why does a page appear on your screen the moment you type a URL?",
-            2:  "Why does a message you send arrive on someone else's phone almost instantly?",
-            3:  "Why do platforms seem to know you better and better over time?",
-            4:  "Why does the map app always know where you are?",
-            5:  "Why do things you \"deleted\" sometimes feel like they never really went away?",
-            6:  "Why can AI answer you as if you were talking to a person?",
-            7:  "How is a web page actually made?",
-            8:  "What do frontend and backend actually each do?",
-            9:  "How does the browser turn the page you wrote into pixels?",
-            10: "When you click a button, where does the data actually go?",
-            11: "Sign up, log in, comment, like, place an order — how are these features actually built?",
-            12: "What is a database actually storing?",
-            13: "When you type a URL into a browser, what actually happens behind the scenes?",
-            14: "Why do some sites load in a blink while others are always slow?",
-            15: "Why does a system that ran fine yesterday start timing out, erroring, and crashing under traffic?",
-            16: "Why does a \"simple\" like, comment, or checkout button need so many moving parts behind it?",
-            17: "Why do big systems keep talking about caches, queues, load balancing, rate limiting, graceful degradation, and circuit breaking?",
-            18: "Why is the database so often the bottleneck?",
-            19: "Why can one slow API drag the entire business path down with it?",
-            20: "Why does caching make systems dramatically faster?",
-            21: "Why do message queues help with shaving peaks and filling troughs?",
-            22: "Why can load balancing let one service absorb huge amounts of traffic?",
-            23: "Why are distributed systems so much harder than single-machine ones?",
-            24: "Why is the hardest part of a high-concurrency system not the features but keeping it stable?",
-            25: "Why do large sites keep investing in monitoring, logging, tracing, and failure drills?",
-            26: "Why is there no silver bullet in system design?",
-            27: "Why doesn't the most \"advanced\" architecture always fit the business you're actually in?",
-            28: "Why isn't a monolith automatically outdated, and why aren't microservices automatically better?",
-            29: "Why do consistency, performance, availability, cost, and complexity always end up trading off against each other?",
-            30: "Why do plans that look great on the whiteboard often stop being worth it in production?",
-            31: "Why does stability tend to matter more than \"clever\" design?",
-            32: "Why is tech debt never just a code problem — it's time, organization, and business piling on top of each other?",
-            33: "Why isn't a recommendation system just delivering content — why is it also shaping your attention?",
-            34: "Why aren't platforms just offering services — why are they also writing the rules?",
-            35: "Why does a button's position, a recommendation strategy, or an interaction mechanic change how people behave?",
-            36: "Why does internet product design end up shaping people's emotions, expression, and judgment?",
-            37: "Why does an org chart end up shaping the system's architecture?",
-            38: "Why do business goals so often decide the tech direction, and not the other way around?",
-            39: "Why do internet systems ultimately change not just how information moves, but how people relate to the world?",
-            40: "Why does AI seem to understand you when it doesn't actually understand you?",
-            41: "Why can AI sound fluent and still be wrong?",
-            42: "Why is generative AI fundamentally different from traditional software systems?",
-            43: "Why are AI outputs probabilistic instead of deterministic like traditional systems?",
-            44: "Why does AI feeling more human make it easier for people to misjudge what it can actually do?",
-            45: "Why hasn't AI made the internet simpler — why has it just buried the complexity deeper?",
-            46: "Why is there a whole system path hidden behind a single button?",
-            47: "Why does a system, as it grows, stop looking like a code problem and start looking like a complexity problem?",
-            48: "Why does going deeper into technology eventually lead you toward understanding people, organizations, and society?",
-            49: "Why is the real \"mental map of the internet\" not scattered facts, but the structure that connects them?",
-            50: "Why does it work this way?"
-        };
+        // Question text comes from assets/data/questions-en.js (QUESTIONS).
 
         function getReadList() {
             try {
@@ -416,14 +362,14 @@
                 html += `<div class="questions-grid">`;
 
                 level.ids.forEach(qid => {
-                    const q = QUESTIONS_EN[qid];
+                    const q = QUESTIONS[qid];
                     if (!q) return;
                     const isRead = readList.includes(qid);
                     const href = `../articles/q${String(qid).padStart(2,'0')}.html`;
 
                     html += `<a href="${href}" class="question-node level-${level.id} ${isRead ? 'read' : ''}">
                         ${qid}
-                        <div class="tooltip">${q}</div>
+                        <div class="tooltip">${q.text}</div>
                     </a>`;
                 });
 

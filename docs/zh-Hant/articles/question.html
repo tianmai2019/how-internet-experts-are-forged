@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>問題加載中...</title>
     <link rel="stylesheet" href="../../assets/css/shared.css">
-    <script src="../../assets/data/questions.js"></script>
+    <script src="../../assets/data/questions-zh-Hant.js"></script>
     <style>
         .level-badge {
             display: inline-block;
@@ -169,7 +169,7 @@
                 // 跳转到真实文章 —— 用 replace 而不是 href，
                 // 这样中转页不会留在浏览器历史里，
                 // 从主文章跳过来后再点"返回上一页"能直接回到主文章。
-                const filename = q${String(id).padStart(2, '0')}`.html`;
+                const filename = `q${String(id).padStart(2, '0')}.html`;
                 window.location.replace(filename);
                 return true;
             }
@@ -250,7 +250,7 @@
                 const icon = LEVEL_ICONS[question.level];
 
                 // 设置标题
-                document.title = Q${id}: ${question.text}``;
+                document.title = `Q${id}: ${question.text}`;
                 document.getElementById('question-text').textContent = question.text;
                 document.getElementById('level-name').textContent = levelName;
                 document.getElementById('page-icon').textContent = icon;
@@ -258,17 +258,17 @@
                 // 设置层级徽章
                 const badge = document.getElementById('level-badge');
                 badge.textContent = levelName;
-                badge.className = level-badge level-${question.level}``;
+                badge.className = `level-badge level-${question.level}`;
 
                 // 设置写作提示
                 const hintList = document.getElementById('hint-list');
                 const hints = getHintsForLevel(question.level);
-                hintList.innerHTML = hints.map(h => <li>${h}`</li>`).join('');
+                hintList.innerHTML = hints.map(h => `<li>${h}</li>`).join('');
 
                 // 修改header，显示Q编号
-                document.getElementById('page-header').innerHTML = 
+                document.getElementById('page-header').innerHTML = `
                     <h1>⏳ Q${id}: 即將上線</h1>
-                    <p class="subtitle">${levelName}`</p>
+                    <p class="subtitle">${levelName}</p>
                 `;
             }, 800);
         }

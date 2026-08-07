@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>知識圖譜 · 互聯網大帝是如何煉成的</title>
     <link rel="stylesheet" href="../../assets/css/shared.css">
-    <script src="../../assets/data/questions.js"></script>
+    <script src="../../assets/data/questions-zh-Hant.js"></script>
     <style>
         .container {
             max-width: 1400px;
@@ -352,11 +352,11 @@
             let html = '';
 
             LEVELS.forEach(level => {
-                html += <div class="level-row level-${level.id}`">`;
-                html += <div class="level-header">
+                html += `<div class="level-row level-${level.id}">`;
+                html += `<div class="level-header">
                     <span class="level-icon">${level.icon}</span>
                     <div class="level-name">${level.name}</div>
-                    <div class="level-desc">${level.desc}`</div>
+                    <div class="level-desc">${level.desc}</div>
                 </div>`;
                 html += `<div class="questions-grid">`;
 
@@ -364,11 +364,11 @@
                     const q = QUESTIONS[qid];
                     if (!q) return;
                     const isRead = readList.includes(qid);
-                    const href = ../articles/q${String(qid).padStart(2,'0')}`.html`;
+                    const href = `../articles/q${String(qid).padStart(2,'0')}.html`;
 
-                    html += <a href="${href}" class="question-node level-${level.id} ${isRead ? 'read' : ''}">
+                    html += `<a href="${href}" class="question-node level-${level.id} ${isRead ? 'read' : ''}">
                         ${qid}
-                        <div class="tooltip">${q.text}`</div>
+                        <div class="tooltip">${q.text}</div>
                     </a>`;
                 });
 
